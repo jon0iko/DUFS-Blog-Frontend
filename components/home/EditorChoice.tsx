@@ -9,7 +9,7 @@ export default function EditorChoice() {
       <div className="container">
         <div className="flex justify-center mb-8">
           <h2 className="text-2xl font-semibold relative">
-            <span className="relative z-10">Editor's Choice</span>
+            <span className="relative z-10">Editor&apos;s Choice</span>
             <span className="absolute left-0 right-0 bottom-0 h-[1px] bg-gray-300 dark:bg-gray-700"></span>
           </h2>
         </div>

@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import Sidebar from "@/components/layout/Sidebar";
 
 
 const roboto = localFont({

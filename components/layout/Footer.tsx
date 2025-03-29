@@ -31,7 +31,7 @@ export default function Footer() {
             <div>
               <h3 className="font-medium mb-4">Contact</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                If you're interested in contributing to the blog, please see our{' '}
+                If you&apos;re interested in contributing to the blog, please see our{' '}
                 <Link href="/pitching-guidelines" className="font-bold hover:underline">
                   Contribution Section.
                 </Link>
