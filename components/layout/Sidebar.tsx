@@ -1,32 +1,29 @@
 // components/layout/Sidebar.tsx
-'use client'; // Keep 'use client' for onClick handlers
+'use client';
 
 import Link from 'next/link';
 import { X } from 'lucide-react';
 import { navigation, socialLinks } from '@/data/dummy-data'; // Adjust path if needed
 import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button'; // Import Button for close
+import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
-// --- Props Interface ---
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
 
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
-
-  // Function to close sidebar, e.g., on link click
   const closeSidebar = () => setIsOpen(false);
 
   return (
     <>
-      {/* Optional: Overlay for dimming content when sidebar is open */}
+      {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-45 bg-black/50 backdrop-blur-sm md:hidden" // Show overlay only below md? Adjust if needed
-          onClick={closeSidebar} // Close sidebar when clicking overlay
+          className="fixed inset-0 z-45 bg-black/50 backdrop-blur-sm md:hidden" // Keep overlay logic as is, usually just for mobile
+          onClick={closeSidebar}
           aria-hidden="true"
         />
       )}
@@ -36,13 +33,15 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         className={cn(
           "fixed inset-y-0 left-0 z-50 h-screen w-64 flex-shrink-0 ", // Positioning & Size
           "flex flex-col border-r bg-background p-6 shadow-lg ", // Structure, Style
+          "overflow-y-auto", // *** Apply scrolling to the entire aside ***
           "transition-transform duration-300 ease-in-out", // Animation
           isOpen ? 'translate-x-0' : '-translate-x-full' // Control visibility
         )}
         aria-label="Sidebar Navigation"
       >
-        {/* Header section with Close button */}
-        <div className="mb-8 flex items-center justify-between">
+        {/* Header section (will now scroll with content if needed) */}
+        {/* Use flex-shrink-0 to prevent shrinking if content is very long */}
+        <div className="mb-8 flex flex-shrink-0 items-center justify-between">
           <Link href="/" onClick={closeSidebar} className="flex items-center space-x-2">
               <span className="font-bold text-xl text-foreground">
                 DUFS Blog Logo
@@ -51,7 +50,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           <Button
             variant="ghost"
             size="icon"
-            onClick={closeSidebar} // Use the function
+            onClick={closeSidebar}
             className="text-muted-foreground hover:text-foreground"
             aria-label="Close sidebar"
           >
@@ -59,14 +58,15 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           </Button>
         </div>
 
-        {/* Navigation Section */}
-        <nav className="flex-grow overflow-y-auto"> {/* Allow scrolling if content overflows */}
+        {/* Navigation Section (will now scroll) */}
+        {/* Removed flex-grow and overflow-y-auto from nav */}
+        <nav className="flex-shrink-0">
           <ul className="space-y-3">
             {navigation.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  onClick={closeSidebar} // Close sidebar on navigation
+                  onClick={closeSidebar}
                   className="block text-base font-medium text-foreground/80 hover:text-foreground transition-colors"
                 >
                    {item.title}
@@ -76,30 +76,34 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           </ul>
         </nav>
 
-        <Separator className="my-6" />
+        {/* Bottom Section (Separator, Social, etc. - will now scroll) */}
+        {/* Use mt-6 or similar for spacing instead of relying on flex-grow */}
+        <div className="mt-6 flex-shrink-0">
+          <Separator className="" /> {/* Removed my-6, rely on parent div margin */}
 
-        {/* Social Links Section */}
-        <div className="">
-          <div className="flex space-x-4">
-            {socialLinks.map((link) => (
-              <Link
-                key={link.platform}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                aria-label={`Visit our ${link.platform} page`}
-              >
-                {link.icon ? (
-                    <Image
-                      src={link.icon} alt={`${link.platform} icon`}
-                      width={24} height={24} className="h-6 w-6"
-                    />
-                ) : (
-                  <span className='uppercase text-xs'>{link.platform}</span>
-                )}
-              </Link>
-            ))}
+          {/* Social Links Section */}
+          <div className="mt-6"> {/* Added margin-top */}
+            <div className="flex space-x-4">
+              {socialLinks.map((link) => (
+                <Link
+                  key={link.platform}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={`Visit our ${link.platform} page`}
+                >
+                  {link.icon ? (
+                      <Image
+                        src={link.icon} alt={`${link.platform} icon`}
+                        width={24} height={24} className="h-6 w-6"
+                      />
+                  ) : (
+                    <span className='uppercase text-xs'>{link.platform}</span>
+                  )}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </aside>
