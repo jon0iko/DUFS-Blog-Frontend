@@ -1,6 +1,7 @@
 import { Article, NavItem, SocialLink } from "@/types";
 
 export const navigation: NavItem[] = [
+  { title: 'Log In', href: '/login' },
   { title: 'Home', href: '/' },
   { title: 'Option1', href: '/Option' },
   { title: 'Option2', href: '/Option' },
