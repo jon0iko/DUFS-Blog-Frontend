@@ -5,22 +5,32 @@ import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-
+import FloatingBanner from "@/components/layout/FloatingBanner";
 
 const roboto = localFont({
   src: [
     {
-      path: "../public/fonts/Roboto-Regular.ttf", // Updated path to TTF
+      path: "../public/fonts/Roboto-Regular.ttf",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../public/fonts/Roboto-Medium.ttf", // Updated path to TTF
+      path: "../public/fonts/Roboto-Light.ttf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/Roboto-Medium.ttf", 
       weight: "500",
       style: "normal",
     },
     {
-      path: "../public/fonts/Roboto-Bold.ttf", // Updated path to TTF
+      path: "../public/fonts/Roboto-SemiBold.ttf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/Roboto-Bold.ttf", 
       weight: "700",
       style: "normal",
     },
@@ -31,7 +41,7 @@ const roboto = localFont({
 
 // --- Load Kalpurush Font (using TTF) ---
 const kalpurush = localFont({
-  src: "../public/fonts/kalpurush.ttf", // Updated path to TTF
+  src: "../public/fonts/kalpurush.ttf", 
   weight: "400", // Adjust if your Kalpurush.ttf has a different default weight
   style: "normal",
   variable: "--font-kalpurush", // Assign CSS variable for Kalpurush
@@ -40,7 +50,7 @@ const kalpurush = localFont({
 
 export const metadata: Metadata = {
   title: "DUFS Blog - Film Publication",
-  description: "An international film publication guiding film lovers.",
+  description: "A film publication guiding film lovers.",
 };
 
 export default function RootLayout({
@@ -66,6 +76,7 @@ export default function RootLayout({
           <div className="flex min-h-screen flex-col">
             <Header />
             <main className="flex-1">{children}</main>
+            <FloatingBanner />
             <Footer />
           </div>
         </ThemeProvider>

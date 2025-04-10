@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 
 export default function MorePostsButton() {
   return (
-    <div className="flex justify-center py-8">
+    <div className="flex justify-center pb-8">
       <Button 
         asChild
-        className="bg-brand-accent hover:bg-brand-accent/90 text-white rounded px-8 py-2 uppercase text-sm font-medium"
+        className="bg-brand-accent/90 hover:bg-brand-accent text-white rounded-full shadow-lg px-8 py-2 uppercase text-sm font-normal"
       >
         <Link href="/articles">
           More Posts

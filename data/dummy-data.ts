@@ -141,3 +141,11 @@ export const heroArticle: Article = {
   },
   publishedAt: '28 MAR 2025',
 };
+
+export const bannerData = {
+  isActive: true,  // Control from Strapi panel
+  headline: "Today is Director X's Birthday",
+  postTitle: "The Cinematic Masterpieces of X",
+  subtitle: "Read this special post celebrating cinematic excellence and cultural significance.",
+  postUrl: "/blog/xx"
+};

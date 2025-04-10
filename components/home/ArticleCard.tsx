@@ -40,12 +40,12 @@ export default function ArticleCard({ article, imageHeight = "h-48" }: ArticleCa
           {/* <h2 className=" text-lg md:text-xl font-semibold line-clamp-2 group-hover:underline">
             {article.title}
           </h2> */}
-          <h2 className={cn("text-lg md:text-xl font-semibold line-clamp-2 group-hover:underline", isBengali && "font-kalpurush")}>
+          <h2 className={cn("text-lg md:text-xl font-bold line-clamp-2 group-hover:underline", isBengali && "font-kalpurush font-bold")}>
             {article.title}
           </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 line-clamp-3 font-light">
             {article.excerpt}
-          </p>
+          </p>  
           <div className="mt-3 flex items-center text-xs text-gray-500">
             <span>{article.author.name}</span>
             <span className="mx-2">•</span>

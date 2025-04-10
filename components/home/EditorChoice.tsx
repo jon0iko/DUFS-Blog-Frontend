@@ -5,7 +5,7 @@ import ArticleCard from './ArticleCard';
 
 export default function EditorChoice() {
   return (
-    <section className="py-12 bg-gray-50 dark:bg-gray-900">
+    <section className="py-12 bg-gray-100 dark:bg-gray-900">
       <div className="container">
         <div className="flex justify-center mb-8">
           <h2 className="text-2xl font-semibold relative">

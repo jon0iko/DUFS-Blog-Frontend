@@ -36,8 +36,8 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:border-gray-800">
-        <div className="container flex h-16 max-w-7xl items-center justify-between gap-4 px-4">
+      <header className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:border-gray-800">
+        <div className="container flex h-16 max-w-7xl items-center justify-between gap-4 px-4 font-light">
 
           {/* Left Side: Hamburger & Logo - Conditionally Hidden on Mobile Search */}
           <div className={cn(
@@ -54,7 +54,7 @@ export default function Header() {
             </Button>
 
             <Link href="/" className="flex items-center space-x-2">
-              <span className="font-bold text-foreground">DUFS Blog</span>
+              <span className="font-semibold text-foreground">DUFS Blog</span>
             </Link>
           </div>
 
