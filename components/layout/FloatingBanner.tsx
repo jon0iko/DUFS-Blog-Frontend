@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,9 +7,16 @@ import { bannerData } from '@/data/dummy-data';
 import { motion, AnimatePresence } from "framer-motion";
 
 const FloatingBanner = () => {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(bannerData.isActive);
 
 
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem('bannerDismissed');
+    if (dismissed) {
+      setIsVisible(false);
+    }
+  }, []);
 
   const handleDismiss = () => {
     setIsVisible(false);
@@ -18,7 +25,7 @@ const FloatingBanner = () => {
     // Reset dismissal after 24 hours
     setTimeout(() => {
       localStorage.removeItem('bannerDismissed');
-    }, 24 * 60 * 60 * 1000);
+    }, 12 * 60 * 60 * 1000);
   };
 
   if (!bannerData?.isActive || !isVisible) {
