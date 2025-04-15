@@ -7,14 +7,14 @@ import { bannerData } from '@/data/dummy-data';
 import { motion, AnimatePresence } from "framer-motion";
 
 const FloatingBanner = () => {
-  const [isVisible, setIsVisible] = useState(bannerData.isActive && !localStorage.getItem('bannerDismissed'));
-
-
+  const [isVisible, setIsVisible] = useState(bannerData.isActive);
 
   useEffect(() => {
     const dismissed = localStorage.getItem('bannerDismissed');
     if (dismissed) {
       setIsVisible(false);
+    } else {
+      setIsVisible(bannerData.isActive);
     }
   }, []);
 
