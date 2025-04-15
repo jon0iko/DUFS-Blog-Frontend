@@ -1,14 +1,13 @@
-// components/layout/Header.tsx
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react'; // Import useRef, useEffect
-import Link from 'next/link';
-import { Menu, Search, Moon, Sun, LogIn, X } from 'lucide-react'; // Added X icon
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useTheme } from 'next-themes';
-import Sidebar from './Sidebar';
-import { cn } from '@/lib/utils';
+import { useState, useRef, useEffect } from "react"; // Import useRef, useEffect
+import Link from "next/link";
+import { Menu, Search, Moon, Sun, LogIn, X } from "lucide-react"; // Added X icon
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useTheme } from "next-themes";
+import Sidebar from "./Sidebar";
+import { cn } from "@/lib/utils";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
@@ -23,7 +22,7 @@ export default function Header() {
   };
 
   const toggleMobileSearch = () => {
-    setIsMobileSearchActive(prevState => !prevState);
+    setIsMobileSearchActive((prevState) => !prevState);
   };
 
   // Focus input when mobile search becomes active
@@ -33,34 +32,37 @@ export default function Header() {
     }
   }, [isMobileSearchActive]);
 
-
   return (
     <>
       <header className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:border-gray-800">
-        <div className="container flex h-16 max-w-7xl items-center justify-between gap-4 px-4 font-light">
-
-          {/* Left Side: Hamburger & Logo - Conditionally Hidden on Mobile Search */}
-          <div className={cn(
-            "flex items-center gap-2",
-            isMobileSearchActive ? "hidden sm:flex" : "flex" // Hide on mobile when search is active
-          )}>
+        <div className="container pl-6 flex h-16 items-center justify-between gap-4 font-light">
+          <div
+            className={cn(
+              "flex items-center gap-6",
+              isMobileSearchActive ? "hidden sm:flex" : "flex" // Hide on mobile when search is active
+            )}
+          >
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleSidebar}
               aria-label="Toggle menu"
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="!w-6 !h-6" />
             </Button>
 
             <Link href="/" className="flex items-center space-x-2">
-              <span className="font-semibold text-foreground">DUFS Blog</span>
+              <span className="text-lg font-semibold text-foreground">
+                DUFS Blog
+              </span>
             </Link>
           </div>
 
           {/* Mobile Search Input Area (Visible only when active and < sm) */}
           {isMobileSearchActive && (
-            <div className="flex flex-1 items-center sm:hidden"> {/* Takes full width on mobile */}
+            <div className="flex flex-1 items-center sm:hidden">
+              {" "}
+              {/* Takes full width on mobile */}
               <Input
                 ref={mobileSearchInputRef} // Attach ref
                 id="mobile-search-input"
@@ -80,56 +82,56 @@ export default function Header() {
             </div>
           )}
 
-
           {/* Right Side Actions - Conditionally Hidden/Modified on Mobile Search */}
-          <div className={cn(
-            "flex items-center gap-1 sm:gap-3",
-            isMobileSearchActive ? "hidden sm:flex" : "flex" // Hide container on mobile when search is active
-          )}>
-
+          <div
+            className={cn(
+              "flex items-center gap-1 sm:gap-4 justify-end",
+              isMobileSearchActive ? "hidden sm:flex" : "flex" // Hide container on mobile when search is active
+            )}
+          >
             {/* Theme Toggle (Always Visible in this section WHEN section is visible) */}
             <Button
               variant="ghost"
               size="icon"
+              className=""
               aria-label="Toggle theme"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
+              <Sun className="!h-5 !w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute !h-5 !w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </Button>
 
             {/* Login Link (Visible >= sm breakpoint) */}
             <Link
-                href="/login"
-                className={cn(
-                    "items-center text-sm font-medium text-foreground/80 hover:text-foreground transition-colors",
-                    "hidden sm:inline-flex"
-                )}
+              href="/login"
+              className={cn(
+                "items-center text-sm font-medium text-foreground/80 hover:text-foreground transition-colors",
+                "hidden sm:inline-flex"
+              )}
             >
-               <LogIn className="mr-1 h-4 w-4" />
-                LOG IN
+              <LogIn className="mr-1 h-6 w-6" />
+              LOG IN
             </Link>
 
             {/* Search Icon Button (Visible < sm breakpoint, triggers mobile search input) */}
             <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleMobileSearch} // Use toggle function
-                aria-label="Search"
-                className="sm:hidden" // Only show below sm
+              variant="ghost"
+              size="icon"
+              onClick={toggleMobileSearch} // Use toggle function
+              aria-label="Search"
+              className="sm:hidden" // Only show below sm
             >
-                <Search className="h-5 w-5" />
+              <Search className="!h-5 !w-5 !pr-0" />
             </Button>
 
             {/* Full Search Input (Visible >= sm breakpoint) */}
-            <div className="relative hidden w-32 sm:block md:w-48">
-               <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-               <Input
-                  type="search"
-                  placeholder="Search..."
-                  className="h-9 w-full rounded-md pl-8 bg-background border"
-               />
+            <div className="relative hidden w-32 sm:block sm:w-40 md:w-64 lg:w-80 ml-auto">
+              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search..."
+                className="h-9 w-full rounded-md pl-8 bg-background border"
+              />
             </div>
           </div>
         </div>
