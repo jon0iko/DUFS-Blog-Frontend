@@ -22,7 +22,7 @@ const FloatingBanner = () => {
     setIsVisible(false);
     localStorage.setItem('bannerDismissed', 'true');
     
-    // Reset dismissal after 24 hours
+    // Reset dismissal after 12 hours
     setTimeout(() => {
       localStorage.removeItem('bannerDismissed');
     }, 12 * 60 * 60 * 1000);
