@@ -2,12 +2,13 @@
 'use client';
 
 import Link from 'next/link';
-import { X } from 'lucide-react';
+import { X, LogIn, LogOut, User, UserPlus } from 'lucide-react';
 import { navigation, socialLinks } from '@/data/dummy-data'; // Adjust path if needed
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth hook
 
 interface SidebarProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
+  const { isAuthenticated, user, logout } = useAuth(); // Use authentication context
   const closeSidebar = () => setIsOpen(false);
 
   return (
@@ -33,11 +35,16 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         className={cn(
           "fixed inset-y-0 left-0 z-50 h-screen w-80 flex-shrink-0 ", // Increased width from w-64 to w-80
           "flex flex-col border-r-4 border-r-gray-800 dark:border-r-white bg-background p-6 shadow-lg ", // Added bold right border with white color in dark mode
-          "overflow-y-auto", // *** Apply scrolling to the entire aside ***
+          "overflow-y-auto scrollbar-hide", // Added scrollbar-hide to hide the scrollbar
           "transition-transform duration-300 ease-in-out", // Animation
           isOpen ? 'translate-x-0' : '-translate-x-full' // Control visibility
         )}
         aria-label="Sidebar Navigation"
+        style={{ 
+          // CSS to hide scrollbars but keep scrolling functionality
+          scrollbarWidth: 'none', // Firefox
+          msOverflowStyle: 'none' // IE and Edge
+        }}
       >
         {/* Header section (will now scroll with content if needed) */}
         {/* Use flex-shrink-0 to prevent shrinking if content is very long */}
@@ -57,6 +64,62 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             <X className='!h-6 !w-6' />
           </Button>
         </div>
+
+        {/* User Authentication Section */}
+        {isAuthenticated ? (
+          <div className="mb-6 py-3 px-4 bg-muted/50 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center mr-3">
+                  <User className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="font-medium">{user?.username}</p>
+                  <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center mt-3 space-x-2">
+              <Link href="/account" className="flex-1">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  size="sm"
+                  onClick={closeSidebar}
+                >
+                  <User className="mr-2 h-4 w-4" /> Account
+                </Button>
+              </Link>
+              
+              <Button 
+                variant="ghost" 
+                className="flex-1 justify-start" 
+                size="sm"
+                onClick={() => {
+                  logout();
+                  closeSidebar();
+                }}
+              >
+                <LogOut className="mr-2 h-4 w-4" /> Logout
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-6 flex items-center space-x-2">
+            <Link href="/auth/signin" onClick={closeSidebar} className="flex-1">
+              <Button variant="outline" className="w-full">
+                <LogIn className="mr-2 h-4 w-4" /> Sign In
+              </Button>
+            </Link>
+            
+            <Link href="/auth/signup" onClick={closeSidebar} className="flex-1">
+              <Button variant="default" className="w-full">
+                <UserPlus className="mr-2 h-4 w-4" /> Sign Up
+              </Button>
+            </Link>
+          </div>
+        )}
 
         {/* Navigation Section (will now scroll) */}
         {/* Removed flex-grow and overflow-y-auto from nav */}

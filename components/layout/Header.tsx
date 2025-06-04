@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react"; // Import useRef, useEffect
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Menu, Search, Moon, Sun, LogIn, X } from "lucide-react"; // Added X icon
+import { Menu, Search, Moon, Sun, LogIn, X, User, LogOut } from "lucide-react"; // Added User and LogOut icons
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "next-themes";
 import Sidebar from "./Sidebar";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
+  const { isAuthenticated, user, logout } = useAuth(); // Use authentication context
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // --- State for mobile search visibility ---
   const [isMobileSearchActive, setIsMobileSearchActive] = useState(false);
@@ -31,6 +33,11 @@ export default function Header() {
       mobileSearchInputRef.current.focus();
     }
   }, [isMobileSearchActive]);
+
+  // Handle logout action
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <>
@@ -101,17 +108,43 @@ export default function Header() {
               <Moon className="absolute !h-5 !w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </Button>
 
-            {/* Login Link (Visible >= sm breakpoint) */}
-            <Link
-              href="/login"
-              className={cn(
-                "items-center text-sm font-medium text-foreground/80 hover:text-foreground transition-colors",
-                "hidden sm:inline-flex"
-              )}
-            >
-              <LogIn className="mr-1 h-6 w-6" />
-              LOG IN
-            </Link>
+            {/* Auth Links - Different states based on authentication */}
+            {!isAuthenticated ? (
+              // Not authenticated - show login/signup
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/auth/signin"
+                  className={cn(
+                    "items-center text-sm font-medium text-foreground/80 hover:text-foreground transition-colors",
+                    "hidden sm:inline-flex"
+                  )}
+                >
+                  <LogIn className="mr-1 h-5 w-5" />
+                  <span>SIGN IN</span>
+                </Link>
+                
+              </div>
+            ) : (
+              // Authenticated - show user info and logout
+              <div className="flex items-center gap-3">
+                
+                <Link href="/account" className="hidden sm:inline-flex items-center text-sm">
+                  <User className="h-5 w-5" />
+                  <span className="hidden md:inline-block text-sm font-medium m-2">
+                  {user?.username}
+                  </span>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="hidden sm:inline-flex"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="!h-5 !w-5 mr-1" />
+                  <span className="hidden md:inline-block">LOGOUT</span>
+                </Button>
+              </div>
+            )}
 
             {/* Search Icon Button (Visible < sm breakpoint, triggers mobile search input) */}
             <Button

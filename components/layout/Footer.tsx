@@ -14,7 +14,7 @@ export default function Footer() {
             <Link href={'https://dufs.org'} className="text-sm text-black dark:text-gray-400 hover:underline">
             <Badge>DUFS</Badge>
             </Link>
-            <Link href={'https://dufs.org'} className="text-sm text-gray-600 dark:text-gray-400 mt-4">
+            <Link href={'https://iiusff.dufs.org'} className="text-sm text-gray-600 dark:text-gray-400 mt-4">
             <Badge>IIUSFF</Badge>
             </Link>
             </div>
