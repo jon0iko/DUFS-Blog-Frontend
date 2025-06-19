@@ -107,7 +107,7 @@ export default function SignUp() {
             autoComplete="username"
             value={formData.username}
             onChange={handleChange}
-            placeholder="Choose a username"
+            placeholder="This will be your author name"
             disabled={isLoading}
           />
         </FormGroup>

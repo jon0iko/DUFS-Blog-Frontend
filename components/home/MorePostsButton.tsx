@@ -10,7 +10,7 @@ export default function MorePostsButton() {
         asChild
         className="bg-brand-accent/90 hover:bg-brand-accent text-white rounded-full shadow-lg px-8 py-2 uppercase text-sm font-normal"
       >
-        <Link href="/articles">
+        <Link href="/browse">
           More Posts
         </Link>
       </Button>

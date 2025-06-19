@@ -13,6 +13,10 @@ export interface Article {
     };
     publishedAt: string;
     readTime?: number;
+    viewCount?: number;
+    tags?: string[];
+    isFeatured?: boolean;
+    isEditorsPick?: boolean;
   }
   
   export interface NavItem {
@@ -25,4 +29,9 @@ export interface Article {
     platform: 'youtube' | 'twitter' | 'instagram' | 'facebook';
     href: string;
     icon: string;
+  }
+
+  export interface categories {
+    Name: string;
+    slug: string;
   }
