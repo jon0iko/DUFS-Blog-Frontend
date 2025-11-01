@@ -3,21 +3,35 @@
 
 import Link from 'next/link';
 import { X, LogIn, LogOut, User, UserPlus } from 'lucide-react';
-import { navigation, socialLinks } from '@/data/dummy-data'; // Adjust path if needed
+import { socialLinks } from '@/data/dummy-data'; // Keep dummy data for social links for now
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext'; // Import useAuth hook
 
+interface NavigationItem {
+  title: string;
+  href: string;
+  isExternal?: boolean;
+}
+
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  navigation?: NavigationItem[];
 }
 
-export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
+export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarProps) {
   const { isAuthenticated, user, logout } = useAuth(); // Use authentication context
   const closeSidebar = () => setIsOpen(false);
+
+  // Fallback navigation if none provided
+  const navItems = navigation.length > 0 ? navigation : [
+    { title: 'Home', href: '/' },
+    { title: 'Browse', href: '/browse' },
+    { title: 'Submit Article', href: '/submit' },
+  ];
 
   return (
     <>
@@ -125,11 +139,13 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         {/* Removed flex-grow and overflow-y-auto from nav */}
         <nav className="flex-shrink-0">
           <ul className="space-y-5">
-            {navigation.map((item) => (
+            {navItems.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
                   onClick={closeSidebar}
+                  target={item.isExternal ? '_blank' : undefined}
+                  rel={item.isExternal ? 'noopener noreferrer' : undefined}
                   className="block text-lg font-medium text-foreground/90 hover:text-background hover:bg-gray-900 dark:hover:bg-gray-300 py-2 px-4 -mx-4 rounded transition-colors"
                 >
                    {item.title}
@@ -156,7 +172,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                   className="text-muted-foreground hover:text-foreground transition-colors"
                   aria-label={`Visit our ${link.platform} page`}
                 >
-                  {link.icon ? (
+                  {typeof link.icon === 'string' && link.icon ? (
                       <Image
                         src={link.icon} alt={`${link.platform} icon`}
                         width={24} height={24} className="h-6 w-6"

@@ -1,10 +1,11 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { categories as categoriesType } from '@/types'
+import { Category } from '@/types'
+import { getFontClass } from '@/lib/fonts'
 
 interface CategoryTabsProps {
-  categories: categoriesType[]
+  categories: Category[]
   activeCategory: string
   setActiveCategory: (category: string) => void
 }
@@ -15,29 +16,31 @@ export default function CategoryTabs({
   setActiveCategory 
 }: CategoryTabsProps) {
   
-  const handleCategoryChange = (category: string) => {
-    setActiveCategory(category)
+  const handleCategoryChange = (categorySlug: string) => {
+    setActiveCategory(categorySlug)
   }
   
   return (
     <div className="overflow-x-auto scrollbar-hide">
       <nav className="flex space-x-12 pb-2">
         {categories.map((category) => {
-          // Remove the leading slash from slug for comparison
-          const categorySlug = category.slug.substring(1)
+          const categorySlug = String((category as any).slug) || ''
+          const categoryName = String((category as any).nameEn || (category as any).Name) || ''
+          const fontClass = getFontClass(categoryName)
           
           return (
             <button
-              key={category.slug}
+              key={categorySlug}
               onClick={() => handleCategoryChange(categorySlug)}
               className={cn(
                 "pb-6 pt-2 px-1 border-b-2 text-lg font-medium transition-colors whitespace-nowrap relative",
+                fontClass,
                 activeCategory === categorySlug
                   ? "border-foreground text-foreground" 
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
               )}
             >
-              {category.Name}
+              {categoryName}
               {activeCategory === categorySlug && (
                 <span className="absolute bottom-[-2px] left-0 right-0 h-[2px] bg-foreground" />
               )}

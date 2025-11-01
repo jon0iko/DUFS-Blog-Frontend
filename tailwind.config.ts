@@ -26,6 +26,10 @@ const config: Config = {
   				'var(--font-roboto)',
                     ...defaultTheme.fontFamily.sans
                 ],
+  			roboto: [
+  				'var(--font-roboto)',
+                    ...defaultTheme.fontFamily.sans
+                ],
   			kalpurush: [
   				'var(--font-kalpurush)',
   				'var(--font-roboto)',

@@ -1,0 +1,69 @@
+/**
+ * Font utility functions for language-specific styling
+ * Bengali text uses Kalpurush font (--font-kalpurush)
+ * English text uses Roboto font (--font-roboto)
+ */
+
+/**
+ * Detect if text contains Bengali characters
+ */
+export const isBengaliText = (text: string): boolean => {
+  if (!text) return false
+  // Bengali Unicode range: U+0980 to U+09FF
+  const bengaliRegex = /[\u0980-\u09FF]/g
+  return bengaliRegex.test(text)
+}
+
+/**
+ * Get appropriate font class for text
+ */
+export const getFontClass = (text: string): string => {
+  return isBengaliText(text) ? 'font-kalpurush' : 'font-roboto'
+}
+
+/**
+ * Split text into Bengali and English segments for mixed content
+ */
+export const splitMixedText = (text: string): Array<{ text: string; isBengali: boolean }> => {
+  if (!text) return []
+
+  const bengaliRegex = /[\u0980-\u09FF]+/g
+  const segments: Array<{ text: string; isBengali: boolean }> = []
+  let lastIndex = 0
+  let match
+
+  if (!bengaliRegex.test(text)) {
+    // No Bengali text found
+    return [{ text, isBengali: false }]
+  }
+
+  // Reset regex for iteration
+  bengaliRegex.lastIndex = 0
+  while ((match = bengaliRegex.exec(text)) !== null) {
+    // Add English segment before Bengali
+    if (match.index > lastIndex) {
+      segments.push({
+        text: text.substring(lastIndex, match.index),
+        isBengali: false,
+      })
+    }
+
+    // Add Bengali segment
+    segments.push({
+      text: match[0],
+      isBengali: true,
+    })
+
+    lastIndex = match.index + match[0].length
+  }
+
+  // Add remaining English text
+  if (lastIndex < text.length) {
+    segments.push({
+      text: text.substring(lastIndex),
+      isBengali: false,
+    })
+  }
+
+  return segments
+}

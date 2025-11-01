@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import ArticleCard from '@/components/home/ArticleCard'
-import { featuredArticles, editorsChoiceArticles } from '@/data/dummy-data'
 import { Article } from '@/types'
 import { Button } from '@/components/ui/button'
+import { strapiAPI } from '@/lib/api'
 
 interface ArticlesListProps {
   category: string
@@ -18,6 +18,7 @@ export default function ArticlesList({
   sortBy
 }: ArticlesListProps) {
   const [articles, setArticles] = useState<Article[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [visibleCount, setVisibleCount] = useState(8)
   
   // Helper function to sort articles
@@ -34,41 +35,49 @@ export default function ArticlesList({
           new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime()
         )
       case 'popular':
-        // For demo, we'll just randomize since we don't have real read counts
-        return sorted.sort(() => Math.random() - 0.5)
+        return sorted.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0))
       default:
         return sorted
     }
   }
   
   useEffect(() => {
-    // Reset visible count when filters change
-    setVisibleCount(8)
-    
-    // Combine both featured and editors choice articles for browsing
-    let filtered = [...featuredArticles, ...editorsChoiceArticles]
-    
-    // Filter by category if not "all"
-    if (category) {
-      filtered = filtered.filter(article => 
-        article.category.toLowerCase() === category.toLowerCase() || 
-        category.toLowerCase() === 'all'
-      )
+    const fetchArticles = async () => {
+      try {
+        setIsLoading(true)
+        setVisibleCount(8)
+        
+        // Build filters
+        const filters: any = {
+          page: 1,
+          pageSize: 100, // Fetch more to allow client-side filtering
+          sort: sortBy === 'recent' ? 'publishedAt:desc' : sortBy === 'oldest' ? 'publishedAt:asc' : 'viewCount:desc'
+        }
+        
+        if (category && category !== 'all') {
+          filters.category = category
+        }
+        
+        if (language && language !== 'all') {
+          filters.language = language === 'bn' ? 'bn' : 'en'
+        }
+        
+        const response = await strapiAPI.getArticles(filters)
+        let fetchedArticles = response.data || []
+        
+        // Sort articles on client side
+        fetchedArticles = sortArticles(fetchedArticles, sortBy)
+        
+        setArticles(fetchedArticles)
+      } catch (error) {
+        console.error('Failed to fetch articles:', error)
+        setArticles([])
+      } finally {
+        setIsLoading(false)
+      }
     }
     
-    // Filter by language
-    if (language !== 'all') {
-      filtered = filtered.filter(article => 
-        (language === 'bn' && article.isBengali) || 
-        (language === 'en' && !article.isBengali)
-      )
-    }
-    
-    // Sort articles
-    filtered = sortArticles(filtered, sortBy)
-    
-    // Update filtered articles
-    setArticles(filtered)
+    fetchArticles()
   }, [category, language, sortBy])
   
   const loadMore = () => {

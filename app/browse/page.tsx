@@ -5,16 +5,37 @@ import { useSearchParams, usePathname, useRouter } from 'next/navigation'
 import CategoryTabs from '@/components/browse/CategoryTabs'
 import FilterOptions from '@/components/browse/FilterOptions'
 import ArticlesList from '@/components/browse/ArticlesList'
-import { category as categories } from '@/data/dummy-data'
+import { strapiAPI } from '@/lib/api'
+import { Category } from '@/types'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function BrowsePage() {
   const searchParams = useSearchParams()
   const pathname = usePathname()
   const router = useRouter()
   
+  const [categories, setCategories] = useState<Category[]>([])
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
+  
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await strapiAPI.getCategories()
+        setCategories(response.data || [])
+      } catch (error) {
+        console.error('Failed to fetch categories:', error)
+        setCategories([])
+      } finally {
+        setIsLoadingCategories(false)
+      }
+    }
+    fetchCategories()
+  }, [])
+  
   // Get category from URL or default to first category
   const categoryParam = searchParams.get('category')
-  const defaultCategory = categories[0].slug.substring(1) // Remove leading slash
+  const defaultCategory = categories.length > 0 ? (categories[0] as any).slug : ''
   const [activeCategory, setActiveCategory] = useState(categoryParam || defaultCategory)
   
   // Get filter values from URL params
@@ -32,7 +53,7 @@ export default function BrowsePage() {
     if (params.toString() !== searchParams.toString()) {
       router.push(`${pathname}?${params.toString()}`)
     }
-  }, [activeCategory, pathname, router, searchParams])
+  }, [activeCategory, categoryParam, pathname, router, searchParams])
 
   // Handle filter changes
   const handleFilterChange = (type: string, value: string) => {
@@ -41,6 +62,9 @@ export default function BrowsePage() {
     router.push(`${pathname}?${params.toString()}`)
   }
   return (
+
+    // if isLoadingCategories, show skeleton
+    
     <div className="container py-8 px-4 md:px-6">
       <div className="mb-8 max-w-3xl">
         <h1 className="text-4xl font-bold mb-4 tracking-tight">BROWSE</h1>        <p className="text-lg text-muted-foreground">

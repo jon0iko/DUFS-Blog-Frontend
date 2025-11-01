@@ -1,6 +1,7 @@
 ﻿import React from "react";
-import { featuredArticles, editorsChoiceArticles } from "@/data/dummy-data";
 import ArticleContent from "@/components/articles/ArticleContent";
+import { serverStrapiAPI } from "@/lib/server-api";
+import type { Article } from "@/types";
 
 interface PageProps {
   params: {
@@ -10,13 +11,19 @@ interface PageProps {
 
 // This function is required for static site generation with dynamic routes
 export async function generateStaticParams() {
-  // In a real app, you would fetch all slugs from an API
-  // For now, we extract them from our dummy data
-  const allArticles = [...featuredArticles, ...editorsChoiceArticles];
-  
-  return allArticles.map((article) => ({
-    slug: article.slug,
-  }));
+  try {
+    // Fetch all published articles from Strapi
+    const response = await serverStrapiAPI.getAllArticles(1, 100);
+    const articles = Array.isArray(response.data) ? response.data : [response.data];
+
+    return (articles || []).map((article: Article) => ({
+      slug: article.slug,
+    }));
+  } catch (error) {
+    console.error('Failed to generate static params:', error);
+    // Return empty array if fetch fails, will use ISR fallback
+    return [];
+  }
 }
 
 export default function ArticlePage({ params }: PageProps) {

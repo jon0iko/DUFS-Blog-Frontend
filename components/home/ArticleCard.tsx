@@ -3,26 +3,36 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Article } from '@/types';
+
+interface ArticleCardData {
+  id: number | string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  image: string;
+  category: string;
+  author: {
+    name: string;
+    avatar?: string;
+  };
+  publishedAt: string;
+  language: 'en' | 'bn' | 'both';
+}
 
 interface ArticleCardProps {
-  article: Article;
-  imageHeight?: string; // allows for different sizes
+  article: ArticleCardData;
+  imageHeight?: string;
 }
 
 export default function ArticleCard({ article, imageHeight = "h-48" }: ArticleCardProps) {
-  const [isBengali, setIsBengali] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsBengali(article.isBengali);
-  }, [article.isBengali]);
+  const isBengali = article.language === 'bn' || article.language === 'both';
 
   return (
     <article className="flex flex-col h-full">
       <div className="relative w-full overflow-hidden group rounded-sm">
         <div className={`relative w-full ${imageHeight}`}>
           <Image
-            src={article.imageSrc}
+            src={article.image}
             alt={article.title}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -36,11 +46,7 @@ export default function ArticleCard({ article, imageHeight = "h-48" }: ArticleCa
         </div>
         
         <Link href={`/articles/${article.slug}`} className="block mt-3">
-          {/* Use cn to optionally set a classname 'font-kalpurush' if the text is in bengali */}
-          {/* <h2 className=" text-lg md:text-xl font-semibold line-clamp-2 group-hover:underline">
-            {article.title}
-          </h2> */}
-          <h2 className={cn("text-lg md:text-xl font-bold line-clamp-2 group-hover:underline", isBengali && "font-kalpurush font-bold")}>
+          <h2 className={cn("text-lg md:text-xl font-bold line-clamp-2 group-hover:underline", isBengali && "font-kalpurush")}>
             {article.title}
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 line-clamp-3 font-light">
