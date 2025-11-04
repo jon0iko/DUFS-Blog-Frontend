@@ -1,84 +1,95 @@
 /**
- * Strapi Helper Functions
- * Utilities for transforming and normalizing Strapi data
+ * Strapi v5 Helper Functions
+ * Utilities for transforming and normalizing Strapi v5 data
+ * 
+ * Key Changes in Strapi v5:
+ * - Response format is FLATTENED (no nested attributes)
+ * - Media fields are directly accessible (no .data wrapper)
+ * - Relations are directly accessible (no .data wrapper)
  */
 
 import { config } from './config';
-import type { Article, Author, Category } from '@/types';
+import type { Article, Author, Category, StrapiMedia } from '@/types';
 
 /**
- * Get full media URL from Strapi media object or path
+ * Get full media URL from Strapi v5 media object or path
  */
 export function getMediaUrl(mediaPath?: string | null): string {
-  if (!mediaPath) return '/images/hero.jpg'; // Default fallback image
+  if (!mediaPath) return '/images/placeholder.jpg';
   if (mediaPath.startsWith('http')) return mediaPath;
   return `${config.strapi.url}${mediaPath}`;
+}
+
+/**
+ * Get media URL from Strapi v5 media object
+ */
+export function getStrapiMediaUrl(media?: StrapiMedia | null): string {
+  if (!media) return '/images/placeholder.jpg';
+  return getMediaUrl(media.url);
 }
 
 /**
  * Extract first image from article gallery or get featured image
  */
 export function getArticleImage(article: Article): string {
-  // Strapi v5 returns media directly or null
-  if (article.featuredImage && typeof article.featuredImage === 'object' && 'url' in article.featuredImage) {
-    return getMediaUrl(article.featuredImage.url);
+  // In Strapi v5, media is directly accessible (flattened)
+  if (article.featuredImage) {
+    return getStrapiMediaUrl(article.featuredImage);
   }
-  if (article.gallery && Array.isArray(article.gallery) && article.gallery.length > 0) {
-    const firstImage = article.gallery[0];
-    if (typeof firstImage === 'object' && 'url' in firstImage) {
-      return getMediaUrl(firstImage.url);
-    }
+  if (article.gallery && article.gallery.length > 0) {
+    return getStrapiMediaUrl(article.gallery[0]);
   }
   return '/images/placeholder.jpg';
 }
 
 /**
- * Get author name safely
+ * Get author name safely (handles backend schema: Name with capital N)
  */
 export function getAuthorName(author?: Author): string {
   if (!author) return 'Staff';
-  // Handle both flat and nested structures for compatibility
-  if (typeof author === 'object' && 'name' in author) {
-    return (author as any).name || 'Staff';
-  }
-  return 'Staff';
+  // Backend schema uses capital N in "Name"
+  return author.Name || 'Staff';
 }
 
 /**
  * Get author avatar URL
  */
 export function getAuthorAvatar(author?: Author): string | undefined {
-  if (!author) return undefined;
-  // Handle both flat and nested structures
-  if (typeof author === 'object' && 'avatar' in author) {
-    const avatar = (author as any).avatar;
-    if (typeof avatar === 'string') {
-      return getMediaUrl(avatar);
-    }
-    if (avatar && typeof avatar === 'object' && 'url' in avatar) {
-      return getMediaUrl(avatar.url as string);
-    }
+  if (!author) return '/images/avatarPlaceholder.png';
+  // In Strapi v5, Avatar is directly accessible (flattened)
+  if (author.Avatar) {
+    return getStrapiMediaUrl(author.Avatar);
   }
-  return undefined;
+  return '/images/avatarPlaceholder.png';
 }
 
 /**
- * Get category name safely
+ * Get category name safely (handles backend schema with capital letters)
  */
 export function getCategoryName(category?: Category): string {
-  if (!category) return 'Uncategorized';
-  // Handle both flat and nested structures
-  if (typeof category === 'object' && 'nameEn' in category) {
-    const cat = category as any;
-    return cat.nameEn || cat.name || 'Uncategorized';
-  }
-  return 'Uncategorized';
+  if (!category) return 'শ্রেণীবিহীন';
+  // Backend schema uses: Name, nameEn, nameBn (with capitals)
+  return category.Name || 'শ্রেণীবিহীন';
 }
 
 /**
- * Format publish date
+ * Get category name in Bengali
  */
-export function formatPublishDate(dateString: string): string {
+export function getCategoryNameBn(category?: Category): string {
+  if (!category) return 'শ্রেণীবিহীন';
+  return category.nameBn || category.Name || 'শ্রেণীবিহীন';
+}
+
+/**
+ * Format publish date (English)
+ */
+export function formatPublishDate(dateString?: string): string {
+  if (!dateString) return new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }).toUpperCase();
+  
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
@@ -88,9 +99,15 @@ export function formatPublishDate(dateString: string): string {
 }
 
 /**
- * Format publish date (Bengali option)
+ * Format publish date (Bengali)
  */
-export function formatPublishDateBn(dateString: string): string {
+export function formatPublishDateBn(dateString?: string): string {
+  if (!dateString) return new Date().toLocaleDateString('bn-BD', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  
   const date = new Date(dateString);
   return date.toLocaleDateString('bn-BD', {
     year: 'numeric',
@@ -100,12 +117,12 @@ export function formatPublishDateBn(dateString: string): string {
 }
 
 /**
- * Get reading time estimate
+ * Get reading time estimate from content
  */
 export function estimateReadingTime(content: string): number {
   if (!content) return 1;
-  // Remove HTML tags
-  const plainText = content.replace(/<[^>]*>/g, '');
+  // Remove HTML tags and blocks content
+  const plainText = content.replace(/<[^>]*>/g, '').replace(/\{[^}]*\}/g, '');
   // Estimate 200 words per minute
   const words = plainText.split(/\s+/).length;
   return Math.ceil(words / 200) || 1;
@@ -121,61 +138,38 @@ export function truncateText(text: string, wordLimit: number = 30): string {
   return words.slice(0, wordLimit).join(' ') + '...';
 }
 
+
 /**
- * Safe access to nested article properties with defaults
+ * Safe access to article properties with defaults
  * Handles Strapi v5 flat response structure
+ * Returns null if article is invalid (for proper error handling)
  */
-export function getArticleData(article: Article) {
-  // Validate article structure
+export function getArticleData(article: Article | null | undefined) {
+  // Validate article structure - return null for proper error handling
   if (!article || !article.title) {
-    console.warn('Invalid article structure:', article);
-    return {
-      id: 0,
-      title: 'Untitled',
-      slug: '',
-      excerpt: '',
-      content: '',
-      image: '/images/hero.jpg',
-      category: 'Uncategorized',
-      author: { name: 'Staff', avatar: undefined },
-      publishedAt: new Date().toLocaleDateString('en-US'),
-      language: 'en' as const,
-      readTime: 1,
-      viewCount: 0,
-      likes: 0,
-      tags: [],
-      isFeatured: false,
-      isEditorsPick: false,
-      isHero: false,
-    };
+    console.error('Invalid or missing article data');
+    return null;
   }
 
   return {
     id: article.id,
-    title: article.title || 'Untitled',
+    documentId: article.documentId,
+    title: article.title,
     slug: article.slug || '',
     excerpt: article.excerpt || '',
     content: article.content || '',
     image: getArticleImage(article),
-    category: article.category && typeof article.category === 'object' && 'nameEn' in article.category
-      ? article.category.nameEn || 'Uncategorized'
-      : 'Uncategorized',
+    category: getCategoryName(article.category),
     author: {
-      name: article.author && typeof article.author === 'object' && 'name' in article.author
-        ? article.author.name
-        : 'Staff',
-      avatar: article.author && typeof article.author === 'object' && 'avatar' in article.author
-        ? getMediaUrl(typeof article.author.avatar === 'string' ? article.author.avatar : undefined)
-        : undefined,
+      name: getAuthorName(article.author),
+      avatar: getAuthorAvatar(article.author),
     },
-    publishedAt: formatPublishDate(article.publishedAt || new Date().toISOString()),
+    publishedAt: formatPublishDate(article.publishedAt),
     language: article.language || 'en',
     readTime: article.readTime || estimateReadingTime(article.content),
     viewCount: article.viewCount || 0,
     likes: article.likes || 0,
-    tags: Array.isArray(article.tags) 
-      ? article.tags.map(tag => typeof tag === 'object' && 'name' in tag ? tag.name : '') 
-      : [],
+    tags: article.tags?.map(tag => tag.name) || [],
     isFeatured: article.isFeatured || false,
     isEditorsPick: article.isEditorsPick || false,
     isHero: article.isHero || false,
@@ -202,7 +196,9 @@ export function buildQueryString(params: Record<string, string | string[] | numb
 }
 
 /**
- * Create Strapi filters for common queries
+ * Create Strapi v5 filters for common queries
+ * Note: Backend uses 'storyState' not 'status'
+ * Note: Backend uses capital letters in some fields (Slug vs slug)
  */
 export function createStrapiFilters(filters: {
   isFeatured?: boolean;
@@ -211,7 +207,7 @@ export function createStrapiFilters(filters: {
   language?: string;
   category?: string;
   tag?: string;
-  status?: string;
+  storyState?: string;
 }): Record<string, string> {
   const strapiFilters: Record<string, string> = {};
 
@@ -228,25 +224,23 @@ export function createStrapiFilters(filters: {
     strapiFilters['filters[language][$eq]'] = filters.language;
   }
   if (filters.category) {
-    strapiFilters['filters[category][slug][$eq]'] = filters.category;
+    // Backend uses capital S in Slug
+    strapiFilters['filters[category][Slug][$eq]'] = filters.category;
   }
   if (filters.tag) {
     strapiFilters['filters[tags][slug][$in]'] = filters.tag;
   }
-  if (filters.status) {
-    // Note: Strapi uses 'storyState' not 'status'
-    strapiFilters['filters[storyState][$eq]'] = filters.status;
+  if (filters.storyState) {
+    strapiFilters['filters[storyState][$eq]'] = filters.storyState;
   }
 
   return strapiFilters;
 }
 
 /**
- * Create populate string for including related data
- * Uses Strapi v5 syntax for nested populations
+ * Create populate string for Strapi v5
+ * Uses indexed populate syntax: populate[0]=field&populate[1]=field
  */
 export function createPopulateString(fields: string[]): string {
-  // For Strapi v5, use dot notation for nested populations
-  // Example: "author.avatar" becomes "populate=author.avatar"
-  return fields.map(f => `populate=${encodeURIComponent(f)}`).join('&');
+  return fields.map((field, index) => `populate[${index}]=${encodeURIComponent(field)}`).join('&');
 }

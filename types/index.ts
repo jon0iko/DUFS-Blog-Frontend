@@ -1,4 +1,4 @@
-// Base Strapi types
+// Base Strapi v5 types - FLATTENED response format (no nested attributes)
 export interface StrapiResponse<T> {
   data: T;
   meta: {
@@ -11,36 +11,29 @@ export interface StrapiResponse<T> {
   };
 }
 
-export interface StrapiEntity {
-  id: number;
-  attributes: {
-    createdAt: string;
-    updatedAt: string;
-    publishedAt: string;
-  };
-}
-
+// Strapi v5 media format - simplified and flattened
 export interface StrapiMedia {
   id: number;
-  attributes: {
-    name: string;
-    alternativeText?: string;
-    caption?: string;
-    width: number;
-    height: number;
-    formats: {
-      thumbnail?: MediaFormat;
-      small?: MediaFormat;
-      medium?: MediaFormat;
-      large?: MediaFormat;
-    };
-    hash: string;
-    ext: string;
-    mime: string;
-    size: number;
-    url: string;
-    previewUrl?: string;
+  documentId: string;
+  name: string;
+  alternativeText?: string;
+  caption?: string;
+  width: number;
+  height: number;
+  formats?: {
+    thumbnail?: MediaFormat;
+    small?: MediaFormat;
+    medium?: MediaFormat;
+    large?: MediaFormat;
   };
+  hash: string;
+  ext: string;
+  mime: string;
+  size: number;
+  url: string;
+  previewUrl?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MediaFormat {
@@ -54,239 +47,218 @@ export interface MediaFormat {
   url: string;
 }
 
-// Enhanced Author interface
+// Author interface - FLATTENED format matching backend schema
+// Backend schema uses: Name, Avatar, Bio, slug (not nested in attributes)
 export interface Author {
   id: number;
-  attributes: {
-    name: string;
-    slug: string;
-    bio?: string;
-    avatar?: {
-      data: StrapiMedia | null;
-    };
-    email?: string;
-    socialLinks?: {
-      twitter?: string;
-      instagram?: string;
-      website?: string;
-    };
-    articlesCount?: number;
-    isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
-    publishedAt: string;
+  documentId: string;
+  Name: string; // Backend uses capital N
+  slug: string;
+  Bio?: string; // Backend uses capital B
+  Avatar?: StrapiMedia;
+  email?: string;
+  socialLinks?: {
+    twitter?: string;
+    instagram?: string;
+    website?: string;
   };
+  articlesCount?: number;
+  isActive?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  locale?: string;
 }
 
-// Enhanced Category interface
+// Category interface - FLATTENED format matching backend schema
+// Backend schema uses: Name, Slug, nameEn, nameBn, etc. (capital letters)
 export interface Category {
   id: number;
-  attributes: {
-    name: string;
-    nameEn: string;
-    nameBn?: string;
-    slug: string;
-    description?: string;
-    color?: string;
-    isActive: boolean;
-    sortOrder: number;
-    articlesCount?: number;
-    createdAt: string;
-    updatedAt: string;
-    publishedAt: string;
-  };
+  documentId: string;
+  Name: string; // Backend uses capital N
+  nameEn: string;
+  nameBn?: string;
+  Slug: string; // Backend uses capital S
+  description?: string;
+  color?: string;
+  isActive: boolean;
+  sortOrder: number;
+  articlesCount?: number;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  locale?: string;
 }
 
-// Enhanced Tag interface
+// Tag interface - FLATTENED format matching backend schema
 export interface Tag {
   id: number;
-  attributes: {
-    name: string;
-    slug: string;
-    color?: string;
-    createdAt: string;
-    updatedAt: string;
-    publishedAt: string;
-  };
+  documentId: string;
+  name: string;
+  slug: string;
+  color?: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  locale?: string;
 }
 
-// Enhanced Article interface
+// Article interface - FLATTENED format matching backend schema
+// In Strapi v5, all fields are at the root level, no nested attributes
 export interface Article {
   id: number;
-  documentId: string;
+  documentId: string; // Strapi v5 uses documentId as the unique identifier
   title: string;
   titleBn?: string;
   slug: string;
   excerpt: string;
   excerptBn?: string;
-  content: string;
+  content: string; // Rich text content
   contentBn?: string;
   language: 'en' | 'bn' | 'both';
-  featuredImage?: StrapiMedia | null;
+  featuredImage?: StrapiMedia;
   gallery?: StrapiMedia[];
-  author?: Author;
-  category?: Category;
-  tags?: Tag[];
+  author?: Author; // Populated relation
+  category?: Category; // Populated relation
+  tags?: Tag[]; // Populated relation
   storyState: 'draft' | 'published' | 'archived' | 'submitted' | 'review';
   isFeatured: boolean;
   isEditorsPick: boolean;
   isHero: boolean;
-  publishedAt: string;
+  publishedAt?: string;
   readTime?: number;
   viewCount: number;
   likes: number;
   metaTitle?: string;
   metaDescription?: string;
   metaKeywords?: string[];
-  socialImage?: StrapiMedia | null;
+  socialImage?: StrapiMedia;
   createdAt: string;
   updatedAt: string;
+  locale?: string;
 }
 
-// Site Configuration
+// Site Configuration - FLATTENED format
 export interface SiteConfig {
   id: number;
-  attributes: {
-    siteName: string;
-    siteDescription: string;
-    siteUrl: string;
-    logoLight: {
-      data: StrapiMedia | null;
-    };
-    logoDark: {
-      data: StrapiMedia | null;
-    };
-    favicon: {
-      data: StrapiMedia | null;
-    };
-    defaultMetaImage: {
-      data: StrapiMedia | null;
-    };
-    socialLinks: SocialLink[];
-    contactEmail: string;
-    supportedLanguages: string[];
-    defaultLanguage: string;
-    gtmId?: string;
-    googleAnalyticsId?: string;
-    createdAt: string;
-    updatedAt: string;
-    publishedAt: string;
-  };
+  documentId: string;
+  siteName: string;
+  siteDescription: string;
+  siteUrl: string;
+  logoLight?: StrapiMedia;
+  logoDark?: StrapiMedia;
+  favicon?: StrapiMedia;
+  defaultMetaImage?: StrapiMedia;
+  socialLinks?: SocialLink[];
+  contactEmail: string;
+  supportedLanguages: string[];
+  defaultLanguage: string;
+  gtmId?: string;
+  googleAnalyticsId?: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  locale?: string;
 }
 
-// Navigation Item
+// Navigation Item - FLATTENED format
 export interface NavigationItem {
   id: number;
-  attributes: {
-    title: string;
-    titleBn?: string;
-    href: string;
-    isExternal: boolean;
-    sortOrder: number;
-    isActive: boolean;
-    openInNewTab: boolean;
-    createdAt: string;
-    updatedAt: string;
-    publishedAt: string;
-  };
+  documentId: string;
+  title: string;
+  titleBn?: string;
+  href: string;
+  isExternal: boolean;
+  sortOrder: number;
+  isActive: boolean;
+  openInNewTab: boolean;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  locale?: string;
 }
 
-// Social Link
+// Social Link - typically a component, not a content type
 export interface SocialLink {
   id: number;
   platform: 'youtube' | 'twitter' | 'instagram' | 'facebook' | 'linkedin' | 'website';
   href: string;
-  icon?: {
-    data: StrapiMedia | null;
-  };
+  icon?: StrapiMedia;
   isActive: boolean;
   sortOrder: number;
 }
 
-// Banner/Announcement
+// Banner/Announcement - FLATTENED format matching backend schema
 export interface Banner {
   id: number;
-  attributes: {
-    headline: string;
-    headlineBn?: string;
-    postTitle: string;
-    postTitleBn?: string;
-    subtitle: string;
-    subtitleBn?: string;
-    postUrl: string;
-    isActive: boolean;
-    startDate?: string;
-    endDate?: string;
-    priority: number;
-    backgroundColor?: string;
-    textColor?: string;
-    createdAt: string;
-    updatedAt: string;
-    publishedAt: string;
-  };
+  documentId: string;
+  headline: string;
+  headlineBn?: string;
+  postTitle: string;
+  postTitleBn?: string;
+  subtitle: string;
+  subtitleBn?: string;
+  postUrl: string;
+  isActive: boolean;
+  startDate?: string;
+  endDate?: string;
+  priority: number;
+  backgroundColor?: string;
+  textColor?: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  locale?: string;
 }
 
-// User Submission
+// User Submission - FLATTENED format
 export interface Submission {
   id: number;
-  attributes: {
-    title: string;
-    excerpt: string;
-    content: string;
-    language: 'en' | 'bn' | 'both';
-    category: {
-      data: Category;
-    };
-    tags: {
-      data: Tag[];
-    };
-    featuredImage?: {
-      data: StrapiMedia | null;
-    };
-    author: {
-      data: Author;
-    };
-    status: 'submitted' | 'under_review' | 'approved' | 'rejected' | 'published';
-    reviewNotes?: string;
-    submittedAt: string;
-    reviewedAt?: string;
-    createdAt: string;
-    updatedAt: string;
-  };
+  documentId: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  language: 'en' | 'bn' | 'both';
+  category?: Category;
+  tags?: Tag[];
+  featuredImage?: StrapiMedia;
+  author?: Author;
+  status: 'submitted' | 'under_review' | 'approved' | 'rejected' | 'published';
+  reviewNotes?: string;
+  submittedAt: string;
+  reviewedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  locale?: string;
 }
 
-// Comment
+// Comment - FLATTENED format
 export interface Comment {
   id: number;
-  attributes: {
-    content: string;
-    authorName: string;
-    authorEmail: string;
-    isApproved: boolean;
-    article: {
-      data: Article;
-    };
-    parentComment?: {
-      data: Comment | null;
-    };
-    replies?: {
-      data: Comment[];
-    };
-    createdAt: string;
-    updatedAt: string;
-    publishedAt: string;
-  };
+  documentId: string;
+  content: string;
+  authorName: string;
+  authorEmail: string;
+  isApproved: boolean;
+  article?: Article;
+  parentComment?: Comment;
+  replies?: Comment[];
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  locale?: string;
 }
 
-// API Response types for frontend use
-export interface ArticleResponse extends StrapiResponse<Article[]> {}
-export interface SingleArticleResponse extends StrapiResponse<Article> {}
-export interface AuthorResponse extends StrapiResponse<Author[]> {}
-export interface CategoryResponse extends StrapiResponse<Category[]> {}
-export interface TagResponse extends StrapiResponse<Tag[]> {}
-export interface BannerResponse extends StrapiResponse<Banner[]> {}
-export interface NavigationResponse extends StrapiResponse<NavigationItem[]> {}
-export interface SiteConfigResponse extends StrapiResponse<SiteConfig> {}
+// API Response types - using type aliases instead of empty interfaces
+export type ArticleResponse = StrapiResponse<Article[]>;
+export type SingleArticleResponse = StrapiResponse<Article>;
+export type AuthorResponse = StrapiResponse<Author[]>;
+export type CategoryResponse = StrapiResponse<Category[]>;
+export type TagResponse = StrapiResponse<Tag[]>;
+export type BannerResponse = StrapiResponse<Banner[]>;
+export type NavigationResponse = StrapiResponse<NavigationItem[]>;
+export type SiteConfigResponse = StrapiResponse<SiteConfig>;
 
 // Legacy types for backward compatibility (will be gradually replaced)
 export interface LegacyArticle {

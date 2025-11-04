@@ -1,15 +1,26 @@
 /**
- * Server-side Strapi API Client
+ * Server-side Strapi v5 API Client
  * For use in Next.js Server Components and API routes
- * Optimized for ISR (Incremental Static Regeneration)
+ * Configured for NO CACHING - Always fetch fresh data from Strapi
+ * 
+ * Key Changes in Strapi v5:
+ * - Response format is FLATTENED (no nested attributes)
+ * - Use documentId to access specific documents
+ * - Populate syntax: populate[0]=field&populate[1]=field
+ * - Filter syntax: filters[field][$operator]=value
  */
 
 import { config } from './config';
-import { createPopulateString, createStrapiFilters } from './strapi-helpers';
-import type { ArticleResponse, SingleArticleResponse, AuthorResponse, CategoryResponse, BannerResponse, NavigationResponse } from '@/types';
-
-// Cache for revalidation
-const CACHE_REVALIDATE_TIME = 3600; // 1 hour in seconds
+import type { 
+  ArticleResponse, 
+  AuthorResponse, 
+  CategoryResponse, 
+  BannerResponse, 
+  NavigationResponse,
+  Article,
+  Author,
+  Category
+} from '@/types';
 
 class ServerStrapiAPI {
   private baseURL: string;
@@ -21,7 +32,7 @@ class ServerStrapiAPI {
   }
 
   /**
-   * Make authenticated requests to Strapi
+   * Make authenticated requests to Strapi v5 with Next.js caching
    */
   private async request<T>(
     endpoint: string,
@@ -43,10 +54,8 @@ class ServerStrapiAPI {
         ...headers,
         ...options.headers,
       },
-      next: {
-        revalidate: CACHE_REVALIDATE_TIME,
-        ...options.next,
-      },
+      // Disable caching - always fetch fresh data from Strapi
+      cache: 'no-store',
     };
 
     try {
@@ -61,30 +70,55 @@ class ServerStrapiAPI {
       return await response.json();
     } catch (error) {
       console.error(`Failed to fetch from ${url}:`, error);
+      
       throw error;
     }
+  }
+
+
+  /**
+   * Build populate query parameters for Strapi v5
+   * Strapi v5: When you populate a relation, ALL its fields are automatically included
+   * No need to specify nested fields like 'author.Avatar'
+   */
+  private buildPopulateString(fields: string[]): string {
+    return fields.map((field, index) => `populate[${index}]=${field}`).join('&');
   }
 
   /**
    * Get hero article (isHero = true)
    */
-  async getHeroArticle(): Promise<SingleArticleResponse> {
-    const filters = createStrapiFilters({ isHero: true, status: 'published' });
-    const populate = createPopulateString(['featuredImage']);
-    const queryString = `${new URLSearchParams(filters).toString()}&${populate}&sort=publishedAt:desc`;
+  async getHeroArticle(): Promise<Article | null> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[isHero][$eq]', 'true');
+    searchParams.append('filters[storyState][$eq]', 'published');
+    searchParams.append('sort', 'publishedAt:desc');
     
-    return this.request<SingleArticleResponse>(
+    // Strapi v5: populate relations directly, all fields are auto-included
+    const populate = this.buildPopulateString(['featuredImage', 'author', 'category', 'tags']);
+    const queryString = `${searchParams.toString()}&${populate}`;
+
+    console.log(`${config.strapi.endpoints.articles}?${queryString}`);
+
+    const response = await this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${queryString}`
     );
+
+    return response.data.length > 0 ? response.data[0] : null;
   }
 
   /**
    * Get featured articles (isFeatured = true)
    */
   async getFeaturedArticles(limit: number = 4): Promise<ArticleResponse> {
-    const filters = createStrapiFilters({ isFeatured: true, status: 'published' });
-    const populate = createPopulateString(['featuredImage']);
-    const queryString = `${new URLSearchParams(filters).toString()}&${populate}&sort=publishedAt:desc&pagination[pageSize]=${limit}`;
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[isFeatured][$eq]', 'true');
+    searchParams.append('filters[storyState][$eq]', 'published');
+    searchParams.append('sort', 'publishedAt:desc');
+    searchParams.append('pagination[pageSize]', limit.toString());
+    
+    const populate = this.buildPopulateString(['featuredImage', 'author', 'category', 'tags']);
+    const queryString = `${searchParams.toString()}&${populate}`;
     
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${queryString}`
@@ -95,9 +129,14 @@ class ServerStrapiAPI {
    * Get editors choice articles (isEditorsPick = true)
    */
   async getEditorsChoiceArticles(limit: number = 4): Promise<ArticleResponse> {
-    const filters = createStrapiFilters({ isEditorsPick: true, status: 'published' });
-    const populate = createPopulateString(['featuredImage']);
-    const queryString = `${new URLSearchParams(filters).toString()}&${populate}&sort=publishedAt:desc&pagination[pageSize]=${limit}`;
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[isEditorsPick][$eq]', 'true');
+    searchParams.append('filters[storyState][$eq]', 'published');
+    searchParams.append('sort', 'publishedAt:desc');
+    searchParams.append('pagination[pageSize]', limit.toString());
+    
+    const populate = this.buildPopulateString(['featuredImage', 'author', 'category', 'tags']);
+    const queryString = `${searchParams.toString()}&${populate}`;
     
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${queryString}`
@@ -108,9 +147,14 @@ class ServerStrapiAPI {
    * Get all published articles with pagination
    */
   async getAllArticles(page: number = 1, pageSize: number = 12): Promise<ArticleResponse> {
-    const filters = createStrapiFilters({ status: 'published' });
-    const populate = createPopulateString(['featuredImage']);
-    const queryString = `${new URLSearchParams(filters).toString()}&${populate}&sort=publishedAt:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`;
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[storyState][$eq]', 'published');
+    searchParams.append('sort', 'publishedAt:desc');
+    searchParams.append('pagination[page]', page.toString());
+    searchParams.append('pagination[pageSize]', pageSize.toString());
+    
+    const populate = this.buildPopulateString(['featuredImage', 'author', 'category', 'tags']);
+    const queryString = `${searchParams.toString()}&${populate}`;
     
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${queryString}`
@@ -120,68 +164,131 @@ class ServerStrapiAPI {
   /**
    * Get article by slug
    */
-  async getArticleBySlug(slug: string): Promise<SingleArticleResponse> {
-    const populate = createPopulateString(['featuredImage', 'gallery', 'socialImage']);
-    const queryString = `filters[slug][$eq]=${slug}&${populate}`;
+  async getArticleBySlug(slug: string): Promise<Article | null> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[slug][$eq]', slug);
     
-    return this.request<SingleArticleResponse>(
+    const populate = this.buildPopulateString([
+      'featuredImage', 
+      'gallery', 
+      'author', 
+      'category', 
+      'tags', 
+      'socialImage'
+    ]);
+    const queryString = `${searchParams.toString()}&${populate}`;
+    
+    const response = await this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${queryString}`
     );
+
+    return response.data.length > 0 ? response.data[0] : null;
   }
 
   /**
-   * Get articles by category
+   * Get articles by category slug
    */
-  async getArticlesByCategory(categorySlug: string, limit: number = 12): Promise<ArticleResponse> {
-    const filters = createStrapiFilters({ category: categorySlug, status: 'published' });
-    const populate = createPopulateString(['featuredImage']);
-    const queryString = `${new URLSearchParams(filters).toString()}&${populate}&sort=publishedAt:desc&pagination[pageSize]=${limit}`;
+  async getArticlesByCategory(categorySlug: string, page: number = 1, pageSize: number = 12): Promise<ArticleResponse> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[category][Slug][$eq]', categorySlug); // Backend uses capital S in Slug
+    searchParams.append('filters[storyState][$eq]', 'published');
+    searchParams.append('sort', 'publishedAt:desc');
+    searchParams.append('pagination[page]', page.toString());
+    searchParams.append('pagination[pageSize]', pageSize.toString());
+    
+    const populate = this.buildPopulateString(['featuredImage', 'author', 'category', 'tags']);
+    const queryString = `${searchParams.toString()}&${populate}`;
     
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${queryString}`
     );
   }
 
+
   /**
-   * Get categories
+   * Get all active categories
    */
   async getCategories(): Promise<CategoryResponse> {
-    const queryString = `filters[isActive][$eq]=true&sort=sortOrder:asc`;
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[isActive][$eq]', 'true');
+    searchParams.append('sort', 'sortOrder:asc');
     
     return this.request<CategoryResponse>(
-      `${config.strapi.endpoints.categories}?${queryString}`
+      `${config.strapi.endpoints.categories}?${searchParams.toString()}`
     );
   }
 
   /**
-   * Get navigation items
+   * Get category by slug
+   */
+  async getCategoryBySlug(slug: string): Promise<Category | null> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[Slug][$eq]', slug); // Backend uses capital S
+    
+    const response = await this.request<CategoryResponse>(
+      `${config.strapi.endpoints.categories}?${searchParams.toString()}`
+    );
+
+    return response.data.length > 0 ? response.data[0] : null;
+  }
+
+  /**
+   * Get active navigation items
    */
   async getNavigationItems(): Promise<NavigationResponse> {
-    const queryString = `filters[isActive][$eq]=true&sort=sortOrder:asc`;
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[isActive][$eq]', 'true');
+    searchParams.append('sort', 'sortOrder:asc');
     
     return this.request<NavigationResponse>(
-      `${config.strapi.endpoints.navigation}?${queryString}`
+      `${config.strapi.endpoints.navigation}?${searchParams.toString()}`
     );
   }
 
   /**
-   * Get active banners
+   * Get active banners (considering date range)
    */
   async getActiveBanners(): Promise<BannerResponse> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[isActive][$eq]', 'true');
+    searchParams.append('sort', 'priority:desc');
+    
     const currentDate = new Date().toISOString();
-    const filters = `filters[isActive][$eq]=true&filters[startDate][$lte]=${currentDate}&filters[endDate][$gte]=${currentDate}`;
+    searchParams.append('filters[$or][0][startDate][$null]', 'true');
+    searchParams.append('filters[$or][1][startDate][$lte]', currentDate);
+    searchParams.append('filters[$or][0][endDate][$null]', 'true');
+    searchParams.append('filters[$or][1][endDate][$gte]', currentDate);
     
     return this.request<BannerResponse>(
-      `${config.strapi.endpoints.banners}?${filters}&sort=priority:desc`
+      `${config.strapi.endpoints.banners}?${searchParams.toString()}`
     );
   }
 
   /**
    * Get author by slug
    */
-  async getAuthorBySlug(slug: string): Promise<AuthorResponse> {
-    const populate = createPopulateString(['avatar']);
-    const queryString = `filters[slug][$eq]=${slug}&${populate}`;
+  async getAuthorBySlug(slug: string): Promise<Author | null> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[slug][$eq]', slug);
+    
+    const populate = this.buildPopulateString(['Avatar']);
+    const queryString = `${searchParams.toString()}&${populate}`;
+    
+    const response = await this.request<AuthorResponse>(
+      `${config.strapi.endpoints.authors}?${queryString}`
+    );
+
+    return response.data.length > 0 ? response.data[0] : null;
+  }
+
+  /**
+   * Get all authors
+   */
+  async getAuthors(): Promise<AuthorResponse> {
+    const searchParams = new URLSearchParams();
+    
+    const populate = this.buildPopulateString(['Avatar']);
+    const queryString = `${searchParams.toString()}&${populate}`;
     
     return this.request<AuthorResponse>(
       `${config.strapi.endpoints.authors}?${queryString}`
@@ -189,14 +296,21 @@ class ServerStrapiAPI {
   }
 
   /**
-   * Get all active authors
+   * Get articles by author documentId
    */
-  async getAuthors(): Promise<AuthorResponse> {
-    const populate = createPopulateString(['avatar']);
-    const queryString = `filters[isActive][$eq]=true&${populate}`;
+  async getArticlesByAuthor(authorDocumentId: string, page: number = 1, pageSize: number = 12): Promise<ArticleResponse> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[author][documentId][$eq]', authorDocumentId);
+    searchParams.append('filters[storyState][$eq]', 'published');
+    searchParams.append('sort', 'publishedAt:desc');
+    searchParams.append('pagination[page]', page.toString());
+    searchParams.append('pagination[pageSize]', pageSize.toString());
     
-    return this.request<AuthorResponse>(
-      `${config.strapi.endpoints.authors}?${queryString}`
+    const populate = this.buildPopulateString(['featuredImage', 'author', 'category', 'tags']);
+    const queryString = `${searchParams.toString()}&${populate}`;
+    
+    return this.request<ArticleResponse>(
+      `${config.strapi.endpoints.articles}?${queryString}`
     );
   }
 }

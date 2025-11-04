@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "export": "npm run build && echo Static site ready in ./out directory",
+    "clear:cache": "rm -rf .next"
   },
   "dependencies": {
     "@radix-ui/react-select": "^2.2.5",

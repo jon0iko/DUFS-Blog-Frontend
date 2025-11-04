@@ -24,13 +24,14 @@ export default function CategoryTabs({
     <div className="overflow-x-auto scrollbar-hide">
       <nav className="flex space-x-12 pb-2">
         {categories.map((category) => {
-          const categorySlug = String((category as any).slug) || ''
-          const categoryName = String((category as any).nameEn || (category as any).Name) || ''
+          // Strapi v5: Backend uses capital S in Slug
+          const categorySlug = category.Slug || ''
+          const categoryName = category.nameEn || category.Name || ''
           const fontClass = getFontClass(categoryName)
           
           return (
             <button
-              key={categorySlug}
+              key={category.documentId}
               onClick={() => handleCategoryChange(categorySlug)}
               className={cn(
                 "pb-6 pt-2 px-1 border-b-2 text-lg font-medium transition-colors whitespace-nowrap relative",

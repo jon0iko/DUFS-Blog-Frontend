@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { config } from './config';
 import { Article, Author, Category } from '@/types';
+import { getArticleImage, getAuthorName, getCategoryName, getAuthorAvatar } from './strapi-helpers';
 
 interface SEOProps {
   title?: string;
@@ -100,41 +101,44 @@ export function generateMetadata({
 }
 
 export function generateArticleMetadata(article: Article): Metadata {
-  const strapiUrl = config.strapi.url;
   const siteUrl = config.site.url;
   
-  const title = (article as any).metaTitle || article.title;
-  const description = (article as any).metaDescription || (article as any).excerpt;
-  const keywords = (article as any).metaKeywords || 
-    ((article as any).tags || []).map((tag: any) => tag.name || tag);
+  // Strapi v5: Direct field access, article.excerpt doesn't exist in current schema
+  const title = article.title;
+  const description = article.content.substring(0, 160) + '...'; // Use content preview as description
   
-  const featuredImage = (article as any).featuredImage || (article as any).socialImage;
-  const imageUrl = featuredImage?.url || `${siteUrl}/images/hero.jpg`;
-  const image = imageUrl.startsWith('http') ? imageUrl : `${strapiUrl}${imageUrl}`;
+  // Tags are directly accessible in v5, using lowercase 'name'
+  const keywords = article.tags ? article.tags.map(tag => tag.name) : [];
+  
+  // Get featured image URL using helper
+  const imageUrl = getArticleImage(article) || `${siteUrl}/images/hero.jpg`;
+
+  // Author and category are directly accessible
+  const authorName = article.author ? getAuthorName(article.author) : 'DUFS Blog';
+  const categoryName = article.category ? getCategoryName(article.category) : 'Blog';
+  const tagNames = article.tags ? article.tags.map(tag => tag.name) : [];
 
   return generateMetadata({
     title,
     description,
     keywords,
-    image,
+    image: imageUrl,
     url: `/articles/${article.slug}`,
     type: 'article',
-    author: (article as any).author?.name || 'DUFS Blog',
+    author: authorName,
     publishedTime: article.publishedAt,
-    modifiedTime: (article as any).updatedAt,
-    section: (article as any).category?.name || 'Blog',
-    tags: ((article as any).tags || []).map((tag: any) => tag.name || tag)
+    modifiedTime: article.updatedAt,
+    section: categoryName,
+    tags: tagNames
   });
 }
 
 export function generateAuthorMetadata(author: Author, articlesCount?: number): Metadata {
-  const strapiUrl = config.strapi.url;
-  
-  const name = (author as any).name || 'Author';
-  const bio = (author as any).bio;
-  const slug = (author as any).slug || 'unknown';
-  const avatarUrl = (author as any).avatar?.url;
-  const imageUrl = avatarUrl ? (avatarUrl.startsWith('http') ? avatarUrl : `${strapiUrl}${avatarUrl}`) : undefined;
+  // Strapi v5: Backend uses capital N in Name, capital A in Avatar, capital B in Bio
+  const name = getAuthorName(author);
+  const bio = author.Bio || '';
+  const slug = author.slug || 'unknown';
+  const avatarUrl = getAuthorAvatar(author);
 
   const title = `${name} - Author Profile`;
   const description = bio || 
@@ -143,16 +147,17 @@ export function generateAuthorMetadata(author: Author, articlesCount?: number): 
   return generateMetadata({
     title,
     description,
-    image: imageUrl,
+    image: avatarUrl || undefined,
     url: `/authors/${slug}`,
     type: 'website'
   });
 }
 
 export function generateCategoryMetadata(category: Category, articlesCount?: number): Metadata {
-  const name = (category as any).name || 'Category';
-  const description = (category as any).description;
-  const slug = (category as any).slug || 'unknown';
+  // Strapi v5: Backend uses capital S in Slug, nameEn or Name for name
+  const name = getCategoryName(category);
+  const description = category.description || '';
+  const slug = category.Slug || 'unknown';
 
   const title = `${name} - Browse Articles`;
   const desc = description || 
@@ -180,21 +185,20 @@ export function generateSearchMetadata(query: string, resultsCount?: number): Me
 
 // JSON-LD structured data generators
 export function generateArticleJsonLd(article: Article) {
-  const strapiUrl = config.strapi.url;
   const siteUrl = config.site.url;
   
-  const featuredImage = (article as any).featuredImage;
-  const authorName = (article as any).author?.name || 'DUFS Blog';
-  const authorSlug = (article as any).author?.slug || 'unknown';
-  const categoryName = (article as any).category?.name || 'Blog';
-  const tags = ((article as any).tags || []).map((tag: any) => tag.name || tag);
-  const imageUrl = featuredImage?.url ? (featuredImage.url.startsWith('http') ? featuredImage.url : `${strapiUrl}${featuredImage.url}`) : undefined;
+  // Strapi v5: Direct access to relations and media
+  const authorName = article.author ? getAuthorName(article.author) : 'DUFS Blog';
+  const authorSlug = article.author?.slug || 'unknown';
+  const categoryName = article.category ? getCategoryName(article.category) : 'Blog';
+  const tags = article.tags ? article.tags.map(tag => tag.name) : [];
+  const imageUrl = getArticleImage(article);
   
   return {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: article.title,
-    description: (article as any).excerpt || article.title,
+    description: article.content.substring(0, 160), // Use content preview
     image: imageUrl,
     author: {
       '@type': 'Person',
@@ -207,15 +211,14 @@ export function generateArticleJsonLd(article: Article) {
       url: siteUrl
     },
     datePublished: article.publishedAt,
-    dateModified: (article as any).updatedAt,
+    dateModified: article.updatedAt,
     mainEntityOfPage: {
       '@type': 'WebPage',
       '@id': `${siteUrl}/articles/${article.slug}`
     },
     articleSection: categoryName,
     keywords: tags,
-    wordCount: article.content.split(' ').length,
-    ...((article as any).readTime && { timeRequired: `PT${(article as any).readTime}M` })
+    wordCount: article.content.split(' ').length
   };
 }
 

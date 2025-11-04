@@ -8,8 +8,7 @@ import AuthorInfo from '@/components/articles/AuthorInfo';
 import CommentSection from '@/components/articles/CommentSection';
 import ReadingProgressBar from '@/components/articles/ReadingProgressBar';
 import { serverStrapiAPI } from '@/lib/server-api';
-import { getArticleImage, formatPublishDate } from '@/lib/strapi-helpers';
-import type { Article } from '@/types';
+import { getArticleImage, formatPublishDate, getAuthorName, getCategoryName, getAuthorAvatar } from '@/lib/strapi-helpers';
 import { notFound } from 'next/navigation';
 
 interface ArticleContentProps {
@@ -18,22 +17,17 @@ interface ArticleContentProps {
 
 export default async function ArticleContent({ slug }: ArticleContentProps) {
   try {
-    const response = await serverStrapiAPI.getArticleBySlug(slug);
-    const articles = Array.isArray(response.data) ? response.data : [response.data];
+    // Strapi v5: getArticleBySlug returns Article | null
+    const article = await serverStrapiAPI.getArticleBySlug(slug);
 
-    if (!articles || articles.length === 0) {
+    if (!article) {
       notFound();
     }
 
-    const article: Article = articles[0];
     const isBengali = article.language === 'bn' || article.language === 'both';
     const imageSrc = getArticleImage(article);
-    const authorName = (article.author && typeof article.author === 'object' && 'name' in article.author) 
-      ? (article.author as any).name 
-      : 'Staff';
-    const categoryName = (article.category && typeof article.category === 'object' && 'nameEn' in article.category)
-      ? (article.category as any).nameEn
-      : 'Uncategorized';
+    const authorName = getAuthorName(article.author);
+    const categoryName = getCategoryName(article.category);
 
     return (
       <>
@@ -71,7 +65,7 @@ export default async function ArticleContent({ slug }: ArticleContentProps) {
 
             {/* Meta Information */}
             <div className="flex flex-wrap items-center gap-4 mb-8 text-sm text-muted-foreground">
-              <span>By <Link href={`/authors/${article.author && typeof article.author === 'object' && 'slug' in article.author ? (article.author as any).slug : ''}`} className="text-foreground hover:underline font-medium">{authorName}</Link></span>
+              <span>By <Link href={`/authors/${article.author?.slug || ''}`} className="text-foreground hover:underline font-medium">{authorName}</Link></span>
               <span>•</span>
               <time dateTime={article.publishedAt}>
                 {formatPublishDate(article.publishedAt)}
@@ -129,19 +123,15 @@ export default async function ArticleContent({ slug }: ArticleContentProps) {
                   <div className="mb-8">
                     <h3 className="text-sm font-semibold mb-3">Tags</h3>
                     <div className="flex flex-wrap gap-2">
-                      {article.tags.map((tag) => {
-                        const tagName = typeof tag === 'object' && 'name' in tag ? (tag as any).name : '';
-                        const tagSlug = typeof tag === 'object' && 'slug' in tag ? (tag as any).slug : '';
-                        return (
-                          <Link
-                            key={typeof tag === 'object' && 'id' in tag ? (tag as any).id : tagSlug}
-                            href={`/browse?tag=${tagSlug}`}
-                            className="inline-block px-3 py-1 bg-muted hover:bg-muted/80 rounded-full text-xs font-medium transition-colors"
-                          >
-                            #{tagName}
-                          </Link>
-                        );
-                      })}
+                      {article.tags.map((tag) => (
+                        <Link
+                          key={tag.documentId}
+                          href={`/browse?tag=${tag.slug}`}
+                          className="inline-block px-3 py-1 bg-muted hover:bg-muted/80 rounded-full text-xs font-medium transition-colors"
+                        >
+                          #{tag.name}
+                        </Link>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -149,11 +139,11 @@ export default async function ArticleContent({ slug }: ArticleContentProps) {
                 <Separator className="my-8" />
 
                 {/* Author Info */}
-                {article.author && typeof article.author === 'object' && (
+                {article.author && (
                   <AuthorInfo 
                     author={{
-                      name: (article.author as any).name || 'Staff',
-                      avatar: (article.author as any).avatar,
+                      name: article.author.Name,
+                      avatar: getAuthorAvatar(article.author),
                     }}
                   />
                 )}
@@ -161,7 +151,7 @@ export default async function ArticleContent({ slug }: ArticleContentProps) {
                 <Separator className="my-8" />
 
                 {/* Comments */}
-                <CommentSection articleId={article.id.toString()} />
+                <CommentSection articleId={article.documentId} />
               </div>
 
               {/* Sidebar */}

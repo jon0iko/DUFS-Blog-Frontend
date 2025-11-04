@@ -1,11 +1,10 @@
 /**
  * SidebarLoader - Server Component
- * Fetches navigation data from Strapi and passes to Sidebar
+ * Fetches navigation data from Strapi v5 and passes to Sidebar
  */
 
 import Sidebar from './Sidebar';
 import { serverStrapiAPI } from '@/lib/server-api';
-import type { NavigationItem } from '@/types';
 
 interface SidebarLoaderProps {
   isOpen: boolean;
@@ -14,13 +13,15 @@ interface SidebarLoaderProps {
 
 export default async function SidebarLoader({ isOpen, setIsOpen }: SidebarLoaderProps) {
   try {
+    // Strapi v5: getNavigationItems returns NavigationResponse with data array
     const response = await serverStrapiAPI.getNavigationItems();
-    const navigationItems = Array.isArray(response.data) ? response.data : [response.data];
+    const navigationItems = response.data;
 
-    const navData = (navigationItems as NavigationItem[]).map(item => ({
-      title: typeof item === 'object' && 'title' in item ? (item as any).title : '',
-      href: typeof item === 'object' && 'href' in item ? (item as any).href : '',
-      isExternal: typeof item === 'object' && 'isExternal' in item ? (item as any).isExternal : false,
+    // Transform to navigation format, handling Strapi v5 flat structure
+    const navData = navigationItems.map(item => ({
+      title: item.title || '',
+      href: item.href || '',
+      isExternal: item.isExternal || false,
     }));
 
     return <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} navigation={navData} />;

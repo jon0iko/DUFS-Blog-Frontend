@@ -2,26 +2,39 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { serverStrapiAPI } from '@/lib/server-api';
 import { getArticleData, getArticleImage } from '@/lib/strapi-helpers';
-import type { Article } from '@/types';
 
 export default async function HeroSection() {
   try {
-    // Fetch hero article from Strapi
-    const response = await serverStrapiAPI.getHeroArticle();
+    // Fetch hero article from Strapi v5 (returns Article | null)
+    const heroArticle = await serverStrapiAPI.getHeroArticle();
     
-    const articleList = Array.isArray(response.data) ? response.data : [response.data];
-    
-    if (!articleList || articleList.length === 0) {
-      return null;
+    if (!heroArticle) {
+      return (
+        <section className="relative h-[50vh] md:h-[60vh] lg:h-[70vh] w-full overflow-hidden bg-gray-900 flex items-center justify-center">
+          <div className="text-center text-white px-4">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">No Hero Article Found</h2>
+            <p className="text-gray-400">Please mark an article as hero in the content manager</p>
+          </div>
+        </section>
+      );
     }
 
-    const heroArticle: Article = articleList[0];
     const articleData = getArticleData(heroArticle);
-    const imageSrc = getArticleImage(heroArticle);
+    
+    if (!articleData) {
+      return (
+        <section className="relative h-[50vh] md:h-[60vh] lg:h-[70vh] w-full overflow-hidden bg-gray-900 flex items-center justify-center">
+          <div className="text-center text-white px-4">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">Invalid Article Data</h2>
+            <p className="text-gray-400">The hero article data is incomplete or corrupted</p>
+          </div>
+        </section>
+      );
+    }
 
-    console.log('Hero Section Article List:', articleList);
-    console.log('Hero Section Article Data:', articleData);
-    console.log('Hero Section Image Source:', imageSrc);
+    const imageSrc = getArticleImage(heroArticle);
+    console.log('Hero Article raw:', heroArticle);
+    console.log('Hero Article Data:', articleData);
 
     return (
       <section className="relative h-[50vh] md:h-[60vh] lg:h-[70vh] w-full overflow-hidden">
@@ -57,6 +70,14 @@ export default async function HeroSection() {
     );
   } catch (error) {
     console.error('Failed to load hero section:', error);
-    return null;
+    return (
+      <section className="relative h-[50vh] md:h-[60vh] lg:h-[70vh] w-full overflow-hidden bg-red-900 flex items-center justify-center">
+        <div className="text-center text-white px-4">
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">Error Loading Hero Section</h2>
+          <p className="text-gray-200">Failed to connect to the CMS. Please check your connection.</p>
+          <p className="text-sm text-gray-400 mt-2">{error instanceof Error ? error.message : 'Unknown error'}</p>
+        </div>
+      </section>
+    );
   }
 }

@@ -1,7 +1,14 @@
+/**
+ * Authentication utilities for Strapi v5 Users & Permissions plugin
+ * The authentication endpoints remain the same in Strapi v5
+ */
+
 import Cookies from 'js-cookie';
+import { config } from './config';
 
 export interface UserData {
   id: number;
+  documentId?: string; // Strapi v5 includes documentId
   username: string;
   email: string;
   provider?: string;
@@ -17,7 +24,7 @@ export interface AuthResponse {
 }
 
 export interface LoginData {
-  identifier: string;
+  identifier: string; // username or email
   password: string;
 }
 
@@ -27,7 +34,7 @@ export interface RegisterData {
   password: string;
 }
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+const STRAPI_URL = config.strapi.url;
 
 // Set authentication token in cookies
 export const setToken = (token: string) => {
@@ -60,10 +67,10 @@ export const removeUser = () => {
   Cookies.remove('user');
 };
 
-// Login API call
+// Login API call - Strapi v5 endpoint
 export async function login(data: LoginData): Promise<AuthResponse> {
   try {
-    const response = await fetch(`${STRAPI_URL}/api/auth/local`, {
+    const response = await fetch(`${STRAPI_URL}${config.strapi.endpoints.auth.login}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -86,10 +93,10 @@ export async function login(data: LoginData): Promise<AuthResponse> {
   }
 }
 
-// Register API call
+// Register API call - Strapi v5 endpoint
 export async function register(data: RegisterData): Promise<AuthResponse> {
   try {
-    const response = await fetch(`${STRAPI_URL}/api/auth/local/register`, {
+    const response = await fetch(`${STRAPI_URL}${config.strapi.endpoints.auth.register}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -124,12 +131,13 @@ export function isAuthenticated(): boolean {
 }
 
 // Fetch current user from Strapi (useful for token validation)
+// Strapi v5: User data is still returned in the same format
 export async function fetchCurrentUser(): Promise<UserData | null> {
   const token = getToken();
   if (!token) return null;
   
   try {
-    const response = await fetch(`${STRAPI_URL}/api/users/me`, {
+    const response = await fetch(`${STRAPI_URL}${config.strapi.endpoints.auth.me}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -139,7 +147,9 @@ export async function fetchCurrentUser(): Promise<UserData | null> {
       throw new Error('Failed to fetch user');
     }
     
-    return await response.json();
+    const userData: UserData = await response.json();
+    setUser(userData); // Update stored user data
+    return userData;
   } catch (error) {
     console.error('Fetch user error:', error);
     logout(); // Clear invalid credentials

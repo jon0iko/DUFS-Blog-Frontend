@@ -7,7 +7,6 @@ import FilterOptions from '@/components/browse/FilterOptions'
 import ArticlesList from '@/components/browse/ArticlesList'
 import { strapiAPI } from '@/lib/api'
 import { Category } from '@/types'
-import { Skeleton } from '@/components/ui/skeleton'
 
 export default function BrowsePage() {
   const searchParams = useSearchParams()
@@ -15,19 +14,17 @@ export default function BrowsePage() {
   const router = useRouter()
   
   const [categories, setCategories] = useState<Category[]>([])
-  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
   
   // Fetch categories on mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
+        // Strapi v5: getCategories returns CategoryResponse with data array
         const response = await strapiAPI.getCategories()
         setCategories(response.data || [])
       } catch (error) {
         console.error('Failed to fetch categories:', error)
         setCategories([])
-      } finally {
-        setIsLoadingCategories(false)
       }
     }
     fetchCategories()
@@ -35,7 +32,8 @@ export default function BrowsePage() {
   
   // Get category from URL or default to first category
   const categoryParam = searchParams.get('category')
-  const defaultCategory = categories.length > 0 ? (categories[0] as any).slug : ''
+  // Backend uses capital S in Slug
+  const defaultCategory = categories.length > 0 ? categories[0].Slug : ''
   const [activeCategory, setActiveCategory] = useState(categoryParam || defaultCategory)
   
   // Get filter values from URL params
