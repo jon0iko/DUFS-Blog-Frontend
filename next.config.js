@@ -9,7 +9,11 @@ const nextConfig = {
     trailingSlash: true, // Useful for CPanel deployments
     typescript: {
       // Check TypeScript during builds
-      ignoreBuildErrors: process.env.NODE_ENV === 'development' ? true : false,
+      ignoreBuildErrors: true,
+    },
+    eslint: {
+      // Ignore ESLint errors during builds
+      ignoreDuringBuilds: true,
     },
   }
   

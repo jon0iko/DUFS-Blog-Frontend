@@ -2,174 +2,244 @@
 
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
-
-interface Comment {
-  id: string;
-  author: {
-    name: string;
-    avatar?: string;
-  };
-  content: string;
-  date: string;
-  likes: number;
-  replies?: Comment[];
-}
+import { Comment as StrapiComment } from '@/types';
+import { MessageCircle, ThumbsUp, Reply } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface CommentSectionProps {
   articleId: string;
+  comments: StrapiComment[];
 }
 
-const dummyComments: Comment[] = [
-  {
-    id: '1',
-    author: { 
-      name: 'Ashwin',
-      avatar: 'https://via.placeholder.com/40'
-    },
-    content: 'What a brilliant essay - thank you for this insightful analysis!',
-    date: '3 days ago',
-    likes: 5,
-  },
-  {
-    id: '2',
-    author: { 
-      name: 'Munira Ahmed',
-      avatar: 'https://via.placeholder.com/40'
-    },
-    content: 'I especially appreciated the cultural context section. It helped me understand the film from a different perspective.',
-    date: '1 week ago',
-    likes: 12,
-    replies: [
-      {
-        id: '2-1',        author: { 
-          name: 'Joya',
-          avatar: 'https://via.placeholder.com/40'
-        },
-        content: 'Absolutely! I think the director\'s background in documentary filmmaking really shows through in those sequences.',
-        date: '5 days ago',
-        likes: 3,
-      }
-    ]
-  }
-];
-
-export default function CommentSection({ articleId }: CommentSectionProps) {
-  const [comments, setComments] = useState<Comment[]>(dummyComments);
+export default function CommentSection({ articleId, comments }: CommentSectionProps) {
+  const [localComments] = useState<StrapiComment[]>(comments);
   const [newComment, setNewComment] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // In a real app, this would come from auth context
+  const [isLoggedIn] = useState(false); // TODO: Connect to auth context
 
   const handleSubmitComment = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (newComment.trim() === '') return;
     
-    const comment: Comment = {
-      id: Date.now().toString(),
-      author: {
-        name: 'Guest User',
-        avatar: 'https://via.placeholder.com/40',
-      },
-      content: newComment,
-      date: 'Just now',
-      likes: 0,
-    };
-    
-    setComments([comment, ...comments]);
+    // TODO: Call Strapi API to create comment
+    console.log('Submitting comment:', newComment, 'for article:', articleId);
     setNewComment('');
   };
 
-  const CommentItem = ({ comment, isReply = false }: { comment: Comment, isReply?: boolean }) => (
-    <div className={cn("flex gap-4", isReply && "ml-12 mt-4")}>
-      <div className="relative w-10 h-10 flex-shrink-0">
-        <Image 
-          src={comment.author.avatar || 'https://via.placeholder.com/40'} 
-          alt={comment.author.name}
-          className="rounded-full"
-          fill
-        />
-      </div>
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+    return `${Math.floor(diffDays / 365)} years ago`;
+  };
+
+  const CommentItem = ({ comment, isReply = false }: { comment: StrapiComment; isReply?: boolean }) => {
+    const [likeCount, setLikeCount] = useState(comment.likeCount || 0);
+    const [hasLiked, setHasLiked] = useState(false);
+    const [showReply, setShowReply] = useState(false);
+
+    // Extract username from users_permissions_user relation or use anonymous
+    const userName = typeof comment.users_permissions_user === 'object' && comment.users_permissions_user !== null
+      ? ((comment.users_permissions_user as { username?: string }).username || 'Anonymous')
+      : 'Anonymous';
+
+    // Generate anonymous avatar with gradient
+    const getAnonymousAvatar = (name: string) => {
+      const colors = [
+        'from-blue-500 to-purple-500',
+        'from-green-500 to-teal-500',
+        'from-pink-500 to-red-500',
+        'from-yellow-500 to-orange-500',
+        'from-indigo-500 to-blue-500',
+      ];
+      const colorIndex = name.charCodeAt(0) % colors.length;
+      const initial = name.charAt(0).toUpperCase();
       
-      <div className="flex-1">
-        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-          <div className="flex justify-between mb-2">
-            <h4 className="font-medium">{comment.author.name}</h4>
-            <span className="text-xs text-gray-500">{comment.date}</span>
+      return (
+        <div className={cn(
+          "w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold",
+          "bg-gradient-to-br",
+          colors[colorIndex]
+        )}>
+          {initial}
+        </div>
+      );
+    };
+
+    const handleLike = async () => {
+      if (!isLoggedIn) return;
+      
+      const newLikeCount = hasLiked ? likeCount - 1 : likeCount + 1;
+      setHasLiked(!hasLiked);
+      setLikeCount(newLikeCount);
+      
+      // TODO: Call API to update comment likes
+      console.log('Updating comment likes:', comment.documentId, newLikeCount);
+    };
+
+    return (
+      <div className={cn(
+        "flex gap-4 p-6 rounded-lg bg-white dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800",
+        isReply && "ml-8 bg-gray-50 dark:bg-gray-900/20"
+      )}>
+        {/* Avatar */}
+        <div className="flex-shrink-0">
+          {getAnonymousAvatar(userName)}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="font-semibold text-gray-900 dark:text-gray-100">
+              {userName}
+            </span>
+            <span className="text-sm text-gray-500">
+              {formatDate(comment.CommentDateTime)}
+            </span>
+            {isReply && (
+              <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 px-2 py-1 rounded">
+                Reply
+              </span>
+            )}
           </div>
-          <p className="text-sm">{comment.content}</p>
+
+          <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+            {comment.Content}
+          </p>
+
+          {/* Actions */}
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "text-xs gap-2",
+                hasLiked && "text-red-500"
+              )}
+              onClick={handleLike}
+              disabled={!isLoggedIn}
+            >
+              <ThumbsUp className={cn(
+                "w-4 h-4",
+                hasLiked && "fill-current"
+              )} />
+              <span>{likeCount > 0 ? likeCount : 'Like'}</span>
+            </Button>
+
+            {comment.isReplyable !== false && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs gap-2"
+                onClick={() => setShowReply(!showReply)}
+              >
+                <Reply className="w-4 h-4" />
+                Reply
+              </Button>
+            )}
+          </div>
+
+          {/* Reply Form (shown when Reply clicked) */}
+          {showReply && (
+            <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+              <textarea
+                placeholder="Write a reply..."
+                className="w-full p-3 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm"
+                rows={3}
+                disabled={!isLoggedIn}
+              />
+              <div className="flex justify-end gap-2 mt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowReply(false)}
+                >
+                  Cancel
+                </Button>
+                <Button size="sm" disabled={!isLoggedIn}>
+                  {isLoggedIn ? 'Post Reply' : 'Sign in to reply'}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Replies List */}
+          {comment.replies && comment.replies.length > 0 && (
+            <div className="mt-6 space-y-4">
+              {comment.replies.map((reply) => (
+                <CommentItem key={reply.id} comment={reply} isReply={true} />
+              ))}
+            </div>
+          )}
         </div>
-        
-        <div className="flex gap-4 mt-2 text-sm">
-          <button className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
-            Like ({comment.likes})
-          </button>
-          <button className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
-            Reply
-          </button>
-        </div>
-        
-        {comment.replies?.map(reply => (
-          <CommentItem key={reply.id} comment={reply} isReply />
-        ))}
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <section id="comments" className="pt-4">
-      <h3 className="text-2xl font-semibold mb-6">Comments ({comments.length})</h3>
-      
-      <div className="mb-8">
-        {isLoggedIn ? (          <form onSubmit={handleSubmitComment} className="mb-8">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-gray-600 dark:text-gray-300">Commenting as <strong>Guest User</strong></span>
-              <button 
-                type="button"
-                onClick={() => setIsLoggedIn(false)}
-                className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
-              >
-                Sign Out
-              </button>
-            </div>
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Share your thoughts..."
-              className="w-full p-4 border rounded-lg dark:bg-gray-800 dark:border-gray-700 focus:ring focus:ring-blue-300 dark:focus:ring-blue-700 transition"
-              rows={3}
-              required
-            />
-            <div className="flex justify-end mt-3">
-              <button 
-                type="submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium transition"
-              >
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <MessageCircle className="w-6 h-6 text-primary" />
+        <h2 className="text-2xl font-bold">
+          Comments {localComments.length > 0 && `(${localComments.length})`}
+        </h2>
+      </div>
+
+      {/* Comment Form */}
+      <div className="p-6 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+        <form onSubmit={handleSubmitComment} className="space-y-4">
+          <textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder={isLoggedIn ? "Share your thoughts..." : "Sign in to comment..."}
+            disabled={!isLoggedIn}
+            className={cn(
+              "w-full min-h-[120px] p-4 rounded-lg border bg-white dark:bg-gray-900",
+              "focus:outline-none focus:ring-2 focus:ring-primary/20",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+              "border-gray-300 dark:border-gray-600"
+            )}
+          />
+          <div className="flex justify-between items-center">
+            {!isLoggedIn && (
+              <p className="text-sm text-gray-500">
+                <a href="/auth/signin" className="text-primary hover:underline">
+                  Sign in
+                </a>{' '}
+                to join the discussion
+              </p>
+            )}
+            <div className="ml-auto">
+              <Button type="submit" disabled={!isLoggedIn || newComment.trim() === ''}>
                 Post Comment
-              </button>
-            </div>
-          </form>
-        ) : (          <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg text-center mb-8">
-            <p className="mb-3">Sign in to join the conversation</p>
-            <div className="flex justify-center gap-3">
-              <button 
-                onClick={() => setIsLoggedIn(true)} 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium transition"
-              >
-                Sign In
-              </button>
-              <button className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 px-4 py-2 rounded font-medium transition">
-                Create Account
-              </button>
+              </Button>
             </div>
           </div>
-        )}
-        
+        </form>
+      </div>
+
+      {/* Comments List */}
+      {localComments.length === 0 ? (
+        <div className="text-center py-12">
+          <MessageCircle className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <p className="text-gray-500 dark:text-gray-400">
+            No comments yet. Be the first to share your thoughts!
+          </p>
+        </div>
+      ) : (
         <div className="space-y-6">
-          {comments.map(comment => (
+          {localComments.map((comment) => (
             <CommentItem key={comment.id} comment={comment} />
           ))}
         </div>
-      </div>
-    </section>
+      )}
+    </div>
   );
 }

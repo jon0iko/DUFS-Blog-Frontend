@@ -11,7 +11,8 @@ import {
   Author,
   Tag,
   SiteConfig,
-  Submission
+  Submission,
+  Comment
 } from '@/types';
 import { getAuthorAvatar } from './strapi-helpers';
 
@@ -248,6 +249,39 @@ class StrapiAPI {
   }
 
   /**
+   * Get articles by category with pagination
+   * Used for loading more articles in a specific category
+   */
+  async getArticlesByCategory(
+    categorySlug: string,
+    limit: number = 6,
+    offset: number = 0
+  ): Promise<ArticleResponse> {
+    const searchParams = new URLSearchParams();
+    
+    // Filter by category slug
+    searchParams.append('filters[category][Slug][$eq]', categorySlug);
+    searchParams.append('filters[storyState][$eq]', 'published');
+    
+    // Pagination
+    searchParams.append('pagination[pageSize]', limit.toString());
+    searchParams.append('pagination[start]', offset.toString());
+    
+    // Sort by most recent
+    searchParams.append('sort', 'publishedAt:desc');
+    
+    // Populate fields
+    const populate = ['featuredImage', 'author', 'category', 'tags'];
+    populate.forEach((field, index) => {
+      searchParams.append(`populate[${index}]`, field);
+    });
+
+    return this.request<ArticleResponse>(
+      `${config.strapi.endpoints.articles}?${searchParams.toString()}`
+    );
+  }
+
+  /**
    * Get related articles based on category
    */
   async getRelatedArticles(
@@ -277,6 +311,24 @@ class StrapiAPI {
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
     );
+  }
+
+  /**
+   * Update article likes count
+   * Strapi v5: PUT /api/articles/:documentId
+   */
+  async updateArticleLikes(documentId: string, likesCount: number): Promise<Article> {
+    return this.request<{ data: Article; meta: object }>(
+      `${config.strapi.endpoints.articles}/${documentId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          data: {
+            likes: likesCount
+          }
+        })
+      }
+    ).then(response => response.data);
   }
 
 
@@ -573,6 +625,80 @@ class StrapiAPI {
       // Silently fail for analytics - don't break user experience
       console.warn('Failed to track article view:', error);
     }
+  }
+
+  // ============================================
+  // COMMENTS API METHODS
+  // ============================================
+  // COMMENTS API METHODS
+  // ============================================
+
+  /**
+   * Get comments for a specific article
+   */
+  async getCommentsByArticle(articleDocumentId: string): Promise<Comment[]> {
+    const searchParams = new URLSearchParams();
+    
+    // Filter by article documentId
+    searchParams.append('filters[article][documentId][$eq]', articleDocumentId);
+    
+    // Sort by date (newest first)
+    searchParams.append('sort', 'CommentDateTime:desc');
+    
+    // Populate user if needed
+    searchParams.append('populate[0]', 'users_permissions_user');
+    // Populate replies
+    searchParams.append('populate[1]', 'replies');
+    searchParams.append('populate[2]', 'replies.users_permissions_user');
+
+    const response = await this.request<{ data: Comment[]; meta: object }>(
+      `/api/comments?${searchParams.toString()}`
+    );
+
+    return response.data;
+  }
+
+  async updateCommentLikes(documentId: string, likeCount: number): Promise<Comment> {
+    const response = await this.request<{ data: Comment }>(
+      `/api/comments/${documentId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          data: {
+            likeCount,
+          },
+        }),
+      }
+    );
+
+    return response.data;
+  }
+
+  async createCommentReply(
+    parentCommentDocumentId: string,
+    content: string,
+    articleDocumentId: string,
+    userId?: string
+  ): Promise<Comment> {
+    const response = await this.request<{ data: Comment }>(
+      '/api/comments',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          data: {
+            Content: content,
+            CommentDateTime: new Date().toISOString(),
+            parentComment: parentCommentDocumentId,
+            article: articleDocumentId,
+            isReplyable: false, // Replies are not replyable by default
+            likeCount: 0,
+            ...(userId && { users_permissions_user: userId }),
+          },
+        }),
+      }
+    );
+
+    return response.data;
   }
 }
 

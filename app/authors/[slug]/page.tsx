@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { serverStrapiAPI } from '@/lib/server-api';
-import AuthorPageClient from '@/components/authors/AuthorPageClient';
+import AuthorClient from '@/components/authors/AuthorClient';
 import type { Author, Article } from '@/types';
 
 // Helper function to generate a slug from an author's name
@@ -80,5 +80,5 @@ export default async function AuthorPage({ params }: { params: { slug: string } 
     notFound();
   }
 
-  return <AuthorPageClient author={author} articles={articles} />;
+  return <AuthorClient author={author} articles={articles} />;
 }

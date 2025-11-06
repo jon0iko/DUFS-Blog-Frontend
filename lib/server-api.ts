@@ -54,8 +54,8 @@ class ServerStrapiAPI {
         ...headers,
         ...options.headers,
       },
-      // Disable caching - always fetch fresh data from Strapi
-      cache: 'no-store',
+      // Static export: cache during build, client-side fetching handles freshness
+      cache: 'force-cache',
     };
 
     try {

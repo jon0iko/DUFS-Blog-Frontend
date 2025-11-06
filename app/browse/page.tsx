@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams, usePathname, useRouter } from 'next/navigation'
 import CategoryTabs from '@/components/browse/CategoryTabs'
 import FilterOptions from '@/components/browse/FilterOptions'
@@ -8,12 +8,13 @@ import ArticlesList from '@/components/browse/ArticlesList'
 import { strapiAPI } from '@/lib/api'
 import { Category } from '@/types'
 
-export default function BrowsePage() {
+function BrowsePageContent() {
   const searchParams = useSearchParams()
   const pathname = usePathname()
   const router = useRouter()
   
   const [categories, setCategories] = useState<Category[]>([])
+  const [activeCategory, setActiveCategory] = useState<string>('')
   
   // Fetch categories on mount
   useEffect(() => {
@@ -21,37 +22,41 @@ export default function BrowsePage() {
       try {
         // Strapi v5: getCategories returns CategoryResponse with data array
         const response = await strapiAPI.getCategories()
-        setCategories(response.data || [])
+        const fetchedCategories = response.data || []
+        setCategories(fetchedCategories)
+        
+        // Set active category from URL or use first category
+        const categoryParam = searchParams.get('category')
+        if (categoryParam) {
+          setActiveCategory(categoryParam)
+        } else if (fetchedCategories.length > 0) {
+          setActiveCategory(fetchedCategories[0].Slug || '')
+        }
       } catch (error) {
         console.error('Failed to fetch categories:', error)
         setCategories([])
       }
     }
     fetchCategories()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  
-  // Get category from URL or default to first category
-  const categoryParam = searchParams.get('category')
-  // Backend uses capital S in Slug
-  const defaultCategory = categories.length > 0 ? categories[0].Slug : ''
-  const [activeCategory, setActiveCategory] = useState(categoryParam || defaultCategory)
   
   // Get filter values from URL params
   const language = searchParams.get('language') || 'all'
   const sortBy = searchParams.get('sort') || 'recent'
 
-  // Update URL when parameters change
+  // Update URL when category changes
   useEffect(() => {
+    if (!activeCategory) return
+    
     const params = new URLSearchParams(searchParams)
+    const currentCategory = params.get('category')
     
-    if (activeCategory !== categoryParam) {
+    if (activeCategory !== currentCategory) {
       params.set('category', activeCategory)
-    }
-    
-    if (params.toString() !== searchParams.toString()) {
       router.push(`${pathname}?${params.toString()}`)
     }
-  }, [activeCategory, categoryParam, pathname, router, searchParams])
+  }, [activeCategory, searchParams, pathname, router])
 
   // Handle filter changes
   const handleFilterChange = (type: string, value: string) => {
@@ -65,7 +70,8 @@ export default function BrowsePage() {
     
     <div className="container py-8 px-4 md:px-6">
       <div className="mb-8 max-w-3xl">
-        <h1 className="text-4xl font-bold mb-4 tracking-tight">BROWSE</h1>        <p className="text-lg text-muted-foreground">
+        <h1 className="text-4xl font-bold mb-4 tracking-tight">BROWSE</h1>        
+        <p className="text-lg text-muted-foreground">
           Browse articles by categories. Find film discussions you didn&apos;t know you were looking for.
         </p>
       </div>
@@ -96,3 +102,20 @@ export default function BrowsePage() {
     </div>
   )
 }
+
+export default function BrowsePage() {
+  return (
+    <Suspense fallback={
+      <div className="container py-8 px-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-12 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-6 bg-gray-200 rounded w-2/3"></div>
+          <div className="h-32 bg-gray-200 rounded w-full"></div>
+        </div>
+      </div>
+    }>
+      <BrowsePageContent />
+    </Suspense>
+  )
+}
+

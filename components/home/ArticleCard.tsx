@@ -3,6 +3,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getFontClass } from '@/lib/fonts';
 
 interface ArticleCardData {
   id: number | string;
@@ -25,11 +26,13 @@ interface ArticleCardProps {
 }
 
 export default function ArticleCard({ article, imageHeight = "h-48" }: ArticleCardProps) {
-  const isBengali = article.language === 'bn' || article.language === 'both';
+  const titleFontClass = getFontClass(article.title);
+  const excerptFontClass = getFontClass(article.excerpt);
 
   return (
     <article className="flex flex-col h-full">
       <div className="relative w-full overflow-hidden group rounded-sm">
+        <Link href={`/read-article?slug=${article.slug}`} className="block mt-3">
         <div className={`relative w-full ${imageHeight}`}>
           <Image
             src={article.image}
@@ -44,12 +47,13 @@ export default function ArticleCard({ article, imageHeight = "h-48" }: ArticleCa
             </span>
           </div>
         </div>
+        </Link>
         
-        <Link href={`/articles/${article.slug}`} className="block mt-3">
-          <h2 className={cn("text-lg md:text-xl font-bold line-clamp-2 group-hover:underline", isBengali && "font-kalpurush")}>
+        <Link href={`/read-article?slug=${article.slug}`} className="block mt-3">
+          <h2 className={cn("text-lg md:text-xl font-bold line-clamp-2 group-hover:underline", titleFontClass)}>
             {article.title}
           </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 line-clamp-3 font-light">
+          <p className={cn("mt-2 text-sm text-gray-600 dark:text-gray-300 line-clamp-3 font-light", excerptFontClass)}>
             {article.excerpt}
           </p>  
           <div className="mt-3 flex items-center text-xs text-gray-500">

@@ -233,22 +233,26 @@ export interface Submission {
   locale?: string;
 }
 
-// Comment - FLATTENED format
+// Comment - FLATTENED format matching Strapi schema
 export interface Comment {
   id: number;
   documentId: string;
-  content: string;
-  authorName: string;
-  authorEmail: string;
-  isApproved: boolean;
-  article?: Article;
-  parentComment?: Comment;
-  replies?: Comment[];
+  Content: string; // Backend uses capital C
+  CommentDateTime: string; // Backend uses this field name
+  users_permissions_user?: unknown; // Relation to user (if logged in)
+  article?: Article; // Relation to article
+  isReplyable?: boolean; // Whether this comment can have replies
+  likeCount?: number; // Number of likes on this comment
+  parentComment?: Comment; // Parent comment if this is a reply
+  replies?: Comment[]; // Replies to this comment
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
   locale?: string;
 }
+
+// Comment response from API
+export type CommentResponse = StrapiResponse<Comment[]>;
 
 // API Response types - using type aliases instead of empty interfaces
 export type ArticleResponse = StrapiResponse<Article[]>;

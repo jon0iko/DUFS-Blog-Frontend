@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import React from 'react';
 import Image from 'next/image';
@@ -8,14 +8,14 @@ import { Separator } from '@/components/ui/separator';
 import { config } from '@/lib/config';
 import { getFontClass } from '@/lib/fonts';
 
-interface AuthorPageClientProps {
+interface Props {
   author: Author;
   articles: Article[];
 }
 
-export default function AuthorPageClient({ author, articles }: AuthorPageClientProps) {
+export default function AuthorClient({ author, articles }: Props) {
   const avatarUrl = author.Avatar?.url 
-    ? ${config.strapi.url}
+    ? config.strapi.url + author.Avatar.url
     : '/images/hero.jpg';
 
   return (
@@ -34,7 +34,7 @@ export default function AuthorPageClient({ author, articles }: AuthorPageClientP
           <div>
             <h1 className="text-3xl font-bold mb-1">{author.Name}</h1>
             <p className="text-sm text-gray-500 mb-4">
-              Writer � Joined {new Date(author.createdAt).toLocaleDateString()}
+              Writer - Joined {new Date(author.createdAt).toLocaleDateString()}
             </p>
             {author.Bio && <p className="text-gray-700">{author.Bio}</p>}
           </div>
@@ -45,36 +45,25 @@ export default function AuthorPageClient({ author, articles }: AuthorPageClientP
         <h2 className="text-2xl font-bold mb-8">Articles by {author.Name}</h2>
         
         {articles.length === 0 ? (
-          <p>This author hasn't published any articles yet.</p>
+          <p className="text-gray-600">This author has not published any articles yet.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {articles.map((article) => {
-              const imageUrl = article.featuredImage?.url
-                ? ${config.strapi.url}
+              const img = article.featuredImage?.url
+                ? config.strapi.url + article.featuredImage.url
                 : '/images/hero.jpg';
-              const titleFont = getFontClass(article.Title || '');
+              const font = getFontClass(article.title || '');
 
               return (
                 <div key={article.id} className="bg-white rounded-lg shadow overflow-hidden">
                   <div className="h-48 relative">
-                    <Image
-                      src={imageUrl}
-                      alt={article.Title || 'Article'}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
+                    <Image src={img} alt={article.title || 'Article'} fill className="object-cover" unoptimized />
                   </div>
                   <div className="p-6">
-                    <Link 
-                      href={/articles/}
-                      className={${titleFont} text-xl font-semibold mb-2 block hover:text-blue-600 transition}
-                    >
-                      {article.Title}
+                    <Link href={`/articles/${article.slug}`} className={font + ' text-xl font-semibold mb-2 block hover:text-blue-600'}>
+                      {article.title}
                     </Link>
-                    {article.summary && (
-                      <p className="text-gray-600 text-sm line-clamp-2">{article.summary}</p>
-                    )}
+                    {article.excerpt && <p className="text-gray-600 text-sm line-clamp-2">{article.excerpt}</p>}
                   </div>
                 </div>
               );

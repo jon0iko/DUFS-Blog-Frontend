@@ -26,7 +26,7 @@ export default function CategoryTabs({
         {categories.map((category) => {
           // Strapi v5: Backend uses capital S in Slug
           const categorySlug = category.Slug || ''
-          const categoryName = category.nameEn || category.Name || ''
+          const categoryName = category.Name || ''
           const fontClass = getFontClass(categoryName)
           
           return (
@@ -34,7 +34,7 @@ export default function CategoryTabs({
               key={category.documentId}
               onClick={() => handleCategoryChange(categorySlug)}
               className={cn(
-                "pb-6 pt-2 px-1 border-b-2 text-lg font-medium transition-colors whitespace-nowrap relative",
+                "pb-6 pt-2 px-1 border-b-2 text-xl font-medium transition-colors whitespace-nowrap relative",
                 fontClass,
                 activeCategory === categorySlug
                   ? "border-foreground text-foreground" 
