@@ -23,6 +23,7 @@
     "dompurify": "^3.3.0",
     "framer-motion": "^12.6.2",
     "js-cookie": "^3.0.5",
+    "libphonenumber-js": "^1.12.25",
     "lucide-react": "^0.485.0",
     "marked": "^16.4.1",
     "next": "14.2.25",

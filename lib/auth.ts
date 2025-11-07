@@ -14,6 +14,8 @@ export interface UserData {
   provider?: string;
   confirmed?: boolean;
   blocked?: boolean;
+  phoneNumber?: string;
+  Country?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -32,6 +34,8 @@ export interface RegisterData {
   username: string;
   email: string;
   password: string;
+  phoneNumber: string;
+  Country: string;
 }
 
 const STRAPI_URL = config.strapi.url;

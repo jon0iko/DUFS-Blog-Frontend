@@ -207,7 +207,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
     ? (article.featuredImage.url.startsWith('http')
         ? article.featuredImage.url
         : `${config.strapi.url}${article.featuredImage.url}`)
-    : '/images/hero.jpg';
+    : '/images/placeholder.jpg';
 
   const authorAvatar = article.author ? getAuthorAvatar(article.author) : undefined;
   const publishedDate = article.publishedAt

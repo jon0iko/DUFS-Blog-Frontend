@@ -54,8 +54,8 @@ class ServerStrapiAPI {
         ...headers,
         ...options.headers,
       },
-      // Static export: cache during build, client-side fetching handles freshness
-      cache: 'force-cache',
+      // NO CACHING - Always fetch fresh data from Strapi
+      cache: 'no-store',
     };
 
     try {
@@ -98,13 +98,29 @@ class ServerStrapiAPI {
     const populate = this.buildPopulateString(['featuredImage', 'author', 'category', 'tags']);
     const queryString = `${searchParams.toString()}&${populate}`;
 
-    console.log(`${config.strapi.endpoints.articles}?${queryString}`);
-
     const response = await this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${queryString}`
     );
 
     return response.data.length > 0 ? response.data[0] : null;
+  }
+
+  /**
+   * Get all hero articles (isHero = true) for carousel
+   */
+  async getHeroArticles(): Promise<ArticleResponse> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[isHero][$eq]', 'true');
+    searchParams.append('filters[storyState][$eq]', 'published');
+    searchParams.append('sort', 'publishedAt:desc');
+    
+    // Strapi v5: populate relations directly, all fields are auto-included
+    const populate = this.buildPopulateString(['featuredImage', 'author', 'category', 'tags']);
+    const queryString = `${searchParams.toString()}&${populate}`;
+    
+    return this.request<ArticleResponse>(
+      `${config.strapi.endpoints.articles}?${queryString}`
+    );
   }
 
   /**

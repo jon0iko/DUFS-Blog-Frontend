@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Form, FormGroup, FormLabel, FormDescription } from '@/components/ui/form';
 import { RegisterData } from '@/lib/auth';
+import { UserPlus, Lock, Mail, User, Phone, Globe } from 'lucide-react';
+import { COUNTRIES, validatePhoneNumber } from '@/lib/phone-validation';
 
 export default function SignUp() {
   const { register, isLoading } = useAuth();
@@ -14,11 +16,13 @@ export default function SignUp() {
     username: '',
     email: '',
     password: '',
+    phoneNumber: '',
+    Country: '',
   });
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     if (name === 'confirmPassword') {
       setConfirmPassword(value);
@@ -52,13 +56,25 @@ export default function SignUp() {
     // Password validation
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
     }
     
     // Confirm password validation
     if (formData.password !== confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    // Country validation
+    if (!formData.Country) {
+      newErrors.Country = 'Country is required';
+    }
+
+    // Phone number validation
+    if (!formData.phoneNumber) {
+      newErrors.phoneNumber = 'Phone number is required';
+    } else if (!validatePhoneNumber(formData.phoneNumber, formData.Country)) {
+      newErrors.phoneNumber = `Invalid phone number for ${COUNTRIES.find(c => c.code === formData.Country)?.name || 'selected country'}`;
     }
     
     setErrors(newErrors);
@@ -83,23 +99,26 @@ export default function SignUp() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-6 space-y-8">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Create an Account</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Sign up to join our community
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h2 className="text-2xl font-bold text-foreground tracking-tight">Join Our Community</h2>
+        <p className="text-sm text-muted-foreground">
+          Create an account to start sharing your film insights
         </p>
       </div>
       
       <Form onSubmit={handleSubmit} className="space-y-4">
         {errors.form && (
-          <div className="p-3 bg-destructive/10 border border-destructive rounded-md">
+          <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
             <p className="text-sm font-medium text-destructive">{errors.form}</p>
           </div>
         )}
         
         <FormGroup error={errors.username}>
-          <FormLabel htmlFor="username">Username</FormLabel>
+          <FormLabel htmlFor="username" className="text-foreground font-semibold flex items-center gap-2">
+            <User className="h-4 w-4 text-primary" />
+            Username
+          </FormLabel>
           <Input
             id="username"
             name="username"
@@ -109,11 +128,15 @@ export default function SignUp() {
             onChange={handleChange}
             placeholder="This will be your author name"
             disabled={isLoading}
+            className="mt-1 bg-muted border-border text-foreground placeholder-muted-foreground focus:ring-primary focus:border-primary"
           />
         </FormGroup>
         
         <FormGroup error={errors.email}>
-          <FormLabel htmlFor="email">Email</FormLabel>
+          <FormLabel htmlFor="email" className="text-foreground font-semibold flex items-center gap-2">
+            <Mail className="h-4 w-4 text-primary" />
+            Email Address
+          </FormLabel>
           <Input
             id="email"
             name="email"
@@ -123,11 +146,57 @@ export default function SignUp() {
             onChange={handleChange}
             placeholder="Enter your email address"
             disabled={isLoading}
+            className="mt-1 bg-muted border-border text-foreground placeholder-muted-foreground focus:ring-primary focus:border-primary"
           />
+        </FormGroup>
+
+        <FormGroup error={errors.Country}>
+          <FormLabel htmlFor="Country" className="text-foreground font-semibold flex items-center gap-2">
+            <Globe className="h-4 w-4 text-primary" />
+            Country
+          </FormLabel>
+          <select
+            id="Country"
+            name="Country"
+            value={formData.Country}
+            onChange={handleChange}
+            disabled={isLoading}
+            className="mt-1 w-full px-3 py-2 bg-muted border border-border text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder-muted-foreground"
+          >
+            <option value="">Select your country</option>
+            {COUNTRIES.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.flag} {country.name}
+              </option>
+            ))}
+          </select>
+        </FormGroup>
+
+        <FormGroup error={errors.phoneNumber}>
+          <FormLabel htmlFor="phoneNumber" className="text-foreground font-semibold flex items-center gap-2">
+            <Phone className="h-4 w-4 text-primary" />
+            Phone Number
+          </FormLabel>
+          <Input
+            id="phoneNumber"
+            name="phoneNumber"
+            type="tel"
+            value={formData.phoneNumber}
+            onChange={handleChange}
+            placeholder={formData.Country ? "Enter your phone number" : "Select a country first"}
+            disabled={isLoading || !formData.Country}
+            className="mt-1 bg-muted border-border text-foreground placeholder-muted-foreground focus:ring-primary focus:border-primary"
+          />
+          <FormDescription className="mt-1 text-xs text-muted-foreground">
+            Enter a valid phone number for your country
+          </FormDescription>
         </FormGroup>
         
         <FormGroup error={errors.password}>
-          <FormLabel htmlFor="password">Password</FormLabel>
+          <FormLabel htmlFor="password" className="text-foreground font-semibold flex items-center gap-2">
+            <Lock className="h-4 w-4 text-primary" />
+            Password
+          </FormLabel>
           <Input
             id="password"
             name="password"
@@ -135,16 +204,20 @@ export default function SignUp() {
             autoComplete="new-password"
             value={formData.password}
             onChange={handleChange}
-            placeholder="Create a password"
+            placeholder="Create a strong password"
             disabled={isLoading}
+            className="mt-1 bg-muted border-border text-foreground placeholder-muted-foreground focus:ring-primary focus:border-primary"
           />
-          <FormDescription>
-            Password must be at least 6 characters long
+          <FormDescription className="mt-1 text-xs text-muted-foreground">
+            Must be at least 8 characters long
           </FormDescription>
         </FormGroup>
         
         <FormGroup error={errors.confirmPassword}>
-          <FormLabel htmlFor="confirmPassword">Confirm Password</FormLabel>
+          <FormLabel htmlFor="confirmPassword" className="text-foreground font-semibold flex items-center gap-2">
+            <Lock className="h-4 w-4 text-primary" />
+            Confirm Password
+          </FormLabel>
           <Input
             id="confirmPassword"
             name="confirmPassword"
@@ -154,18 +227,24 @@ export default function SignUp() {
             onChange={handleChange}
             placeholder="Confirm your password"
             disabled={isLoading}
+            className="mt-1 bg-muted border-border text-foreground placeholder-muted-foreground focus:ring-primary focus:border-primary"
           />
         </FormGroup>
         
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? 'Creating account...' : 'Sign Up'}
+        <Button 
+          type="submit" 
+          className="w-full mt-6 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+          disabled={isLoading}
+        >
+          <UserPlus className="h-4 w-4" />
+          {isLoading ? 'Creating account...' : 'Create Account'}
         </Button>
       </Form>
       
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground">
+      <div className="pt-4 border-t border-border">
+        <p className="text-sm text-muted-foreground text-center">
           Already have an account?{' '}
-          <Link href="/auth/signin" className="text-primary font-medium hover:underline">
+          <Link href="/auth/signin" className="text-primary font-semibold hover:underline transition-colors duration-200">
             Sign In
           </Link>
         </p>

@@ -54,12 +54,13 @@ export default function Header() {
               size="icon"
               onClick={toggleSidebar}
               aria-label="Toggle menu"
+              className="hover:bg-gray-100 dark:hover:bg-gray-800"
             >
-              <Menu className="!w-6 !h-6" />
+              <Menu className="!w-7 !h-7 stroke-2" />
             </Button>
 
             <Link href="/" className="flex items-center space-x-2">
-              <span className="text-lg font-semibold text-foreground">
+              <span className="text-xl font-bold text-foreground">
                 DUFS Blog
               </span>
             </Link>
@@ -100,12 +101,12 @@ export default function Header() {
             <Button
               variant="ghost"
               size="icon"
-              className=""
+              className="hover:bg-gray-100 dark:hover:bg-gray-800"
               aria-label="Toggle theme"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             >
-              <Sun className="!h-5 !w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute !h-5 !w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <Sun className="!h-6 !w-6 stroke-2 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute !h-6 !w-6 stroke-2 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </Button>
 
             {/* Auth Links - Different states based on authentication */}
@@ -115,11 +116,11 @@ export default function Header() {
                 <Link
                   href="/auth/signin"
                   className={cn(
-                    "items-center text-sm font-medium text-foreground/80 hover:text-foreground transition-colors",
+                    "items-center text-base font-bold text-foreground hover:text-blue-600 dark:hover:text-blue-400 transition-colors",
                     "hidden sm:inline-flex"
                   )}
                 >
-                  <LogIn className="mr-1 h-5 w-5" />
+                  <LogIn className="mr-2 h-6 w-6 stroke-2" />
                   <span>SIGN IN</span>
                 </Link>
                 
@@ -128,19 +129,19 @@ export default function Header() {
               // Authenticated - show user info and logout
               <div className="flex items-center gap-3">
                 
-                <Link href="/account" className="hidden sm:inline-flex items-center text-sm">
-                  <User className="h-5 w-5" />
-                  <span className="hidden md:inline-block text-sm font-medium m-2">
+                <Link href="/account" className="hidden sm:inline-flex items-center text-base font-bold gap-2">
+                  <User className="h-6 w-6 stroke-2" />
+                  <span className="hidden md:inline-block text-base font-bold">
                   {user?.username}
                   </span>
                 </Link>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="hidden sm:inline-flex"
+                  className="hidden sm:inline-flex font-bold hover:bg-gray-100 dark:hover:bg-gray-800"
                   onClick={handleLogout}
                 >
-                  <LogOut className="!h-5 !w-5 mr-1" />
+                  <LogOut className="!h-6 !w-6 stroke-2 mr-2" />
                   <span className="hidden md:inline-block">LOGOUT</span>
                 </Button>
               </div>
@@ -152,22 +153,29 @@ export default function Header() {
               size="icon"
               onClick={toggleMobileSearch} // Use toggle function
               aria-label="Search"
-              className="sm:hidden" // Only show below sm
+              className="sm:hidden hover:bg-gray-100 dark:hover:bg-gray-800"
             >
-              <Search className="!h-5 !w-5 !pr-0" />
+              <Search className="!h-6 !w-6 stroke-2" />
             </Button>
 
             {/* Full Search Input (Visible >= sm breakpoint) */}
             <div className="relative hidden w-32 sm:block sm:w-40 md:w-64 lg:w-80 ml-auto">
-              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-5 w-5 stroke-2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search..."
-                className="h-9 w-full rounded-md pl-8 bg-background border"
+                className="h-10 w-full rounded-md pl-10 bg-background border font-medium"
               />
             </div>
           </div>
         </div>
+        {/* Border below header - not full width */}
+        <div className="container flex justify-center">
+          <div className="w-full border-t-4 border-gray-900 dark:border-gray-100 shadow-lg rounded-full"></div>
+        </div>
+
+        {/* Spacing below border */}
+        <div className="h-2"></div>
       </header>
 
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
