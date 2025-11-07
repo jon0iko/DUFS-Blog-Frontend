@@ -5,7 +5,7 @@ export default async function HeroSection() {
   try {
     // Fetch all hero articles from Strapi v5
     const heroArticlesResponse = await serverStrapiAPI.getHeroArticles();
-    console.log('Hero Articles Response:', heroArticlesResponse);
+    // console.log('Hero Articles Response:', heroArticlesResponse);
     
     if (!heroArticlesResponse.data || heroArticlesResponse.data.length === 0) {
       return (

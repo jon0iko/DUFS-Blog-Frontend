@@ -83,8 +83,8 @@ export default function SignIn() {
           <Input
             id="identifier"
             name="identifier"
-            type="text"
-            autoComplete="username"
+            type="email"
+            autoComplete="email"
             value={formData.identifier}
             onChange={handleChange}
             placeholder="Enter your email or username"

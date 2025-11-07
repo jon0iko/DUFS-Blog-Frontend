@@ -2,13 +2,15 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Menu, Search, Moon, Sun, LogIn, X, User, LogOut } from "lucide-react"; // Added User and LogOut icons
+import { Menu, Search, Moon, Sun, LogIn, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "next-themes";
 import Sidebar from "./Sidebar";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook
+import { useAuth } from "@/contexts/AuthContext";
+import Avatar from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
@@ -123,28 +125,35 @@ export default function Header() {
                   <LogIn className="mr-2 h-6 w-6 stroke-2" />
                   <span>SIGN IN</span>
                 </Link>
-                
               </div>
             ) : (
-              // Authenticated - show user info and logout
-              <div className="flex items-center gap-3">
-                
-                <Link href="/account" className="hidden sm:inline-flex items-center text-base font-bold gap-2">
-                  <User className="h-6 w-6 stroke-2" />
-                  <span className="hidden md:inline-block text-base font-bold">
-                  {user?.username}
-                  </span>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="hidden sm:inline-flex font-bold hover:bg-gray-100 dark:hover:bg-gray-800"
-                  onClick={handleLogout}
+              // Authenticated - show user avatar with dropdown menu
+              <DropdownMenu
+                trigger={
+                  <Avatar
+                    initials={user?.username?.charAt(0).toUpperCase() || "U"}
+                    size="md"
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                  />
+                }
+                align="right"
+              >
+                <DropdownMenuItem
+                  onClick={() => {
+                    window.location.href = "/account";
+                  }}
                 >
-                  <LogOut className="!h-6 !w-6 stroke-2 mr-2" />
-                  <span className="hidden md:inline-block">LOGOUT</span>
-                </Button>
-              </div>
+                  Profile
+                </DropdownMenuItem>
+                <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <LogOut className="mr-2 h-4 w-4 inline stroke-2" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenu>
             )}
 
             {/* Search Icon Button (Visible < sm breakpoint, triggers mobile search input) */}
