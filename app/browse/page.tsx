@@ -5,6 +5,7 @@ import { useSearchParams, usePathname, useRouter } from 'next/navigation'
 import CategoryTabs from '@/components/browse/CategoryTabs'
 import FilterOptions from '@/components/browse/FilterOptions'
 import ArticlesList from '@/components/browse/ArticlesList'
+import LoadingScreen from '@/components/common/LoadingScreen'
 import { strapiAPI } from '@/lib/api'
 import { Category } from '@/types'
 
@@ -15,11 +16,13 @@ function BrowsePageContent() {
   
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState<string>('')
+  const [isLoading, setIsLoading] = useState(true)
   
   // Fetch categories on mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
+        setIsLoading(true)
         // Strapi v5: getCategories returns CategoryResponse with data array
         const response = await strapiAPI.getCategories()
         const fetchedCategories = response.data || []
@@ -32,9 +35,11 @@ function BrowsePageContent() {
         } else if (fetchedCategories.length > 0) {
           setActiveCategory(fetchedCategories[0].Slug || '')
         }
+        setIsLoading(false)
       } catch (error) {
         console.error('Failed to fetch categories:', error)
         setCategories([])
+        setIsLoading(false)
       }
     }
     fetchCategories()
@@ -65,10 +70,12 @@ function BrowsePageContent() {
     router.push(`${pathname}?${params.toString()}`)
   }
   return (
-
-    // if isLoadingCategories, show skeleton
-    
-    <div className="container py-8 px-4 md:px-6">
+    <>
+      <LoadingScreen isLoading={isLoading} />
+      
+      {/* if isLoadingCategories, show skeleton */}
+      
+      <div className="container py-8 px-4 md:px-6">
       <div className="mb-8 max-w-3xl">
         <h1 className="text-4xl font-bold mb-4 tracking-tight">BROWSE</h1>        
         <p className="text-lg text-muted-foreground">
@@ -100,6 +107,7 @@ function BrowsePageContent() {
         sortBy={sortBy}
       />
     </div>
+    </>
   )
 }
 

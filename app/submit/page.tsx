@@ -3,7 +3,10 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import LoadingScreen from '@/components/common/LoadingScreen';
 import BlogSubmissionForm from '@/components/submissions/BlogSubmissionForm';
+// import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor"
+
 
 export default function SubmitPage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -15,18 +18,15 @@ export default function SubmitPage() {
     }
   }, [isLoading, isAuthenticated, router]);
 
-  if (isLoading) {
-    return <div className="container py-12 text-center">Loading...</div>;
-  }
-
-  if (!isAuthenticated) {
-    return null;
-  }
-
   return (
-    <div className="container py-12 px-4">
-      <h1 className="text-4xl font-bold mb-8 text-center">Submit Your Article</h1>
-      <BlogSubmissionForm />
-    </div>
+    <>
+      <LoadingScreen isLoading={isLoading} />
+      {isAuthenticated && (
+        <div className="container py-12 px-4">
+          <h1 className="text-4xl font-bold mb-8 text-center">Submit Your Article</h1>
+          <BlogSubmissionForm />
+        </div>
+      )}
+    </>
   );
 }

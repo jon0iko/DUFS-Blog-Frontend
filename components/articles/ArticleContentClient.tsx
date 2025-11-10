@@ -11,6 +11,7 @@ import ArticleHTMLContent from './ArticleHTMLContent';
 import CommentSection from './CommentSection';
 import RelatedArticles from './RelatedArticles';
 import ReadingProgressBar from './ReadingProgressBar';
+import LoadingScreen from '@/components/common/LoadingScreen';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -220,6 +221,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
 
   return (
     <>
+      <LoadingScreen isLoading={loading} />
       <ReadingProgressBar />
       
       <article className="relative">
