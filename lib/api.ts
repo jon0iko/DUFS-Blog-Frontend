@@ -12,7 +12,9 @@ import {
   Tag,
   SiteConfig,
   Submission,
-  Comment
+  Comment,
+  Draft,
+  DraftResponse
 } from '@/types';
 import { getAuthorAvatar } from './strapi-helpers';
 
@@ -104,11 +106,13 @@ class StrapiAPI {
     language?: 'en' | 'bn' | 'both';
     featured?: boolean;
     editorsPick?: boolean;
-    storyState?: string;
     sort?: string;
     populate?: string[];
   }): Promise<ArticleResponse> {
     const searchParams = new URLSearchParams();
+    
+    // Strapi v5: status=published is required to get published content (draft/publish system)
+    searchParams.append('status', 'published');
     
     // Pagination
     if (params?.page) searchParams.append('pagination[page]', params.page.toString());
@@ -130,9 +134,6 @@ class StrapiAPI {
     if (params?.editorsPick) {
       searchParams.append('filters[isEditorsPick][$eq]', 'true');
     }
-    if (params?.storyState) {
-      searchParams.append('filters[storyState][$eq]', params.storyState);
-    }
     
     // Sorting
     const sort = params?.sort || 'publishedAt:desc';
@@ -143,6 +144,8 @@ class StrapiAPI {
     populate.forEach((field, index) => {
       searchParams.append(`populate[${index}]`, field);
     });
+
+    console.log(`${config.strapi.endpoints.articles}?${searchParams.toString()}`)
 
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
@@ -156,6 +159,7 @@ class StrapiAPI {
   async getArticleBySlug(slug: string): Promise<Article | null> {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[slug][$eq]', slug);
+    searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     
     // Populate all necessary fields for article detail page
     const populate = [
@@ -184,6 +188,7 @@ class StrapiAPI {
    */
   async getArticleByDocumentId(documentId: string): Promise<Article> {
     const searchParams = new URLSearchParams();
+    searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     
     const populate = [
       'featuredImage',
@@ -211,7 +216,6 @@ class StrapiAPI {
     return this.getArticles({
       featured: true,
       pageSize: limit,
-      storyState: 'published',
       sort: 'publishedAt:desc'
     });
   }
@@ -223,7 +227,6 @@ class StrapiAPI {
     return this.getArticles({
       editorsPick: true,
       pageSize: limit,
-      storyState: 'published',
       sort: 'publishedAt:desc'
     });
   }
@@ -234,7 +237,7 @@ class StrapiAPI {
   async getHeroArticle(): Promise<Article | null> {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[isHero][$eq]', 'true');
-    searchParams.append('filters[storyState][$eq]', 'published');
+    searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     
     const populate = ['featuredImage', 'author', 'category'];
     populate.forEach((field, index) => {
@@ -259,9 +262,11 @@ class StrapiAPI {
   ): Promise<ArticleResponse> {
     const searchParams = new URLSearchParams();
     
+    // Strapi v5 draft/publish system
+    searchParams.append('status', 'published');
+    
     // Filter by category slug
     searchParams.append('filters[category][Slug][$eq]', categorySlug);
-    searchParams.append('filters[storyState][$eq]', 'published');
     
     // Pagination
     searchParams.append('pagination[pageSize]', limit.toString());
@@ -291,10 +296,12 @@ class StrapiAPI {
   ): Promise<ArticleResponse> {
     const searchParams = new URLSearchParams();
     
+    // Strapi v5 draft/publish system
+    searchParams.append('status', 'published');
+    
     // Filter by category and exclude current article
     searchParams.append('filters[category][Slug][$eq]', categorySlug);
     searchParams.append('filters[documentId][$ne]', currentArticleId);
-    searchParams.append('filters[storyState][$eq]', 'published');
     
     // Pagination
     searchParams.append('pagination[pageSize]', limit.toString());
@@ -369,9 +376,11 @@ class StrapiAPI {
   async getAuthorArticles(authorDocumentId: string, page: number = 1, pageSize: number = 12): Promise<ArticleResponse> {
     const searchParams = new URLSearchParams();
     
+    // Strapi v5 draft/publish system
+    searchParams.append('status', 'published');
+    
     // Filter by author documentId
     searchParams.append('filters[author][documentId][$eq]', authorDocumentId);
-    searchParams.append('filters[storyState][$eq]', 'published');
     
     // Pagination
     searchParams.append('pagination[page]', page.toString());
@@ -446,6 +455,65 @@ class StrapiAPI {
     );
 
     return response.data.length > 0 ? response.data[0] : null;
+  }
+
+  /**
+   * Create a new tag
+   */
+  async createTag(name: string): Promise<Tag> {
+    // Generate slug from name
+    const slug = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+
+    const response = await this.request<{ data: Tag }>(
+      config.strapi.endpoints.tags,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          data: { name, slug },
+        }),
+      }
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Create tag if it doesn't exist, or return existing tag
+   */
+  async getOrCreateTag(name: string): Promise<Tag> {
+    // Generate slug for lookup
+    const slug = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+
+    // Check if tag exists
+    const existingTag = await this.getTagBySlug(slug);
+    if (existingTag) {
+      return existingTag;
+    }
+
+    // Create new tag
+    return this.createTag(name);
+  }
+
+  /**
+   * Delete a tag by ID
+   */
+  async deleteTag(id: number): Promise<void> {
+    await this.request<void>(
+      `${config.strapi.endpoints.tags}/${id}`,
+      {
+        method: 'DELETE',
+      }
+    );
   }
 
 
@@ -594,8 +662,8 @@ class StrapiAPI {
       searchParams.append('filters[language][$eq]', filters.language);
     }
 
-    // Only published articles
-    searchParams.append('filters[storyState][$eq]', 'published');
+    // Strapi v5 draft/publish system - only get published articles
+    searchParams.append('status', 'published');
 
     // Populate necessary fields
     const populate = ['featuredImage', 'author', 'category', 'tags'];
@@ -630,43 +698,113 @@ class StrapiAPI {
   // ============================================
   // COMMENTS API METHODS
   // ============================================
-  // COMMENTS API METHODS
-  // ============================================
 
   /**
    * Get comments for a specific article
+   * Only fetches top-level comments (not replies) - replies are populated
    */
   async getCommentsByArticle(articleDocumentId: string): Promise<Comment[]> {
-    const searchParams = new URLSearchParams();
-    
-    // Filter by article documentId
-    searchParams.append('filters[article][documentId][$eq]', articleDocumentId);
-    
-    // Sort by date (newest first)
-    searchParams.append('sort', 'CommentDateTime:desc');
-    
-    // Populate user if needed
-    searchParams.append('populate[0]', 'users_permissions_user');
-    // Populate replies
-    searchParams.append('populate[1]', 'replies');
-    searchParams.append('populate[2]', 'replies.users_permissions_user');
+    try {
+      const searchParams = new URLSearchParams();
+      
+      // Filter by article documentId and only top-level comments (no parent)
+      searchParams.append('filters[article][documentId][$eq]', articleDocumentId);
+      searchParams.append('filters[parentComment][$null]', 'true');
+      
+      // Sort by date (newest first)
+      searchParams.append('sort', 'CommentDateTime:desc');
+      
+      // Populate user
+      searchParams.append('populate[0]', 'users_permissions_user');
+      // Populate replies with nested user
+      searchParams.append('populate[1]', 'replies');
+      searchParams.append('populate[2]', 'replies.users_permissions_user');
 
-    const response = await this.request<{ data: Comment[]; meta: object }>(
-      `/api/comments?${searchParams.toString()}`
+      const response = await this.request<{ data: Comment[]; meta: object }>(
+        `/api/comments?${searchParams.toString()}`
+      );
+
+      return response.data || [];
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Create a new comment on an article
+   */
+  async createComment(
+    articleId: number,
+    content: string,
+    userId?: number
+  ): Promise<Comment> {
+    const commentData: Record<string, unknown> = {
+      Content: content,
+      CommentDateTime: new Date().toISOString(),
+      article: articleId, // Strapi v5 uses numeric ID
+      isReplyable: true,
+      likeCount: 0,
+    };
+
+    if (userId) {
+      commentData.users_permissions_user = userId;
+    }
+
+    const response = await this.request<{ data: Comment }>(
+      '/api/comments',
+      {
+        method: 'POST',
+        body: JSON.stringify({ data: commentData }),
+      }
     );
 
     return response.data;
   }
 
+  /**
+   * Create a reply to an existing comment
+   */
+  async createCommentReply(
+    parentCommentId: number,
+    articleId: number,
+    content: string,
+    userId?: number
+  ): Promise<Comment> {
+    const replyData: Record<string, unknown> = {
+      Content: content,
+      CommentDateTime: new Date().toISOString(),
+      parentComment: parentCommentId, // Strapi v5 uses numeric ID
+      article: articleId, // Strapi v5 uses numeric ID
+      isReplyable: false, // Replies are not replyable by default
+      likeCount: 0,
+    };
+
+    if (userId) {
+      replyData.users_permissions_user = userId;
+    }
+
+    const response = await this.request<{ data: Comment }>(
+      '/api/comments',
+      {
+        method: 'POST',
+        body: JSON.stringify({ data: replyData }),
+      }
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Update comment likes count
+   */
   async updateCommentLikes(documentId: string, likeCount: number): Promise<Comment> {
     const response = await this.request<{ data: Comment }>(
       `/api/comments/${documentId}`,
       {
         method: 'PUT',
         body: JSON.stringify({
-          data: {
-            likeCount,
-          },
+          data: { likeCount },
         }),
       }
     );
@@ -674,31 +812,94 @@ class StrapiAPI {
     return response.data;
   }
 
-  async createCommentReply(
-    parentCommentDocumentId: string,
-    content: string,
-    articleDocumentId: string,
-    userId?: string
-  ): Promise<Comment> {
-    const response = await this.request<{ data: Comment }>(
-      '/api/comments',
+  /**
+   * Delete a comment (by documentId)
+   */
+  async deleteComment(documentId: string): Promise<void> {
+    await this.request(`/api/comments/${documentId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // ============================================
+  // DRAFT API METHODS
+  // ============================================
+
+  /**
+   * Get all drafts for the current user
+   */
+  async getDraftsForUser(userId: number): Promise<Draft[]> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[users_permissions_user][id][$eq]', userId.toString());
+    searchParams.append('sort', 'updatedAt:desc');
+    searchParams.append('populate[0]', 'users_permissions_user');
+
+    const response = await this.request<DraftResponse>(
+      `/api/drafts?${searchParams.toString()}`
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Get a single draft by documentId
+   */
+  async getDraftById(documentId: string): Promise<Draft | null> {
+    try {
+      const response = await this.request<{ data: Draft }>(
+        `/api/drafts/${documentId}`
+      );
+      return response.data;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Create a new draft
+   */
+  async createDraft(name: string, content: string, userId: number): Promise<Draft> {
+    const draftData = {
+      name,
+      content,
+      users_permissions_user: userId,
+    };
+
+    const response = await this.request<{ data: Draft }>(
+      '/api/drafts',
       {
         method: 'POST',
+        body: JSON.stringify({ data: draftData }),
+      }
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Update an existing draft
+   */
+  async updateDraft(documentId: string, name: string, content: string): Promise<Draft> {
+    const response = await this.request<{ data: Draft }>(
+      `/api/drafts/${documentId}`,
+      {
+        method: 'PUT',
         body: JSON.stringify({
-          data: {
-            Content: content,
-            CommentDateTime: new Date().toISOString(),
-            parentComment: parentCommentDocumentId,
-            article: articleDocumentId,
-            isReplyable: false, // Replies are not replyable by default
-            likeCount: 0,
-            ...(userId && { users_permissions_user: userId }),
-          },
+          data: { name, content },
         }),
       }
     );
 
     return response.data;
+  }
+
+  /**
+   * Delete a draft
+   */
+  async deleteDraft(documentId: string): Promise<void> {
+    await this.request(`/api/drafts/${documentId}`, {
+      method: 'DELETE',
+    });
   }
 }
 

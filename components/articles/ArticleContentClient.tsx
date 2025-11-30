@@ -447,8 +447,9 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
               {/* Comments Section */}
               <div className="mt-16">
                 <CommentSection 
-                  articleId={article.documentId}
-                  comments={comments}
+                  articleId={article.id}
+                  articleDocumentId={article.documentId}
+                  initialComments={comments}
                 />
               </div>
             </div>

@@ -73,39 +73,123 @@ export default function LoadingScreen({
       aria-label="Loading content"
       role="status"
     >
-      <div className="flex flex-col items-center gap-4">
-        {/* Spinning Logo Container */}
-        <div
-          className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center rounded-full bg-white"
-          style={{
-            animation: 'spin 3s linear infinite',
-          }}
-        >
-          <Image
-            src="/images/loading.svg"
-            alt="Loading"
-            width={96}
-            height={96}
-            className="object-contain"
-            priority
-            unoptimized
+      <div className="flex flex-col items-center gap-6">
+        {/* Animated Logo Container with Orbital Rings */}
+        <div className="relative w-32 h-32 md:w-40 md:h-40 flex items-center justify-center">
+          {/* Outer Ring */}
+          <div
+            className="absolute inset-0 rounded-full border-2 border-border/30"
+            style={{
+              animation: 'pulse-ring 2s ease-in-out infinite',
+            }}
           />
+          
+          {/* Middle Ring */}
+          <div
+            className="absolute inset-3 rounded-full border-2 border-border/50"
+            style={{
+              animation: 'pulse-ring 2s ease-in-out infinite 0.4s',
+            }}
+          />
+          
+          {/* Inner Ring */}
+          <div
+            className="absolute inset-6 rounded-full border-2 border-primary/40"
+            style={{
+              animation: 'pulse-ring 2s ease-in-out infinite 0.8s',
+            }}
+          />
+
+          {/* Logo with Gentle Float */}
+          <div
+            className="relative z-10 w-24 h-24 md:w-28 md:h-28 flex items-center justify-center rounded-full bg-white dark:bg-white shadow-lg p-3"
+            style={{
+              animation: 'float 3s ease-in-out infinite',
+            }}
+          >
+            <Image
+              src="/images/loading.svg"
+              alt="Loading"
+              width={80}
+              height={80}
+              className="object-contain w-full h-full"
+              priority
+              unoptimized
+            />
+          </div>
+
+          {/* Orbiting Dot */}
+          <div
+            className="absolute inset-0"
+            style={{
+              animation: 'rotate 4s linear infinite',
+            }}
+          >
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-primary rounded-full" />
+          </div>
         </div>
 
-        {/* Loading Text */}
-        <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">
-          Loading...
-        </p>
+        {/* Loading Text with Dots Animation */}
+        <div className="flex items-center gap-1">
+          <p className="text-sm md:text-base text-muted-foreground">
+            Loading
+          </p>
+          <span className="flex gap-1">
+            <span
+              className="w-1 h-1 bg-muted-foreground rounded-full"
+              style={{ animation: 'bounce-dot 1.4s infinite 0s' }}
+            />
+            <span
+              className="w-1 h-1 bg-muted-foreground rounded-full"
+              style={{ animation: 'bounce-dot 1.4s infinite 0.2s' }}
+            />
+            <span
+              className="w-1 h-1 bg-muted-foreground rounded-full"
+              style={{ animation: 'bounce-dot 1.4s infinite 0.4s' }}
+            />
+          </span>
+        </div>
       </div>
 
-      {/* CSS for spinning animation */}
+      {/* CSS for all animations */}
       <style jsx>{`
-        @keyframes spin {
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px) scale(1);
+          }
+          50% {
+            transform: translateY(-8px) scale(1.05);
+          }
+        }
+
+        @keyframes pulse-ring {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 0.3;
+          }
+          50% {
+            transform: scale(1.1);
+            opacity: 0.6;
+          }
+        }
+
+        @keyframes rotate {
           from {
             transform: rotate(0deg);
           }
           to {
             transform: rotate(360deg);
+          }
+        }
+
+        @keyframes bounce-dot {
+          0%, 80%, 100% {
+            transform: translateY(0);
+            opacity: 0.5;
+          }
+          40% {
+            transform: translateY(-6px);
+            opacity: 1;
           }
         }
       `}</style>

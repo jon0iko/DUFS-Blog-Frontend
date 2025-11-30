@@ -91,7 +91,7 @@ class ServerStrapiAPI {
   async getHeroArticle(): Promise<Article | null> {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[isHero][$eq]', 'true');
-    searchParams.append('filters[storyState][$eq]', 'published');
+    searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     searchParams.append('sort', 'publishedAt:desc');
     
     // Strapi v5: populate relations directly, all fields are auto-included
@@ -111,7 +111,7 @@ class ServerStrapiAPI {
   async getHeroArticles(): Promise<ArticleResponse> {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[isHero][$eq]', 'true');
-    searchParams.append('filters[storyState][$eq]', 'published');
+    searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     searchParams.append('sort', 'publishedAt:desc');
     
     // Strapi v5: populate relations directly, all fields are auto-included
@@ -129,7 +129,7 @@ class ServerStrapiAPI {
   async getFeaturedArticles(limit: number = 4): Promise<ArticleResponse> {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[isFeatured][$eq]', 'true');
-    searchParams.append('filters[storyState][$eq]', 'published');
+    searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     searchParams.append('sort', 'publishedAt:desc');
     searchParams.append('pagination[pageSize]', limit.toString());
     
@@ -147,7 +147,7 @@ class ServerStrapiAPI {
   async getEditorsChoiceArticles(limit: number = 4): Promise<ArticleResponse> {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[isEditorsPick][$eq]', 'true');
-    searchParams.append('filters[storyState][$eq]', 'published');
+    searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     searchParams.append('sort', 'publishedAt:desc');
     searchParams.append('pagination[pageSize]', limit.toString());
     
@@ -164,7 +164,7 @@ class ServerStrapiAPI {
    */
   async getAllArticles(page: number = 1, pageSize: number = 12): Promise<ArticleResponse> {
     const searchParams = new URLSearchParams();
-    searchParams.append('filters[storyState][$eq]', 'published');
+    searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     searchParams.append('sort', 'publishedAt:desc');
     searchParams.append('pagination[page]', page.toString());
     searchParams.append('pagination[pageSize]', pageSize.toString());
@@ -207,7 +207,7 @@ class ServerStrapiAPI {
   async getArticlesByCategory(categorySlug: string, page: number = 1, pageSize: number = 12): Promise<ArticleResponse> {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[category][Slug][$eq]', categorySlug); // Backend uses capital S in Slug
-    searchParams.append('filters[storyState][$eq]', 'published');
+    searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     searchParams.append('sort', 'publishedAt:desc');
     searchParams.append('pagination[page]', page.toString());
     searchParams.append('pagination[pageSize]', pageSize.toString());
@@ -317,7 +317,7 @@ class ServerStrapiAPI {
   async getArticlesByAuthor(authorDocumentId: string, page: number = 1, pageSize: number = 12): Promise<ArticleResponse> {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[author][documentId][$eq]', authorDocumentId);
-    searchParams.append('filters[storyState][$eq]', 'published');
+    searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     searchParams.append('sort', 'publishedAt:desc');
     searchParams.append('pagination[page]', page.toString());
     searchParams.append('pagination[pageSize]', pageSize.toString());

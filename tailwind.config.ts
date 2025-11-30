@@ -69,7 +69,7 @@ const config: Config = {
   			brand: {
   				dark: '#1a1a1a',
   				light: '#f8f8f8',
-  				accent: '#627D6B'
+  				accent: '#1a8917'
   			},
   			popover: {
   				DEFAULT: 'hsl(var(--popover))',

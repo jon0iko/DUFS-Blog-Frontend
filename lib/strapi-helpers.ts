@@ -197,7 +197,7 @@ export function buildQueryString(params: Record<string, string | string[] | numb
 
 /**
  * Create Strapi v5 filters for common queries
- * Note: Backend uses 'storyState' not 'status'
+ * Note: Uses Strapi v5's built-in status=published for draft/publish
  * Note: Backend uses capital letters in some fields (Slug vs slug)
  */
 export function createStrapiFilters(filters: {
@@ -207,7 +207,6 @@ export function createStrapiFilters(filters: {
   language?: string;
   category?: string;
   tag?: string;
-  storyState?: string;
 }): Record<string, string> {
   const strapiFilters: Record<string, string> = {};
 
@@ -229,9 +228,6 @@ export function createStrapiFilters(filters: {
   }
   if (filters.tag) {
     strapiFilters['filters[tags][slug][$in]'] = filters.tag;
-  }
-  if (filters.storyState) {
-    strapiFilters['filters[storyState][$eq]'] = filters.storyState;
   }
 
   return strapiFilters;

@@ -121,7 +121,6 @@ export interface Article {
   author?: Author; // Populated relation
   category?: Category; // Populated relation
   tags?: Tag[]; // Populated relation
-  storyState: 'draft' | 'published' | 'archived' | 'submitted' | 'review';
   isFeatured: boolean;
   isEditorsPick: boolean;
   isHero: boolean;
@@ -253,6 +252,23 @@ export interface Comment {
 
 // Comment response from API
 export type CommentResponse = StrapiResponse<Comment[]>;
+
+// Draft - for saving editor content
+export interface Draft {
+  id: number;
+  documentId: string;
+  name: string;
+  content: string;
+  users_permissions_user?: {
+    id: number;
+    username: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Draft response from API
+export type DraftResponse = StrapiResponse<Draft[]>;
 
 // API Response types - using type aliases instead of empty interfaces
 export type ArticleResponse = StrapiResponse<Article[]>;

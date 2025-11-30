@@ -3,10 +3,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
-import { AuthProvider } from "@/contexts/AuthContext"; // Add this import
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-import FloatingBanner from "@/components/layout/FloatingBanner";
+import { AuthProvider } from "@/contexts/AuthContext";
+import LayoutContent from '@/components/layout/LayoutContent';
 
 const roboto = localFont({
   src: [
@@ -75,12 +73,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-              <FloatingBanner />
-              <Footer />
-            </div>
+            <LayoutContent>{children}</LayoutContent>
           </AuthProvider>
         </ThemeProvider>
       </body>

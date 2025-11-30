@@ -15,7 +15,7 @@ interface AuthorPageClientProps {
 
 export default function AuthorPageClient({ author, articles }: AuthorPageClientProps) {
   const avatarUrl = author.Avatar?.url 
-    ? ${config.strapi.url}
+    ? `${config.strapi.url}${author.Avatar.url}`
     : '/images/hero.jpg';
 
   return (
@@ -34,7 +34,7 @@ export default function AuthorPageClient({ author, articles }: AuthorPageClientP
           <div>
             <h1 className="text-3xl font-bold mb-1">{author.Name}</h1>
             <p className="text-sm text-gray-500 mb-4">
-              Writer � Joined {new Date(author.createdAt).toLocaleDateString()}
+              Writer • Joined {new Date(author.createdAt).toLocaleDateString()}
             </p>
             {author.Bio && <p className="text-gray-700">{author.Bio}</p>}
           </div>
@@ -45,12 +45,12 @@ export default function AuthorPageClient({ author, articles }: AuthorPageClientP
         <h2 className="text-2xl font-bold mb-8">Articles by {author.Name}</h2>
         
         {articles.length === 0 ? (
-          <p>This author hasn't published any articles yet.</p>
+          <p>This author hasn&apos;t published any articles yet.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {articles.map((article) => {
               const imageUrl = article.featuredImage?.url
-                ? ${config.strapi.url}
+                ? `${config.strapi.url}${article.featuredImage.url}`
                 : '/images/hero.jpg';
               const titleFont = getFontClass(article.Title || '');
 
@@ -67,8 +67,8 @@ export default function AuthorPageClient({ author, articles }: AuthorPageClientP
                   </div>
                   <div className="p-6">
                     <Link 
-                      href={/articles/}
-                      className={${titleFont} text-xl font-semibold mb-2 block hover:text-blue-600 transition}
+                      href={`/articles/${article.documentId || article.slug}`}
+                      className={`${titleFont} text-xl font-semibold mb-2 block hover:text-blue-600 transition`}
                     >
                       {article.Title}
                     </Link>

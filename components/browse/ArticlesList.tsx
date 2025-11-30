@@ -76,8 +76,10 @@ export default function ArticlesList({
         }
         
         // Strapi v5: getArticles returns ArticleResponse with data array
+        console.log('Fetching articles with filters:', filters)
         const response = await strapiAPI.getArticles(filters)
         let fetchedArticles = response.data || []
+        console.log(`Fetched ${fetchedArticles.length} articles from Strapi`)
         
         // Sort articles on client side
         fetchedArticles = sortArticles(fetchedArticles, sortBy)

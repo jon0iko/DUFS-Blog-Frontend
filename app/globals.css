@@ -87,3 +87,63 @@
     display: none; /* Chrome, Safari and Opera */
   }
 }
+
+/* Dropdown and menu animations */
+@layer base {
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes zoomIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@layer utilities {
+  .animate-in {
+    animation-fill-mode: both;
+  }
+
+  .fade-in {
+    animation: fadeIn var(--animation-duration, 200ms) ease-out;
+  }
+
+  .zoom-in-95 {
+    animation: zoomIn var(--animation-duration, 200ms) ease-out;
+  }
+
+  .slide-down {
+    animation: slideDown var(--animation-duration, 200ms) ease-out;
+  }
+
+  .duration-200 {
+    animation-duration: 200ms;
+  }
+
+  .duration-300 {
+    animation-duration: 300ms;
+  }
+}

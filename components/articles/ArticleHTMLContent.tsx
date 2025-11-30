@@ -114,8 +114,19 @@ export default function ArticleHTMLContent({
       return `<li${attrs} class="ml-2 ${fontClass}">` + content + '</li>';
     });
     
-    // Style images
-    html = html.replace(/<img([^>]*)>/g, '<img$1 class="rounded-lg shadow-lg my-10 max-w-2xl mx-auto w-full">');
+    // Style images - max 500px width, maintain aspect ratio for consistency with editor
+    html = html.replace(/<img([^>]*)>/g, (match, attrs) => {
+      return `<div class="my-10 flex justify-center"><img${attrs} class="rounded-lg shadow-lg" style="max-width: 500px; width: 100%; height: auto;"></div>`;
+    });
+
+    // Style figure elements with image captions - same max-width sizing
+    html = html.replace(/<figure([^>]*)data-image-caption([^>]*)>([\s\S]*?)<\/figure>/gi, (match, attrs1, attrs2, innerContent) => {
+      // Extract and restyle the img inside
+      const styledInner = innerContent.replace(/<img([^>]*)>/g, (imgMatch: string, imgAttrs: string) => {
+        return `<img${imgAttrs} class="rounded-lg shadow-lg" style="max-width: 500px; width: 100%; height: auto;">`;
+      });
+      return `<figure${attrs1}data-image-caption${attrs2} class="my-10 flex flex-col items-center">${styledInner}</figure>`;
+    });
     
     // Style hr
     html = html.replace(/<hr([^>]*)>/g, '<hr$1 class="my-10 border-t border-gray-300 dark:border-gray-600">');

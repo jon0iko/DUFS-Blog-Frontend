@@ -24,7 +24,6 @@ export default function CategoryTabs({
     <div className="overflow-x-auto scrollbar-hide">
       <nav className="flex space-x-12 pb-2">
         {categories.map((category) => {
-          // Strapi v5: Backend uses capital S in Slug
           const categorySlug = category.Slug || ''
           const categoryName = category.Name || ''
           const fontClass = getFontClass(categoryName)
