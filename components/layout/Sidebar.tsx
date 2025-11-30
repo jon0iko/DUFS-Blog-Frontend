@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext'; // Import useAuth hook
+import { getUserAvatarUrl } from '@/lib/auth'; // Import avatar helper
 
 interface NavigationItem {
   title: string;
@@ -84,8 +85,13 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
           <div className="mb-6 py-3 px-4 bg-muted/50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center mr-3">
-                  <User className="h-6 w-6" />
+                <div className="h-10 w-10 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center mr-3 relative">
+                  <Image
+                    src={getUserAvatarUrl(user)}
+                    alt={user?.username || 'User'}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
                 <div>
                   <p className="font-medium">{user?.username}</p>

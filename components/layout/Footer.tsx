@@ -20,13 +20,18 @@ export default function Footer() {
             </div>
           </div>
 
-          <div className='text-center'>
-          <p className="text-sm font-light text-gray-600 dark:text-gray-200">
-                If you&apos;re interested in contributing to the blog,<br></br> please see our{' '}
-                <Link href="/pitching-guidelines" className="font-bold hover:underline">
-                  Contribution Section.
-                </Link>
-              </p>
+          <div className='text-center md:text-left'>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            <span className="font-semibold text-gray-800 dark:text-gray-100">Address:</span> 1st floor, TSC, University of Dhaka<br />
+            Dhaka 1000, Bangladesh.
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+            <span className="font-semibold text-gray-800 dark:text-gray-100">Phone:</span> +880 1558641981
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+            <span className="font-semibold text-gray-800 dark:text-gray-100">Email:</span>{' '}
+            <a href="mailto:info@dufs.org" className="hover:underline">info@dufs.org</a>
+          </p>
           </div>
           
           <div>

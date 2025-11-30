@@ -20,10 +20,20 @@ export default function CategoryTabs({
     setActiveCategory(categorySlug)
   }
   
+  // Create "All" category option
+  const allCategory = {
+    documentId: 'all',
+    Slug: 'all',
+    Name: 'All'
+  }
+  
+  // Combine "All" with other categories
+  const allCategories = [allCategory, ...categories]
+  
   return (
-    <div className="overflow-x-auto scrollbar-hide">
-      <nav className="flex space-x-12 pb-2">
-        {categories.map((category) => {
+    <div>
+      <nav className="flex flex-wrap gap-x-6 gap-y-3 md:gap-x-10">
+        {allCategories.map((category) => {
           const categorySlug = category.Slug || ''
           const categoryName = category.Name || ''
           const fontClass = getFontClass(categoryName)
@@ -33,7 +43,7 @@ export default function CategoryTabs({
               key={category.documentId}
               onClick={() => handleCategoryChange(categorySlug)}
               className={cn(
-                "pb-6 pt-2 px-1 border-b-2 text-xl font-medium transition-colors whitespace-nowrap relative",
+                "pb-2 pt-2 px-1 border-b-2 text-lg md:text-xl font-medium transition-colors relative",
                 fontClass,
                 activeCategory === categorySlug
                   ? "border-foreground text-foreground" 

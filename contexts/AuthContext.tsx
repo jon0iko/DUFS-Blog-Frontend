@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   login as loginApi, 
@@ -21,6 +21,8 @@ interface AuthContextType {
   login: (data: LoginData) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
+  updateLocalUser: (userData: UserData) => void;
   error: string | null;
 }
 
@@ -101,6 +103,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/');
   };
 
+  // Refresh user data from server
+  const refreshUser = useCallback(async () => {
+    try {
+      const currentUser = await fetchCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+      }
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+    }
+  }, []);
+
+  // Update local user state (without fetching from server)
+  const updateLocalUser = useCallback((userData: UserData) => {
+    setUser(userData);
+  }, []);
+
   const value = {
     isLoading,
     isAuthenticated: !!user,
@@ -108,6 +127,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     register,
     logout,
+    refreshUser,
+    updateLocalUser,
     error
   };
 

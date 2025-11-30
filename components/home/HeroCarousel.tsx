@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -68,19 +68,26 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
   };
 
   const currentArticle = articles[currentIndex];
-  const articleData = getArticleData(currentArticle);
+  const articleData = useMemo(() => getArticleData(currentArticle), [currentArticle]);
+  const imageSrc = useMemo(() => getArticleImage(currentArticle), [currentArticle]);
+  
+  // Compute font classes based on current article data
+  const titleFontClass = useMemo(
+    () => (articleData ? getFontClass(articleData.title) : 'font-roboto'),
+    [articleData]
+  );
+  const excerptFontClass = useMemo(
+    () => (articleData ? getFontClass(articleData.excerpt) : 'font-roboto'),
+    [articleData]
+  );
 
   if (!articleData) {
     return null;
   }
 
-  const imageSrc = getArticleImage(currentArticle);
-  const titleFontClass = getFontClass(articleData.title);
-  const excerptFontClass = getFontClass(articleData.excerpt);
-
   return (
     <section 
-      className="relative h-[50vh] md:h-[60vh] lg:h-[70vh] w-full overflow-hidden group"
+      className="relative h-[60vh] md:h-[60vh] lg:h-[70vh] w-full overflow-hidden group"
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
@@ -100,11 +107,12 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
       </div>
 
       {/* Content overlay */}
-      <Link href={`/read-article?slug=${articleData.slug}`}>
+      <Link href={`/read-article?slug=${articleData.slug}`} key={currentIndex}>
         <div className="absolute inset-0 flex flex-col justify-end">
           <div className="container pl-6 pb-12">
             <div className="max-w-5xl">
               <h1
+                key={`title-${currentIndex}`}
                 className={`${titleFontClass} text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 transition-all duration-700 ease-out ${
                   isTransitioning ? "translate-y-2" : "opacity-100 translate-y-0"
                 } ${
@@ -114,6 +122,7 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
                 {articleData.title}
               </h1>
               <p
+                key={`excerpt-${currentIndex}`}
                 className={`${excerptFontClass} text-lg md:text-xl text-white/80 transition-all duration-700 ease-out delay-100 ${
                   isTransitioning ? "translate-y-2" : "opacity-100 translate-y-0"
                 }`}

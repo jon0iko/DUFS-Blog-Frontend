@@ -19,6 +19,22 @@ import {
 import { getAuthorAvatar } from './strapi-helpers';
 
 /**
+ * Bookmarked Article interface for account page
+ */
+export interface BookmarkedArticle {
+  bookmarkDocumentId: string;
+  articleId: number;
+  articleDocumentId: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  featuredImage?: string;
+  authorName?: string;
+  category?: string;
+  createdAt: string;
+}
+
+/**
  * Strapi v5 API Client for Client-Side Data Fetching
  * 
  * Key Changes in Strapi v5:
@@ -640,30 +656,46 @@ class StrapiAPI {
   // ============================================
 
   /**
-   * Search content across articles
+   * Search content across articles (title, excerpt, content, author name, tags)
+   * Uses multiple $or filters for comprehensive search
    */
-  async searchContent(query: string, filters?: {
-    contentType?: 'articles' | 'authors';
+  async searchArticles(query: string, options?: {
+    page?: number;
+    pageSize?: number;
     category?: string;
     language?: 'en' | 'bn' | 'both';
   }): Promise<ArticleResponse> {
     const searchParams = new URLSearchParams();
     
     // Search across multiple fields using $or operator
+    // Includes: title, titleBn, excerpt, excerptBn, content, contentBn, author name, tags
     searchParams.append('filters[$or][0][title][$containsi]', query);
-    searchParams.append('filters[$or][1][excerpt][$containsi]', query);
-    searchParams.append('filters[$or][2][content][$containsi]', query);
+    searchParams.append('filters[$or][1][titleBn][$containsi]', query);
+    searchParams.append('filters[$or][2][excerpt][$containsi]', query);
+    searchParams.append('filters[$or][3][excerptBn][$containsi]', query);
+    searchParams.append('filters[$or][4][content][$containsi]', query);
+    searchParams.append('filters[$or][5][contentBn][$containsi]', query);
+    searchParams.append('filters[$or][6][author][Name][$containsi]', query);
+    searchParams.append('filters[$or][7][tags][name][$containsi]', query);
     
-    if (filters?.category) {
-      searchParams.append('filters[category][Slug][$eq]', filters.category);
+    // Additional filters
+    if (options?.category) {
+      searchParams.append('filters[category][Slug][$eq]', options.category);
     }
     
-    if (filters?.language) {
-      searchParams.append('filters[language][$eq]', filters.language);
+    if (options?.language) {
+      searchParams.append('filters[language][$eq]', options.language);
     }
+
+    // Pagination
+    searchParams.append('pagination[page]', (options?.page || 1).toString());
+    searchParams.append('pagination[pageSize]', (options?.pageSize || 10).toString());
 
     // Strapi v5 draft/publish system - only get published articles
     searchParams.append('status', 'published');
+    
+    // Sort by relevance (most recent first as fallback)
+    searchParams.append('sort', 'publishedAt:desc');
 
     // Populate necessary fields
     const populate = ['featuredImage', 'author', 'category', 'tags'];
@@ -674,6 +706,20 @@ class StrapiAPI {
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
     );
+  }
+
+  /**
+   * @deprecated Use searchArticles instead
+   */
+  async searchContent(query: string, filters?: {
+    contentType?: 'articles' | 'authors';
+    category?: string;
+    language?: 'en' | 'bn' | 'both';
+  }): Promise<ArticleResponse> {
+    return this.searchArticles(query, {
+      category: filters?.category,
+      language: filters?.language,
+    });
   }
 
   // ============================================
@@ -714,11 +760,10 @@ class StrapiAPI {
       // Sort by date (newest first)
       searchParams.append('sort', 'CommentDateTime:desc');
       
-      // Populate user
-      searchParams.append('populate[0]', 'users_permissions_user');
-      // Populate replies with nested user
-      searchParams.append('populate[1]', 'replies');
-      searchParams.append('populate[2]', 'replies.users_permissions_user');
+      // Populate user with all fields including avatar
+      searchParams.append('populate[users_permissions_user][populate]', '*');
+      // Populate replies and their users with avatars
+      searchParams.append('populate[replies][populate][users_permissions_user][populate]', '*');
 
       const response = await this.request<{ data: Comment[]; meta: object }>(
         `/api/comments?${searchParams.toString()}`
@@ -742,13 +787,14 @@ class StrapiAPI {
     const commentData: Record<string, unknown> = {
       Content: content,
       CommentDateTime: new Date().toISOString(),
-      article: articleId, // Strapi v5 uses numeric ID
+      article: { connect: [articleId] }, // Strapi v5 relation connect syntax
       isReplyable: true,
       likeCount: 0,
     };
 
     if (userId) {
-      commentData.users_permissions_user = userId;
+      // Use connect syntax for user relation in Strapi v5
+      commentData.users_permissions_user = { connect: [userId] };
     }
 
     const response = await this.request<{ data: Comment }>(
@@ -774,14 +820,15 @@ class StrapiAPI {
     const replyData: Record<string, unknown> = {
       Content: content,
       CommentDateTime: new Date().toISOString(),
-      parentComment: parentCommentId, // Strapi v5 uses numeric ID
-      article: articleId, // Strapi v5 uses numeric ID
+      parentComment: { connect: [parentCommentId] }, // Strapi v5 relation connect syntax
+      article: { connect: [articleId] }, // Strapi v5 relation connect syntax
       isReplyable: false, // Replies are not replyable by default
       likeCount: 0,
     };
 
     if (userId) {
-      replyData.users_permissions_user = userId;
+      // Use connect syntax for user relation in Strapi v5
+      replyData.users_permissions_user = { connect: [userId] };
     }
 
     const response = await this.request<{ data: Comment }>(
@@ -819,6 +866,284 @@ class StrapiAPI {
     await this.request(`/api/comments/${documentId}`, {
       method: 'DELETE',
     });
+  }
+
+  // ============================================
+  // USER ARTICLE LIKE API METHODS
+  // ============================================
+
+  /**
+   * Check if user has liked an article
+   */
+  async hasUserLikedArticle(userId: number, articleId: number): Promise<{ liked: boolean; likeId?: string }> {
+    try {
+      const searchParams = new URLSearchParams();
+      searchParams.append('filters[user][id][$eq]', userId.toString());
+      searchParams.append('filters[article][id][$eq]', articleId.toString());
+
+      const response = await this.request<{ data: Array<{ id: number; documentId: string }> }>(
+        `/api/user-article-likes?${searchParams.toString()}`
+      );
+
+      if (response.data && response.data.length > 0) {
+        return { liked: true, likeId: response.data[0].documentId };
+      }
+      return { liked: false };
+    } catch (error) {
+      console.error('Error checking user like:', error);
+      return { liked: false };
+    }
+  }
+
+  /**
+   * Create a like for an article (user-specific)
+   */
+  async likeArticle(userId: number, articleId: number): Promise<{ success: boolean; likeId?: string }> {
+    try {
+      const response = await this.request<{ data: { id: number; documentId: string } }>(
+        '/api/user-article-likes',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            data: {
+              user: { connect: [userId] },
+              article: { connect: [articleId] },
+            },
+          }),
+        }
+      );
+      return { success: true, likeId: response.data.documentId };
+    } catch (error) {
+      console.error('Error liking article:', error);
+      return { success: false };
+    }
+  }
+
+  /**
+   * Remove a like from an article
+   */
+  async unlikeArticle(likeDocumentId: string): Promise<boolean> {
+    try {
+      await this.request(`/api/user-article-likes/${likeDocumentId}`, {
+        method: 'DELETE',
+      });
+      return true;
+    } catch (error) {
+      console.error('Error unliking article:', error);
+      return false;
+    }
+  }
+
+  // ============================================
+  // BOOKMARK API METHODS
+  // ============================================
+
+  /**
+   * Check if user has bookmarked an article
+   */
+  async hasUserBookmarkedArticle(userId: number, articleId: number): Promise<{ bookmarked: boolean; bookmarkId?: string }> {
+    try {
+      const searchParams = new URLSearchParams();
+      searchParams.append('filters[user][id][$eq]', userId.toString());
+      searchParams.append('filters[article][id][$eq]', articleId.toString());
+
+      const response = await this.request<{ data: Array<{ id: number; documentId: string }> }>(
+        `/api/bookmarks?${searchParams.toString()}`
+      );
+
+      if (response.data && response.data.length > 0) {
+        return { bookmarked: true, bookmarkId: response.data[0].documentId };
+      }
+      return { bookmarked: false };
+    } catch (error) {
+      console.error('Error checking bookmark:', error);
+      return { bookmarked: false };
+    }
+  }
+
+  /**
+   * Create a bookmark for an article
+   */
+  async bookmarkArticle(userId: number, articleId: number): Promise<{ success: boolean; bookmarkId?: string }> {
+    try {
+      const response = await this.request<{ data: { id: number; documentId: string } }>(
+        '/api/bookmarks',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            data: {
+              user: { connect: [userId] },
+              article: { connect: [articleId] },
+            },
+          }),
+        }
+      );
+      return { success: true, bookmarkId: response.data.documentId };
+    } catch (error) {
+      console.error('Error bookmarking article:', error);
+      return { success: false };
+    }
+  }
+
+  /**
+   * Remove a bookmark
+   */
+  async removeBookmark(bookmarkDocumentId: string): Promise<boolean> {
+    try {
+      await this.request(`/api/bookmarks/${bookmarkDocumentId}`, {
+        method: 'DELETE',
+      });
+      return true;
+    } catch (error) {
+      console.error('Error removing bookmark:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get all bookmarked articles for a user
+   */
+  async getUserBookmarks(userId: number): Promise<Article[]> {
+    try {
+      const searchParams = new URLSearchParams();
+      searchParams.append('filters[user][id][$eq]', userId.toString());
+      searchParams.append('populate[article][populate][0]', 'featuredImage');
+      searchParams.append('populate[article][populate][1]', 'author');
+      searchParams.append('populate[article][populate][2]', 'category');
+      searchParams.append('sort', 'createdAt:desc');
+
+      const response = await this.request<{ data: Array<{ id: number; documentId: string; article: Article }> }>(
+        `/api/bookmarks?${searchParams.toString()}`
+      );
+
+      // Extract articles from bookmarks
+      return response.data
+        .filter(bookmark => bookmark.article)
+        .map(bookmark => bookmark.article);
+    } catch (error) {
+      console.error('Error fetching bookmarks:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get all bookmarks for a user with bookmark IDs for removal
+   */
+  async getBookmarksForUser(userId: number): Promise<BookmarkedArticle[]> {
+    try {
+      const searchParams = new URLSearchParams();
+      searchParams.append('filters[user][id][$eq]', userId.toString());
+      searchParams.append('populate[article][populate][0]', 'featuredImage');
+      searchParams.append('populate[article][populate][1]', 'author');
+      searchParams.append('populate[article][populate][2]', 'category');
+      searchParams.append('sort', 'createdAt:desc');
+
+      const response = await this.request<{ 
+        data: Array<{ 
+          id: number; 
+          documentId: string; 
+          createdAt: string;
+          article: {
+            id: number;
+            documentId: string;
+            title: string;
+            slug: string;
+            excerpt?: string;
+            featuredImage?: { url: string };
+            author?: { Name: string };
+            category?: { Name: string };
+          };
+        }> 
+      }>(`/api/bookmarks?${searchParams.toString()}`);
+
+      // Transform to BookmarkedArticle format
+      return response.data
+        .filter(bookmark => bookmark.article)
+        .map(bookmark => ({
+          bookmarkDocumentId: bookmark.documentId,
+          articleId: bookmark.article.id,
+          articleDocumentId: bookmark.article.documentId,
+          title: bookmark.article.title,
+          slug: bookmark.article.slug,
+          excerpt: bookmark.article.excerpt,
+          featuredImage: bookmark.article.featuredImage?.url,
+          authorName: bookmark.article.author?.Name,
+          category: bookmark.article.category?.Name,
+          createdAt: bookmark.createdAt,
+        }));
+    } catch (error) {
+      console.error('Error fetching bookmarks for user:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get comment count for an article (without fetching all comments)
+   */
+  async getCommentCountForArticle(articleDocumentId: string): Promise<number> {
+    try {
+      const searchParams = new URLSearchParams();
+      searchParams.append('filters[article][documentId][$eq]', articleDocumentId);
+      searchParams.append('pagination[pageSize]', '1');
+      
+      const response = await this.request<{ 
+        data: Comment[]; 
+        meta: { pagination: { total: number } } 
+      }>(
+        `/api/comments?${searchParams.toString()}`
+      );
+
+      return response.meta.pagination.total;
+    } catch (error) {
+      console.error('Error fetching comment count:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get comments for an article with pagination
+   */
+  async getCommentsByArticlePaginated(
+    articleDocumentId: string, 
+    page: number = 1, 
+    pageSize: number = 10
+  ): Promise<{ comments: Comment[]; total: number; hasMore: boolean }> {
+    try {
+      const searchParams = new URLSearchParams();
+      
+      // Filter by article documentId and only top-level comments
+      searchParams.append('filters[article][documentId][$eq]', articleDocumentId);
+      searchParams.append('filters[parentComment][$null]', 'true');
+      
+      // Pagination
+      searchParams.append('pagination[page]', page.toString());
+      searchParams.append('pagination[pageSize]', pageSize.toString());
+      
+      // Sort by date (newest first)
+      searchParams.append('sort', 'CommentDateTime:desc');
+      
+      // Populate user with all fields including avatar
+      searchParams.append('populate[users_permissions_user][populate]', '*');
+      // Populate replies and their users with avatars
+      searchParams.append('populate[replies][populate][users_permissions_user][populate]', '*');
+
+      const response = await this.request<{ 
+        data: Comment[]; 
+        meta: { pagination: { page: number; pageSize: number; pageCount: number; total: number } } 
+      }>(
+        `/api/comments?${searchParams.toString()}`
+      );
+
+      const { pagination } = response.meta;
+      return {
+        comments: response.data || [],
+        total: pagination.total,
+        hasMore: pagination.page < pagination.pageCount,
+      };
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      return { comments: [], total: 0, hasMore: false };
+    }
   }
 
   // ============================================

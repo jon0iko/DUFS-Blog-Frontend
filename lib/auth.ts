@@ -6,6 +6,22 @@
 import Cookies from 'js-cookie';
 import { config } from './config';
 
+export interface UserAvatar {
+  id: number;
+  documentId?: string;
+  url: string;
+  name?: string;
+  alternativeText?: string;
+  width?: number;
+  height?: number;
+  formats?: {
+    thumbnail?: { url: string; width: number; height: number };
+    small?: { url: string; width: number; height: number };
+    medium?: { url: string; width: number; height: number };
+    large?: { url: string; width: number; height: number };
+  };
+}
+
 export interface UserData {
   id: number;
   documentId?: string; // Strapi v5 includes documentId
@@ -14,8 +30,10 @@ export interface UserData {
   provider?: string;
   confirmed?: boolean;
   blocked?: boolean;
+  Bio?: string; // Strapi uses capital B
   phoneNumber?: string;
   Country?: string;
+  Avatar?: UserAvatar; // User avatar image
   createdAt?: string;
   updatedAt?: string;
 }
@@ -89,11 +107,38 @@ export async function login(data: LoginData): Promise<AuthResponse> {
 
     const responseData: AuthResponse = await response.json();
     setToken(responseData.jwt);
+    
+    // Fetch user with Avatar populated
+    const userWithAvatar = await fetchCurrentUserWithToken(responseData.jwt);
+    if (userWithAvatar) {
+      responseData.user = userWithAvatar;
+    }
     setUser(responseData.user);
+    
     return responseData;
   } catch (error) {
     console.error('Login error:', error);
     throw error;
+  }
+}
+
+// Helper to fetch current user with a specific token (used during login)
+async function fetchCurrentUserWithToken(token: string): Promise<UserData | null> {
+  try {
+    const response = await fetch(`${STRAPI_URL}${config.strapi.endpoints.auth.me}?populate=Avatar`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Fetch user with token error:', error);
+    return null;
   }
 }
 
@@ -226,7 +271,7 @@ async function createAuthorForUser(user: UserData, token: string): Promise<void>
  * Get the Author entry for the currently logged in user
  * Returns null if no author is found
  */
-export async function getAuthorForCurrentUser(): Promise<{ id: number; documentId: string; Name: string } | null> {
+export async function getAuthorForCurrentUser(): Promise<{ id: number; documentId: string; Name: string; slug: string } | null> {
   const token = getToken();
   const user = getUser();
   
@@ -261,6 +306,7 @@ export async function getAuthorForCurrentUser(): Promise<{ id: number; documentI
         id: author.id,
         documentId: author.documentId,
         Name: author.Name,
+        slug: author.slug,
       };
     }
     
@@ -282,6 +328,118 @@ export function isAuthenticated(): boolean {
   return !!getToken();
 }
 
+/**
+ * Update user profile (public function)
+ * Updates username, Bio, phoneNumber, Country
+ */
+export async function updateUserData(
+  userId: number,
+  profileData: { 
+    username?: string; 
+    Bio?: string;
+    phoneNumber?: string; 
+    Country?: string;
+  }
+): Promise<UserData> {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+
+  const response = await fetch(`${STRAPI_URL}/api/users/${userId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(profileData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error('Profile update error:', errorData);
+    
+    // Check for duplicate username error
+    if (errorData?.error?.message?.includes('username') || 
+        errorData?.error?.message?.includes('unique') ||
+        errorData?.error?.message?.includes('already')) {
+      throw new Error('This username is already taken. Please choose a different one.');
+    }
+    
+    throw new Error(errorData?.error?.message || 'Failed to update profile');
+  }
+
+  const updatedUser: UserData = await response.json();
+  setUser(updatedUser); // Update stored user data
+  return updatedUser;
+}
+
+/**
+ * Change user password
+ */
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+
+  const response = await fetch(`${STRAPI_URL}/api/auth/change-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      currentPassword,
+      password: newPassword,
+      passwordConfirmation: newPassword,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error('Password change error:', errorData);
+    
+    if (errorData?.error?.message?.includes('password') || 
+        errorData?.error?.message?.includes('incorrect') ||
+        errorData?.error?.message?.includes('wrong')) {
+      throw new Error('Current password is incorrect');
+    }
+    
+    throw new Error(errorData?.error?.message || 'Failed to change password');
+  }
+}
+
+/**
+ * Delete user account
+ * Note: This requires proper Strapi permissions for users to delete themselves
+ */
+export async function deleteAccount(userId: number): Promise<void> {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+
+  const response = await fetch(`${STRAPI_URL}/api/users/${userId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error('Account deletion error:', errorData);
+    throw new Error(errorData?.error?.message || 'Failed to delete account');
+  }
+
+  // Clear local auth data after successful deletion
+  logout();
+}
+
 // Fetch current user from Strapi (useful for token validation)
 // Strapi v5: User data is still returned in the same format
 export async function fetchCurrentUser(): Promise<UserData | null> {
@@ -289,7 +447,8 @@ export async function fetchCurrentUser(): Promise<UserData | null> {
   if (!token) return null;
   
   try {
-    const response = await fetch(`${STRAPI_URL}${config.strapi.endpoints.auth.me}`, {
+    // Populate Avatar field when fetching current user
+    const response = await fetch(`${STRAPI_URL}${config.strapi.endpoints.auth.me}?populate=Avatar`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -307,4 +466,90 @@ export async function fetchCurrentUser(): Promise<UserData | null> {
     logout(); // Clear invalid credentials
     return null;
   }
+}
+
+/**
+ * Get the full avatar URL for a user
+ * Returns placeholder if no avatar is set
+ */
+export function getUserAvatarUrl(user: UserData | null): string {
+  if (!user?.Avatar?.url) {
+    return '/images/avatarPlaceholder.png';
+  }
+  const url = user.Avatar.url;
+  return url.startsWith('http') ? url : `${STRAPI_URL}${url}`;
+}
+
+/**
+ * Upload avatar image for a user
+ * Uses Strapi's upload endpoint and then links it to the user
+ */
+export async function uploadUserAvatar(userId: number, file: File): Promise<UserData> {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+
+  // Step 1: Upload the file to Strapi's media library
+  const formData = new FormData();
+  formData.append('files', file);
+  formData.append('ref', 'plugin::users-permissions.user');
+  formData.append('refId', userId.toString());
+  formData.append('field', 'Avatar');
+
+  const uploadResponse = await fetch(`${STRAPI_URL}/api/upload`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!uploadResponse.ok) {
+    const errorData = await uploadResponse.json();
+    console.error('Avatar upload error:', errorData);
+    throw new Error(errorData?.error?.message || 'Failed to upload avatar');
+  }
+
+  // Step 2: Fetch updated user data with the new avatar
+  const updatedUser = await fetchCurrentUser();
+  if (!updatedUser) {
+    throw new Error('Failed to fetch updated user data');
+  }
+
+  return updatedUser;
+}
+
+/**
+ * Remove user avatar
+ */
+export async function removeUserAvatar(userId: number): Promise<UserData> {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+
+  // Update user to remove avatar reference
+  const response = await fetch(`${STRAPI_URL}/api/users/${userId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ Avatar: null }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error('Remove avatar error:', errorData);
+    throw new Error(errorData?.error?.message || 'Failed to remove avatar');
+  }
+
+  // Fetch updated user data
+  const updatedUser = await fetchCurrentUser();
+  if (!updatedUser) {
+    throw new Error('Failed to fetch updated user data');
+  }
+
+  return updatedUser;
 }

@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Menu, Search, Moon, Sun, LogIn, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useTheme } from "next-themes";
 import Sidebar from "./Sidebar";
+import SearchBar from "./SearchBar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import Avatar from "@/components/ui/avatar";
@@ -14,29 +14,19 @@ import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
-  const { isAuthenticated, user, logout } = useAuth(); // Use authentication context
+  const { isAuthenticated, user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // --- State for mobile search visibility ---
   const [isMobileSearchActive, setIsMobileSearchActive] = useState(false);
-  const mobileSearchInputRef = useRef<HTMLInputElement>(null); // Ref for focusing input
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
-    setIsMobileSearchActive(false); // Close search if opening sidebar
+    setIsMobileSearchActive(false);
   };
 
   const toggleMobileSearch = () => {
     setIsMobileSearchActive((prevState) => !prevState);
   };
 
-  // Focus input when mobile search becomes active
-  useEffect(() => {
-    if (isMobileSearchActive && mobileSearchInputRef.current) {
-      mobileSearchInputRef.current.focus();
-    }
-  }, [isMobileSearchActive]);
-
-  // Handle logout action
   const handleLogout = () => {
     logout();
   };
@@ -48,7 +38,7 @@ export default function Header() {
           <div
             className={cn(
               "flex items-center gap-6",
-              isMobileSearchActive ? "hidden sm:flex" : "flex" // Hide on mobile when search is active
+              isMobileSearchActive ? "hidden sm:flex" : "flex"
             )}
           >
             <Button
@@ -70,21 +60,17 @@ export default function Header() {
 
           {/* Mobile Search Input Area (Visible only when active and < sm) */}
           {isMobileSearchActive && (
-            <div className="flex flex-1 items-center sm:hidden">
-              {" "}
-              {/* Takes full width on mobile */}
-              <Input
-                ref={mobileSearchInputRef} // Attach ref
-                id="mobile-search-input"
-                type="search"
-                placeholder="Search..."
-                className="h-9 flex-1 rounded-md bg-muted pr-9" // Use flex-1, add padding for X button
+            <div className="flex flex-1 items-center gap-2 sm:hidden">
+              <SearchBar
+                className="flex-1"
+                autoFocus
+                isMobile
+                onClose={() => setIsMobileSearchActive(false)}
               />
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={toggleMobileSearch} // Close action
-                className="-ml-9 z-10" // Position X button over the input's end
+                onClick={toggleMobileSearch}
                 aria-label="Close search"
               >
                 <X className="h-5 w-5 text-muted-foreground" />
@@ -92,14 +78,14 @@ export default function Header() {
             </div>
           )}
 
-          {/* Right Side Actions - Conditionally Hidden/Modified on Mobile Search */}
+          {/* Right Side Actions */}
           <div
             className={cn(
               "flex items-center gap-1 sm:gap-4 justify-end",
-              isMobileSearchActive ? "hidden sm:flex" : "flex" // Hide container on mobile when search is active
+              isMobileSearchActive ? "hidden sm:flex" : "flex"
             )}
           >
-            {/* Theme Toggle (Always Visible in this section WHEN section is visible) */}
+            {/* Theme Toggle */}
             <Button
               variant="ghost"
               size="icon"
@@ -111,9 +97,24 @@ export default function Header() {
               <Moon className="absolute !h-6 !w-6 stroke-2 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </Button>
 
-            {/* Auth Links - Different states based on authentication */}
+            {/* Search Icon Button (Visible < sm breakpoint) */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleMobileSearch}
+              aria-label="Search"
+              className="sm:hidden hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <Search className="!h-6 !w-6 stroke-2" />
+            </Button>
+
+            {/* Desktop Search Input (Visible >= sm breakpoint) */}
+            <SearchBar
+              className="hidden sm:block w-40 md:w-64 lg:w-80"
+            />
+
+            {/* Auth Links */}
             {!isAuthenticated ? (
-              // Not authenticated - show login/signup
               <div className="flex items-center gap-2">
                 <Link
                   href="/auth/signin"
@@ -127,7 +128,6 @@ export default function Header() {
                 </Link>
               </div>
             ) : (
-              // Authenticated - show user avatar with dropdown menu
               <DropdownMenu
                 trigger={
                   <Avatar
@@ -155,35 +155,13 @@ export default function Header() {
                 </DropdownMenuItem>
               </DropdownMenu>
             )}
-
-            {/* Search Icon Button (Visible < sm breakpoint, triggers mobile search input) */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleMobileSearch} // Use toggle function
-              aria-label="Search"
-              className="sm:hidden hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              <Search className="!h-6 !w-6 stroke-2" />
-            </Button>
-
-            {/* Full Search Input (Visible >= sm breakpoint) */}
-            <div className="relative hidden w-32 sm:block sm:w-40 md:w-64 lg:w-80 ml-auto">
-              <Search className="absolute left-3 top-1/2 h-5 w-5 stroke-2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search..."
-                className="h-10 w-full rounded-md pl-10 bg-background border font-medium"
-              />
-            </div>
           </div>
         </div>
-        {/* Border below header - not full width */}
+        {/* Border below header */}
         <div className="container flex justify-center">
           <div className="w-full border-t-4 border-gray-900 dark:border-gray-100 shadow-lg rounded-full"></div>
         </div>
 
-        {/* Spacing below border */}
         <div className="h-2"></div>
       </header>
 

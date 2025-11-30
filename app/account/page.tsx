@@ -22,7 +22,6 @@ export default function AccountPage() {
       <LoadingScreen isLoading={isLoading} />
       {isAuthenticated && (
         <div className="container max-w-3xl mx-auto py-12 px-4">
-          <h1 className="text-3xl font-bold mb-8">My Account</h1>
           <AccountProfile />
         </div>
       )}

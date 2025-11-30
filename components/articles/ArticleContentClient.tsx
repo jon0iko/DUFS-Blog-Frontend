@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { strapiAPI } from '@/lib/api';
-import { Article, Comment as StrapiComment } from '@/types';
+import { Article } from '@/types';
 import { config } from '@/lib/config';
 import { getAuthorAvatar } from '@/lib/strapi-helpers';
 import { getFontClass } from '@/lib/fonts';
+import { useAuth } from '@/contexts/AuthContext';
 import ArticleHTMLContent from './ArticleHTMLContent';
 import CommentSection from './CommentSection';
 import RelatedArticles from './RelatedArticles';
 import ReadingProgressBar from './ReadingProgressBar';
-import LoadingScreen from '@/components/common/LoadingScreen';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,18 +35,31 @@ interface ArticleContentClientProps {
 
 export default function ArticleContentClient({ slug }: ArticleContentClientProps) {
   const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [article, setArticle] = useState<Article | null>(null);
-  const [comments, setComments] = useState<StrapiComment[]>([]);
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  
+  // Like state
   const [likes, setLikes] = useState(0);
   const [hasLiked, setHasLiked] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const [likeDocumentId, setLikeDocumentId] = useState<string | null>(null);
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
+  
+  // Bookmark state
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkDocumentId, setBookmarkDocumentId] = useState<string | null>(null);
+  const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
 
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [slug]);
+
+  // Fetch article data
   useEffect(() => {
     const fetchArticleData = async () => {
       try {
@@ -63,14 +76,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
         }
 
         setArticle(articleData);
-        console.log('Article set in state:', articleData);
         setLikes(articleData.likes || 0);
-
-        // Fetch comments
-        if (articleData.documentId) {
-          const commentsData = await strapiAPI.getCommentsByArticle(articleData.documentId);
-          setComments(commentsData);
-        }
 
         // Fetch related articles
         if (articleData.category?.Slug && articleData.documentId) {
@@ -95,72 +101,100 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
     }
   }, [slug]);
 
-  // Client-side scroll progress tracking for article content only
+  // Check if user has liked/bookmarked the article
   useEffect(() => {
-    const handleScroll = () => {
-      if (!contentRef.current) return;
+    const checkUserInteractions = async () => {
+      if (!user?.id || !article?.id) return;
 
-      const element = contentRef.current;
-      const rect = element.getBoundingClientRect();
-      const elementTop = rect.top;
-      const elementHeight = rect.height;
-      const viewportHeight = window.innerHeight;
+      try {
+        // Check like status
+        const likeStatus = await strapiAPI.hasUserLikedArticle(user.id, article.id);
+        setHasLiked(likeStatus.liked);
+        if (likeStatus.likeId) {
+          setLikeDocumentId(likeStatus.likeId);
+        }
 
-      // Calculate how much of the content is visible
-      // When top of content is at bottom of viewport: 0% progress
-      // When bottom of content is at top of viewport: 100% progress
-      let progress = 0;
-
-      if (elementTop + elementHeight <= viewportHeight) {
-        // Content is fully visible
-        progress = 100;
-      } else if (elementTop >= viewportHeight) {
-        // Content hasn't entered viewport yet
-        progress = 0;
-      } else {
-        // Content is partially visible
-        const visiblePortion = viewportHeight - elementTop;
-        progress = (visiblePortion / elementHeight) * 100;
-      }
-
-      progress = Math.max(0, Math.min(100, progress));
-      setScrollProgress(Math.round(progress));
-
-      // Log when user has scrolled through 50%, 75%, and 100% of content
-      if (progress === 100) {
-        console.log('User completed reading article content');
-      } else if (progress >= 75 && scrollProgress < 75) {
-        console.log('User scrolled 75% through article');
-      } else if (progress >= 50 && scrollProgress < 50) {
-        console.log('User scrolled 50% through article');
+        // Check bookmark status
+        const bookmarkStatus = await strapiAPI.hasUserBookmarkedArticle(user.id, article.id);
+        setIsBookmarked(bookmarkStatus.bookmarked);
+        if (bookmarkStatus.bookmarkId) {
+          setBookmarkDocumentId(bookmarkStatus.bookmarkId);
+        }
+      } catch (err) {
+        console.error('Error checking user interactions:', err);
       }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [scrollProgress]);
+    checkUserInteractions();
+  }, [user?.id, article?.id]);
 
-  const handleLike = () => {
-    if (!hasLiked && article) {
-      const newLikesCount = likes + 1;
-      setLikes(newLikesCount);
-      setHasLiked(true);
-      
-      // Persist like count to Strapi
-      strapiAPI.updateArticleLikes(article.documentId, newLikesCount)
-        .catch(err => {
-          console.error('Failed to update likes:', err);
-          // Revert optimistic update on error
-          setLikes(likes);
+  const handleLike = useCallback(async () => {
+    if (!isAuthenticated || !user?.id || !article?.id || isLikeLoading) return;
+
+    setIsLikeLoading(true);
+
+    try {
+      if (hasLiked && likeDocumentId) {
+        // Unlike
+        const success = await strapiAPI.unlikeArticle(likeDocumentId);
+        if (success) {
+          const newLikesCount = Math.max(0, likes - 1);
+          setLikes(newLikesCount);
           setHasLiked(false);
-        });
+          setLikeDocumentId(null);
+          // Update article likes count
+          await strapiAPI.updateArticleLikes(article.documentId, newLikesCount);
+        }
+      } else {
+        // Like
+        const result = await strapiAPI.likeArticle(user.id, article.id);
+        if (result.success) {
+          const newLikesCount = likes + 1;
+          setLikes(newLikesCount);
+          setHasLiked(true);
+          if (result.likeId) {
+            setLikeDocumentId(result.likeId);
+          }
+          // Update article likes count
+          await strapiAPI.updateArticleLikes(article.documentId, newLikesCount);
+        }
+      }
+    } catch (err) {
+      console.error('Error handling like:', err);
+    } finally {
+      setIsLikeLoading(false);
     }
-  };
+  }, [isAuthenticated, user?.id, article?.id, article?.documentId, hasLiked, likeDocumentId, likes, isLikeLoading]);
 
-  const handleBookmark = () => {
-    setIsBookmarked(!isBookmarked);
-    // TODO: Call API to persist bookmark
-  };
+  const handleBookmark = useCallback(async () => {
+    if (!isAuthenticated || !user?.id || !article?.id || isBookmarkLoading) return;
+
+    setIsBookmarkLoading(true);
+
+    try {
+      if (isBookmarked && bookmarkDocumentId) {
+        // Remove bookmark
+        const success = await strapiAPI.removeBookmark(bookmarkDocumentId);
+        if (success) {
+          setIsBookmarked(false);
+          setBookmarkDocumentId(null);
+        }
+      } else {
+        // Add bookmark
+        const result = await strapiAPI.bookmarkArticle(user.id, article.id);
+        if (result.success) {
+          setIsBookmarked(true);
+          if (result.bookmarkId) {
+            setBookmarkDocumentId(result.bookmarkId);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error handling bookmark:', err);
+    } finally {
+      setIsBookmarkLoading(false);
+    }
+  }, [isAuthenticated, user?.id, article?.id, isBookmarked, bookmarkDocumentId, isBookmarkLoading]);
 
   const handleShare = () => {
     if (navigator.share && article) {
@@ -169,6 +203,9 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
         text: article.excerpt,
         url: window.location.href,
       });
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(window.location.href);
     }
   };
 
@@ -221,8 +258,8 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
 
   return (
     <>
-      <LoadingScreen isLoading={loading} />
-      <ReadingProgressBar />
+      {/* Reading progress bar - tracks only the article content */}
+      <ReadingProgressBar targetId="article-content" />
       
       <article className="relative">
         {/* Hero Section with Cinematic Feel */}
@@ -363,7 +400,8 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                     hasLiked && "text-red-500"
                   )}
                   onClick={handleLike}
-                  title="Like article"
+                  disabled={!isAuthenticated || isLikeLoading}
+                  title={isAuthenticated ? "Like article" : "Sign in to like"}
                 >
                   <Heart className={cn("w-5 h-5", hasLiked && "fill-current")} />
                   <span className="text-xs">{likes}</span>
@@ -377,7 +415,8 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                     isBookmarked && "text-amber-500"
                   )}
                   onClick={handleBookmark}
-                  title="Bookmark"
+                  disabled={!isAuthenticated || isBookmarkLoading}
+                  title={isAuthenticated ? "Bookmark" : "Sign in to bookmark"}
                 >
                   <Bookmark className={cn("w-5 h-5", isBookmarked && "fill-current")} />
                 </Button>
@@ -395,24 +434,31 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
             </aside>
 
             {/* Main Article Content */}
-            <div className="flex-1 max-w-4xl" ref={contentRef}>
-              <ArticleHTMLContent 
-                content={article.content} 
-                fontSize={fontSize}
-              />
+            <div className="flex-1 max-w-4xl">
+              {/* Article content with ID for progress tracking */}
+              <div id="article-content" ref={contentRef}>
+                <ArticleHTMLContent 
+                  content={article.content} 
+                  fontSize={fontSize}
+                />
+              </div>
 
               {/* Tags */}
               {article.tags && article.tags.length > 0 && (
                 <div className="lg:hidden  mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex flex-wrap gap-2">
                     {article.tags.map((tag) => (
-                      <Badge 
-                        key={tag.id} 
-                        variant="outline"
-                        className="text-sm"
+                      <Link 
+                        key={tag.id}
+                        href={`/browse?search=${encodeURIComponent(tag.name)}&category=all`}
                       >
-                        #{tag.name}
-                      </Badge>
+                        <Badge 
+                          variant="outline"
+                          className="text-sm cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                        >
+                          #{tag.name}
+                        </Badge>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -449,7 +495,6 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                 <CommentSection 
                   articleId={article.id}
                   articleDocumentId={article.documentId}
-                  initialComments={comments}
                 />
               </div>
             </div>
@@ -488,13 +533,17 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {article.tags.map((tag) => (
-                      <Badge 
-                        key={tag.id} 
-                        variant="outline"
-                        className="text-xs cursor-default"
+                      <Link 
+                        key={tag.id}
+                        href={`/browse?search=${encodeURIComponent(tag.name)}&category=all`}
                       >
-                        #{tag.name}
-                      </Badge>
+                        <Badge 
+                          variant="outline"
+                          className="text-xs cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                        >
+                          #{tag.name}
+                        </Badge>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -522,7 +571,8 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
               size="sm"
               className={cn("flex flex-col gap-1", hasLiked && "text-red-500")}
               onClick={handleLike}
-              title="Like article"
+              disabled={!isAuthenticated || isLikeLoading}
+              title={isAuthenticated ? (hasLiked ? "Unlike article" : "Like article") : "Sign in to like"}
             >
               <Heart className={cn("w-5 h-5", hasLiked && "fill-current")} />
               <span className="text-xs">{likes}</span>
@@ -533,7 +583,8 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
               size="sm"
               className={cn(isBookmarked && "text-amber-500")}
               onClick={handleBookmark}
-              title="Bookmark"
+              disabled={!isAuthenticated || isBookmarkLoading}
+              title={isAuthenticated ? (isBookmarked ? "Remove bookmark" : "Add bookmark") : "Sign in to bookmark"}
             >
               <Bookmark className={cn("w-5 h-5", isBookmarked && "fill-current")} />
             </Button>

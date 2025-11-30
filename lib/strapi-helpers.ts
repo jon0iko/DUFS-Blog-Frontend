@@ -140,6 +140,14 @@ export function truncateText(text: string, wordLimit: number = 30): string {
 
 
 /**
+ * Get author slug safely
+ */
+export function getAuthorSlug(author?: Author): string | undefined {
+  if (!author) return undefined;
+  return author.slug;
+}
+
+/**
  * Safe access to article properties with defaults
  * Handles Strapi v5 flat response structure
  * Returns null if article is invalid (for proper error handling)
@@ -163,6 +171,7 @@ export function getArticleData(article: Article | null | undefined) {
     author: {
       name: getAuthorName(article.author),
       avatar: getAuthorAvatar(article.author),
+      slug: getAuthorSlug(article.author),
     },
     publishedAt: formatPublishDate(article.publishedAt),
     language: article.language || 'en',

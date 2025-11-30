@@ -33,7 +33,7 @@ export default function RelatedArticles({ articles }: RelatedArticlesProps) {
           return (
             <Link 
               key={article.id}
-              href={`/articles/${article.slug}`}
+              href={`/read-article?slug=${article.slug}`}
               className="group"
             >
               <div className="relative aspect-[4/3] rounded-lg overflow-hidden mb-4">
@@ -49,7 +49,7 @@ export default function RelatedArticles({ articles }: RelatedArticlesProps) {
               <div>
                 {article.category && (
                   <span 
-                    className="inline-block text-xs font-medium mb-2 px-2 py-1 rounded bg-black text-white dark:bg-white dark:text-black"
+                    className="inline-block text-xs font-medium mb-2 ml-0.5 px-2 py-1 bg-black text-white dark:bg-white dark:text-black rounded-2xl"
                   
                   >
                     {article.category.Name}
@@ -57,17 +57,17 @@ export default function RelatedArticles({ articles }: RelatedArticlesProps) {
                 )}
                 
                 <h3 className={cn(
-                  "font-semibold text-lg leading-tight mb-2 group-hover:text-primary transition line-clamp-2",
+                  "font-semibold text-lg leading-tight mb-2 group-hover:text-primary transition line-clamp-2 px-1",
                   article.language === 'bn' && "font-kalpurush"
                 )}>
                   {article.title}
                 </h3>
                 
-                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">
+                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3 px-1">
                   {article.excerpt}
                 </p>
 
-                <div className="flex items-center text-sm text-primary font-medium">
+                <div className="flex items-center text-sm text-primary font-medium px-1 group-hover:underline">
                   <span>Read More</span>
                   <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
                 </div>

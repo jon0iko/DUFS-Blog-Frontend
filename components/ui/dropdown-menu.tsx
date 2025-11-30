@@ -45,9 +45,10 @@ const DropdownMenu = ({ children, trigger, align = "right" }: DropdownMenuProps)
         const triggerButton = dropdownRef.current?.querySelector('[role="button"]') as HTMLElement;
         if (triggerButton) {
           const rect = triggerButton.getBoundingClientRect();
+          // Use viewport-relative position since dropdown is fixed positioned
           setPosition({
-            top: rect.bottom + window.scrollY + 8,
-            left: align === "left" ? rect.left + window.scrollX : rect.right + window.scrollX,
+            top: rect.bottom + 8,
+            left: align === "left" ? rect.left : rect.right,
           });
           setIsPositioned(true);
         }

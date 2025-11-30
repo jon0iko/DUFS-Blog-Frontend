@@ -6,83 +6,79 @@ import { Article } from '@/types'
 import { Button } from '@/components/ui/button'
 import { strapiAPI } from '@/lib/api'
 import { getArticleData } from '@/lib/strapi-helpers'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface ArticlesListProps {
   category: string
   language: string
   sortBy: string
+  searchQuery?: string
 }
+
+const ARTICLES_PER_PAGE = 12
 
 export default function ArticlesList({
   category,
   language,
-  sortBy
+  sortBy,
+  searchQuery
 }: ArticlesListProps) {
   const [articles, setArticles] = useState<Article[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [visibleCount, setVisibleCount] = useState(8)
-  
-  // Helper function to sort articles
-  const sortArticles = (articles: Article[], sortType: string): Article[] => {
-    const sorted = [...articles]
-    
-    switch (sortType) {
-      case 'recent':
-        return sorted.sort((a, b) => {
-          const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
-          const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
-          return dateB - dateA;
-        })
-      case 'oldest':
-        return sorted.sort((a, b) => {
-          const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
-          const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
-          return dateA - dateB;
-        })
-      case 'popular':
-        return sorted.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0))
-      default:
-        return sorted
-    }
-  }
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalArticles, setTotalArticles] = useState(0)
   
   useEffect(() => {
     const fetchArticles = async () => {
       try {
         setIsLoading(true)
-        setVisibleCount(8)
         
-        // Build filters for Strapi v5
-        const filters: {
-          page?: number;
-          pageSize?: number;
-          category?: string;
-          language?: 'en' | 'bn' | 'both';
-          sort?: string;
-          storyState?: string;
-        } = {
-          page: 1,
-          pageSize: 100, // Fetch more to allow client-side filtering
-          sort: sortBy === 'recent' ? 'publishedAt:desc' : sortBy === 'oldest' ? 'publishedAt:asc' : 'viewCount:desc',
-          storyState: 'published' // Only fetch published articles
+        let response;
+        
+        // If there's a search query, use the search API
+        if (searchQuery && searchQuery.trim()) {
+          response = await strapiAPI.searchArticles(searchQuery, {
+            page: currentPage,
+            pageSize: ARTICLES_PER_PAGE,
+            category: category && category !== 'all' ? category : undefined,
+            language: language && language !== 'all' ? (language as 'en' | 'bn') : undefined,
+          })
+        } else {
+          // Build filters for Strapi v5
+          const filters: {
+            page?: number;
+            pageSize?: number;
+            category?: string;
+            language?: 'en' | 'bn' | 'both';
+            sort?: string;
+            storyState?: string;
+          } = {
+            page: currentPage,
+            pageSize: ARTICLES_PER_PAGE,
+            sort: sortBy === 'recent' ? 'publishedAt:desc' : sortBy === 'oldest' ? 'publishedAt:asc' : 'viewCount:desc',
+            storyState: 'published'
+          }
+          
+          if (category && category !== 'all') {
+            filters.category = category
+          }
+          
+          if (language && language !== 'all') {
+            filters.language = language === 'bn' ? 'bn' : 'en'
+          }
+          
+          response = await strapiAPI.getArticles(filters)
         }
         
-        if (category && category !== 'all') {
-          filters.category = category
+        const fetchedArticles = response.data || []
+        
+        // Get pagination info from meta
+        const pagination = response.meta?.pagination
+        if (pagination) {
+          setTotalPages(pagination.pageCount || 1)
+          setTotalArticles(pagination.total || 0)
         }
-        
-        if (language && language !== 'all') {
-          filters.language = language === 'bn' ? 'bn' : 'en'
-        }
-        
-        // Strapi v5: getArticles returns ArticleResponse with data array
-        console.log('Fetching articles with filters:', filters)
-        const response = await strapiAPI.getArticles(filters)
-        let fetchedArticles = response.data || []
-        console.log(`Fetched ${fetchedArticles.length} articles from Strapi`)
-        
-        // Sort articles on client side
-        fetchedArticles = sortArticles(fetchedArticles, sortBy)
         
         setArticles(fetchedArticles)
       } catch (error) {
@@ -94,19 +90,63 @@ export default function ArticlesList({
     }
     
     fetchArticles()
-  }, [category, language, sortBy])
+  }, [category, language, sortBy, currentPage, searchQuery])
   
-  const loadMore = () => {
-    setVisibleCount(prevCount => prevCount + 8)
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [category, language, sortBy, searchQuery])
+  
+  // Handle page changes
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page)
+      // Scroll to top of articles list
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }
   
-  // Filter out invalid articles and get only the visible articles
+  // Generate page numbers to display
+  const getPageNumbers = (): (number | string)[] => {
+    const pages: (number | string)[] = []
+    const maxVisiblePages = 5
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i)
+      }
+    } else {
+      // Always show first page
+      pages.push(1)
+      
+      if (currentPage > 3) {
+        pages.push('...')
+      }
+      
+      // Show pages around current page
+      const start = Math.max(2, currentPage - 1)
+      const end = Math.min(totalPages - 1, currentPage + 1)
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i)
+      }
+      
+      if (currentPage < totalPages - 2) {
+        pages.push('...')
+      }
+      
+      // Always show last page
+      pages.push(totalPages)
+    }
+    
+    return pages
+  }
+  
+  // Filter out invalid articles
   const validArticles = articles
     .map(article => ({ raw: article, data: getArticleData(article) }))
     .filter(item => item.data !== null);
-    
-  const visibleArticles = validArticles.slice(0, visibleCount)
-  const hasMore = visibleCount < validArticles.length
   
   return (
     <div>
@@ -133,8 +173,13 @@ export default function ArticlesList({
         </div>
       ) : (
         <>
+          {/* Articles count info */}
+          <div className="mb-6 text-sm text-muted-foreground">
+            Showing {(currentPage - 1) * ARTICLES_PER_PAGE + 1} - {Math.min(currentPage * ARTICLES_PER_PAGE, totalArticles)} of {totalArticles} articles
+          </div>
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-            {visibleArticles.map(({ raw, data }) => (
+            {validArticles.map(({ raw, data }) => (
               <ArticleCard 
                 key={raw.documentId} 
                 article={data!} 
@@ -143,15 +188,60 @@ export default function ArticlesList({
             ))}
           </div>
           
-          {hasMore && (
-            <div className="mt-10 text-center">
-              <Button 
-                onClick={loadMore}
-                variant="outline" 
-                className="px-8 py-6 text-base"
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
+              {/* Previous Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1"
               >
-                Load More ({validArticles.length - visibleCount} remaining)
+                <ChevronLeft className="h-4 w-4" />
+                Previous
               </Button>
+              
+              {/* Page Numbers */}
+              <div className="flex items-center gap-1">
+                {getPageNumbers().map((page, index) => (
+                  page === '...' ? (
+                    <span key={`ellipsis-${index}`} className="px-3 py-2 text-muted-foreground">
+                      ...
+                    </span>
+                  ) : (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => goToPage(page as number)}
+                      className="min-w-[40px]"
+                    >
+                      {page}
+                    </Button>
+                  )
+                ))}
+              </div>
+              
+              {/* Next Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          
+          {/* Page info for mobile */}
+          {totalPages > 1 && (
+            <div className="mt-4 text-center text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
             </div>
           )}
         </>
