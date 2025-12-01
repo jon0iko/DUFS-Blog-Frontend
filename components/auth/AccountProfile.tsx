@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  User, Mail, AtSign, Calendar, FileText, Clock, Trash2, Edit3, Loader2, 
+  Mail, AtSign, Calendar, FileText, Clock, Trash2, Edit3, Loader2, 
   ChevronRight, Bookmark, Phone, Globe, Lock, LogOut, AlertTriangle,
   Check, Pencil, Eye
 } from 'lucide-react';
@@ -15,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDate, cn } from '@/lib/utils';
 import { strapiAPI, BookmarkedArticle } from '@/lib/api';
+import { config } from '@/lib/config';
 import { updateUserData, changePassword, deleteAccount, getAuthorForCurrentUser, uploadUserAvatar, removeUserAvatar, getUserAvatarUrl } from '@/lib/auth';
 import { validatePhoneNumber, formatPhoneNumber, COUNTRIES } from '@/lib/phone-validation';
 import { Draft } from '@/types';
@@ -1118,19 +1119,19 @@ export default function AccountProfile() {
                       )}
                     >
                       {/* Article Thumbnail */}
-                      {bookmark.featuredImage && (
-                        <div className="flex-shrink-0 w-20 h-16 rounded-lg overflow-hidden relative">
-                          <Image
-                            src={bookmark.featuredImage.startsWith('http') 
-                              ? bookmark.featuredImage 
-                              : `${process.env.NEXT_PUBLIC_STRAPI_URL || ''}${bookmark.featuredImage}`
-                            }
-                            alt={bookmark.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      )}
+                      <div className="flex-shrink-0 w-20 h-16 rounded-lg overflow-hidden relative bg-gray-100 dark:bg-gray-700">
+                        <Image
+                          src={bookmark.featuredImage 
+                            ? (bookmark.featuredImage.startsWith('http') 
+                                ? bookmark.featuredImage 
+                                : `${config.strapi.url}${bookmark.featuredImage}`)
+                            : '/images/placeholder.jpg'
+                          }
+                          alt={bookmark.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
                       
                       {/* Article Info */}
                       <div className="flex-1 min-w-0">

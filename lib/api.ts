@@ -1,4 +1,5 @@
 import { config } from './config';
+import { getToken } from './auth';
 import {
   ArticleResponse,
   AuthorResponse,
@@ -105,6 +106,52 @@ class StrapiAPI {
       return data;
     } catch (error) {
       console.error('API Request Error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Make user-authenticated requests to Strapi v5
+   * Uses the user's JWT token from auth cookies
+   */
+  private async userRequest<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const url = `${this.baseURL}${endpoint}`;
+    const userToken = getToken();
+    
+    if (!userToken) {
+      throw new Error('User not authenticated');
+    }
+    
+    const defaultHeaders: HeadersInit = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${userToken}`,
+    };
+
+    const reqConfig: RequestInit = {
+      headers: {
+        ...defaultHeaders,
+        ...options.headers,
+      },
+      cache: 'no-store',
+      ...options,
+    };
+
+    try {
+      const response = await fetch(url, reqConfig);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Strapi User API Error (${response.status}):`, errorText);
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('User API Request Error:', error);
       throw error;
     }
   }
@@ -900,7 +947,7 @@ class StrapiAPI {
    */
   async likeArticle(userId: number, articleId: number): Promise<{ success: boolean; likeId?: string }> {
     try {
-      const response = await this.request<{ data: { id: number; documentId: string } }>(
+      const response = await this.userRequest<{ data: { id: number; documentId: string } }>(
         '/api/user-article-likes',
         {
           method: 'POST',
@@ -924,7 +971,7 @@ class StrapiAPI {
    */
   async unlikeArticle(likeDocumentId: string): Promise<boolean> {
     try {
-      await this.request(`/api/user-article-likes/${likeDocumentId}`, {
+      await this.userRequest(`/api/user-article-likes/${likeDocumentId}`, {
         method: 'DELETE',
       });
       return true;
@@ -966,7 +1013,7 @@ class StrapiAPI {
    */
   async bookmarkArticle(userId: number, articleId: number): Promise<{ success: boolean; bookmarkId?: string }> {
     try {
-      const response = await this.request<{ data: { id: number; documentId: string } }>(
+      const response = await this.userRequest<{ data: { id: number; documentId: string } }>(
         '/api/bookmarks',
         {
           method: 'POST',
@@ -990,7 +1037,7 @@ class StrapiAPI {
    */
   async removeBookmark(bookmarkDocumentId: string): Promise<boolean> {
     try {
-      await this.request(`/api/bookmarks/${bookmarkDocumentId}`, {
+      await this.userRequest(`/api/bookmarks/${bookmarkDocumentId}`, {
         method: 'DELETE',
       });
       return true;

@@ -371,7 +371,57 @@ export async function updateUserData(
 
   const updatedUser: UserData = await response.json();
   setUser(updatedUser); // Update stored user data
+  
+  // If Bio was updated, also update the author's Bio
+  if (profileData.Bio !== undefined) {
+    try {
+      await updateAuthorBio(profileData.Bio);
+    } catch (err) {
+      console.warn('Failed to sync bio to author:', err);
+      // Don't throw - user update succeeded, author sync is secondary
+    }
+  }
+  
   return updatedUser;
+}
+
+/**
+ * Update the author's Bio field
+ * Called when user updates their bio to keep author in sync
+ */
+async function updateAuthorBio(bio: string): Promise<void> {
+  const token = getToken();
+  const user = getUser();
+  
+  if (!token || !user) {
+    return;
+  }
+
+  // First, get the author for this user
+  const author = await getAuthorForCurrentUser();
+  if (!author) {
+    return; // No author linked to this user
+  }
+
+  // Update the author's Bio
+  const response = await fetch(`${STRAPI_URL}/api/authors/${author.documentId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      data: {
+        Bio: bio,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error('Author bio update error:', errorData);
+    throw new Error('Failed to update author bio');
+  }
 }
 
 /**

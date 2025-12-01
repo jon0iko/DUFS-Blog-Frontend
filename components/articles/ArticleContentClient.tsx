@@ -35,7 +35,7 @@ interface ArticleContentClientProps {
 
 export default function ArticleContentClient({ slug }: ArticleContentClientProps) {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [article, setArticle] = useState<Article | null>(null);
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
@@ -104,7 +104,8 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
   // Check if user has liked/bookmarked the article
   useEffect(() => {
     const checkUserInteractions = async () => {
-      if (!user?.id || !article?.id) return;
+      // Wait for auth to finish loading and ensure we have user and article
+      if (isAuthLoading || !user?.id || !article?.id) return;
 
       try {
         // Check like status
@@ -126,7 +127,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
     };
 
     checkUserInteractions();
-  }, [user?.id, article?.id]);
+  }, [isAuthLoading, user?.id, article?.id]);
 
   const handleLike = useCallback(async () => {
     if (!isAuthenticated || !user?.id || !article?.id || isLikeLoading) return;
@@ -311,7 +312,10 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                 {/* Meta Information */}
                 <div className="flex flex-wrap items-center gap-6 text-sm text-gray-300">
                   {article.author && (
-                    <div className="flex items-center gap-3">
+                    <Link 
+                      href={`/author?slug=${article.author.slug}`}
+                      className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                    >
                       {authorAvatar && (
                         <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white/20">
                           <Image
@@ -325,10 +329,10 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                       <div>
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4" />
-                          <span className={cn("font-medium text-white", getFontClass(article.author.Name))}>{article.author.Name}</span>
+                          <span className={cn("font-medium text-white hover:underline", getFontClass(article.author.Name))}>{article.author.Name}</span>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   )}
                   
                   <div className="flex items-center gap-2">
@@ -467,9 +471,12 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
               {/* Author Bio */}
               {article.author && (
                 <div className="mt-12 p-6 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-                  <div className="flex gap-4">
+                  <Link 
+                    href={`/author?slug=${article.author.slug}`}
+                    className="flex gap-4 group"
+                  >
                     {authorAvatar && (
-                      <div className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0">
+                      <div className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0 group-hover:opacity-80 transition-opacity">
                         <Image
                           src={authorAvatar}
                           alt={article.author.Name}
@@ -479,14 +486,14 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                       </div>
                     )}
                     <div>
-                      <h3 className={cn("text-xl font-semibold mb-2", getFontClass(article.author.Name))}>{article.author.Name}</h3>
+                      <h3 className={cn("text-xl font-semibold mb-2 group-hover:text-primary transition-colors", getFontClass(article.author.Name))}>{article.author.Name}</h3>
                       {article.author.Bio && (
                         <p className={cn("text-gray-600 dark:text-gray-400", getFontClass(article.author.Bio))}>
                           {article.author.Bio}
                         </p>
                       )}
                     </div>
-                  </div>
+                  </Link>
                 </div>
               )}
 
@@ -564,51 +571,69 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
         
 
         {/* Mobile Actions Bar */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 z-40">
-          <div className="flex items-center justify-around">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn("flex flex-col gap-1", hasLiked && "text-red-500")}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 px-4 py-3 z-40 shadow-lg">
+          <div className="flex items-center justify-around max-w-md mx-auto">
+            {/* Like Button */}
+            <button
               onClick={handleLike}
               disabled={!isAuthenticated || isLikeLoading}
+              className={cn(
+                "flex flex-col items-center gap-0.5 p-2 rounded-xl transition-all",
+                hasLiked 
+                  ? "text-red-500" 
+                  : "text-gray-600 dark:text-gray-400",
+                !isAuthenticated && "opacity-50"
+              )}
               title={isAuthenticated ? (hasLiked ? "Unlike article" : "Like article") : "Sign in to like"}
             >
-              <Heart className={cn("w-5 h-5", hasLiked && "fill-current")} />
-              <span className="text-xs">{likes}</span>
-            </Button>
+              <Heart className={cn("w-6 h-6", hasLiked && "fill-current")} />
+              <span className="text-xs font-medium">{likes}</span>
+            </button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(isBookmarked && "text-amber-500")}
+            {/* Bookmark Button */}
+            <button
               onClick={handleBookmark}
               disabled={!isAuthenticated || isBookmarkLoading}
+              className={cn(
+                "flex flex-col items-center gap-0.5 p-2 rounded-xl transition-all",
+                isBookmarked 
+                  ? "text-amber-500" 
+                  : "text-gray-600 dark:text-gray-400",
+                !isAuthenticated && "opacity-50"
+              )}
               title={isAuthenticated ? (isBookmarked ? "Remove bookmark" : "Add bookmark") : "Sign in to bookmark"}
             >
-              <Bookmark className={cn("w-5 h-5", isBookmarked && "fill-current")} />
-            </Button>
+              <Bookmark className={cn("w-6 h-6", isBookmarked && "fill-current")} />
+              <span className="text-xs font-medium">Save</span>
+            </button>
 
-            <Button
-              variant="ghost"
-              size="sm"
+            {/* Share Button */}
+            <button
               onClick={handleShare}
+              className="flex flex-col items-center gap-0.5 p-2 rounded-xl text-gray-600 dark:text-gray-400 transition-all"
               title="Share article"
             >
-              <Share2 className="w-5 h-5" />
-            </Button>
+              <Share2 className="w-6 h-6" />
+              <span className="text-xs font-medium">Share</span>
+            </button>
 
-            {/* Font Size Selector for Mobile */}
-            <select
-              value={fontSize}
-              onChange={(e) => setFontSize(e.target.value as 'small' | 'medium' | 'large')}
-              className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-transparent"
-              title="Change font size"
-            >
-              <option value="small">Small</option>
-              <option value="medium">Medium</option>
-              <option value="large">Large</option>
-            </select>
+            {/* Font Size Selector */}
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                <span className="text-base font-bold">A</span>
+                <select
+                  value={fontSize}
+                  onChange={(e) => setFontSize(e.target.value as 'small' | 'medium' | 'large')}
+                  className="text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg px-1.5 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  title="Change font size"
+                >
+                  <option value="small">Small</option>
+                  <option value="medium">Medium</option>
+                  <option value="large">Large</option>
+                </select>
+              </div>
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Font</span>
+            </div>
           </div>
         </div>
       </article>
