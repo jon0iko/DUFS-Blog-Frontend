@@ -5,7 +5,7 @@ import { getArticleData } from '@/lib/strapi-helpers';
 export default async function FeaturedArticles() {
   try {
     // Strapi v5: getFeaturedArticles returns ArticleResponse with data array
-    const response = await serverStrapiAPI.getFeaturedArticles(4);
+    const response = await serverStrapiAPI.getFeaturedArticles(12);
     const articles = response.data;
 
     if (!articles || articles.length === 0) {

@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import Avatar from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { getUserAvatarUrl } from '@/lib/auth'; 
+
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
@@ -110,7 +112,7 @@ export default function Header() {
 
             {/* Desktop Search Input (Visible >= sm breakpoint) */}
             <SearchBar
-              className="hidden sm:block w-40 md:w-64 lg:w-80"
+              className="hidden sm:block w-40 md:w-64 lg:w-80 border rounded border-black"
             />
 
             {/* Auth Links */}
@@ -131,6 +133,7 @@ export default function Header() {
               <DropdownMenu
                 trigger={
                   <Avatar
+                    src={getUserAvatarUrl(user)}
                     initials={user?.username?.charAt(0).toUpperCase() || "U"}
                     size="md"
                     className="cursor-pointer hover:opacity-80 transition-opacity"
