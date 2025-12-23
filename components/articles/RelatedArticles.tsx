@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Article } from '@/types';
 import { config } from '@/lib/config';
 import { ArrowRight } from 'lucide-react';
+import { getFontClass } from '@/lib/fonts';
 
 interface RelatedArticlesProps {
   articles: Article[];
@@ -14,7 +15,6 @@ interface RelatedArticlesProps {
 
 export default function RelatedArticles({ articles }: RelatedArticlesProps) {
   if (!articles || articles.length === 0) return null;
-
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-8">
@@ -49,7 +49,7 @@ export default function RelatedArticles({ articles }: RelatedArticlesProps) {
               <div>
                 {article.category && (
                   <span 
-                    className="inline-block text-xs font-medium mb-2 ml-0.5 px-2 py-1 bg-black text-white dark:bg-white dark:text-black rounded-2xl"
+                    className={cn("inline-block text-xs font-medium mb-2 ml-0.5 px-2 py-1 bg-black text-white dark:bg-white dark:text-black rounded-2xl", getFontClass(article.category.Name))}
                   
                   >
                     {article.category.Name}
@@ -63,7 +63,7 @@ export default function RelatedArticles({ articles }: RelatedArticlesProps) {
                   {article.title}
                 </h3>
                 
-                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3 px-1">
+                <p className={cn("text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3 px-1", article.language === 'bn' && "font-kalpurush")}>
                   {article.excerpt}
                 </p>
 

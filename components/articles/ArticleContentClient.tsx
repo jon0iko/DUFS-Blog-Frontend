@@ -227,9 +227,9 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
 
   if (error || !article) {
     return (
-      <div className="container max-w-7xl mx-auto px-4 py-12">
+      <div className="container m-20 max-w-7xl mx-auto px-4 py-12 pt-18">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">Article Not Found</h1>
+          <h1 className="text-4xl font-bold mb-4">Error!</h1>
           <p className="text-gray-600 dark:text-gray-400 mb-8">
             {error || 'The article you are looking for does not exist.'}
           </p>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Facebook, Twitter, Linkedin, Link as LinkIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/components/ui/toast';
 
 interface FloatingShareBarProps {
   title: string;
@@ -10,6 +11,7 @@ interface FloatingShareBarProps {
 }
 
 export default function FloatingShareBar({ title, url }: FloatingShareBarProps) {
+  const toast = useToast();
   const [isVisible, setIsVisible] = useState(false);
   
   // Convert relative URL to absolute
@@ -26,7 +28,7 @@ export default function FloatingShareBar({ title, url }: FloatingShareBarProps) 
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(fullUrl);
-    alert('Link copied to clipboard!');
+    toast.success('Link copied to clipboard!');
   };
   
   useEffect(() => {

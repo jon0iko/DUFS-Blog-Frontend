@@ -32,6 +32,7 @@ export interface BookmarkedArticle {
   featuredImage?: string;
   authorName?: string;
   category?: string;
+  language?: string;
   createdAt: string;
 }
 
@@ -1096,6 +1097,7 @@ class StrapiAPI {
             title: string;
             slug: string;
             excerpt?: string;
+            language?: string;
             featuredImage?: { url: string };
             author?: { Name: string };
             category?: { Name: string };
@@ -1116,6 +1118,7 @@ class StrapiAPI {
           featuredImage: bookmark.article.featuredImage?.url,
           authorName: bookmark.article.author?.Name,
           category: bookmark.article.category?.Name,
+          language: bookmark.article.language,
           createdAt: bookmark.createdAt,
         }));
     } catch (error) {

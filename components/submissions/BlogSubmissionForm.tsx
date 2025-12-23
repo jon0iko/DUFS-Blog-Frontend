@@ -7,9 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/components/ui/toast';
 
 export default function BlogSubmissionForm() {
   const { user } = useAuth();
+  const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -51,7 +53,7 @@ export default function BlogSubmissionForm() {
       });
 
       if (response.ok) {
-        alert('Submission successful! Your article is under review.');
+        toast.success('Your article is under review.', 'Submission Successful');
         setFormData({
           title: '',
           excerpt: '',
@@ -61,10 +63,12 @@ export default function BlogSubmissionForm() {
           language: '',
           featuredImage: null
         });
+      } else {
+        toast.error('Submission failed. Please try again.', 'Submission Failed');
       }
     } catch (error) {
       console.error('Submission error:', error);
-      alert('Submission failed. Please try again.');
+      toast.error('Submission failed. Please try again.', 'Submission Failed');
     } finally {
       setIsSubmitting(false);
     }

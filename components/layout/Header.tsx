@@ -54,9 +54,7 @@ export default function Header() {
             </Button>
 
             <Link href="/" className="flex items-center space-x-2">
-              <span className="text-xl font-bold text-foreground">
-                DUFS Blog
-              </span>
+              <img src="/images/logoo.png" alt="Logo" className="h-12 w-14" />
             </Link>
           </div>
 

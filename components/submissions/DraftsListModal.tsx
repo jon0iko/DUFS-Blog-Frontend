@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Draft } from '@/types';
 import { strapiAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/ui/toast';
 
 interface DraftsListModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export default function DraftsListModal({
   onDeleteDraft,
 }: DraftsListModalProps) {
   const { user } = useAuth();
+  const toast = useToast();
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -87,9 +89,10 @@ export default function DraftsListModal({
       await strapiAPI.deleteDraft(draft.documentId);
       setDrafts(prev => prev.filter(d => d.documentId !== draft.documentId));
       onDeleteDraft?.(draft.documentId);
+      toast.success(`Draft "${draft.name}" deleted successfully`);
     } catch (err) {
       console.error('Error deleting draft:', err);
-      alert('Failed to delete draft');
+      toast.error('Failed to delete draft', 'Delete Failed');
     } finally {
       setDeletingId(null);
     }

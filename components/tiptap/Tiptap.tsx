@@ -21,6 +21,7 @@ import { uploadImageToStrapi, validateImageFile, fileToBase64, getStrapiMediaUrl
 import Cookies from 'js-cookie'
 import ImageWithCaption from './ImageWithCaption'
 import type { TiptapRef, TiptapProps } from './types'
+import { useToast } from '@/components/ui/toast'
 
 // Re-export types for consumers
 export type { TiptapRef, TiptapProps } from './types'
@@ -31,6 +32,7 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
   onWordCountChange,
   placeholder = 'Start writing your story...',
 }, ref) => {
+  const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
   const lastContentRef = useRef<string>(initialContent)
@@ -144,7 +146,7 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
     // Validate file
     const validation = validateImageFile(file)
     if (!validation.valid) {
-      alert(validation.error)
+      toast.error(validation.error || 'Invalid image file', 'Upload Failed')
       return
     }
 
@@ -191,7 +193,7 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
       console.log('Image uploaded successfully:', uploadedImage)
     } catch (error) {
       console.error('Image upload failed:', error)
-      alert('Failed to upload image. Using local preview instead.')
+      toast.warning('Failed to upload image. Using local preview instead.', 'Upload Warning')
     } finally {
       setIsUploading(false)
       // Reset file input

@@ -12,6 +12,7 @@ import SaveDraftModal from '@/components/submissions/SaveDraftModal';
 import DraftsListModal from '@/components/submissions/DraftsListModal';
 import { strapiAPI } from '@/lib/api';
 import { Draft } from '@/types';
+import { useToast } from '@/components/ui/toast';
 
 // Helper to generate user-specific storage keys
 const getStorageKey = (userId: number | undefined, key: string): string => {
@@ -31,6 +32,7 @@ export default function SubmitPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const tiptapRef = useRef<TiptapRef>(null);
+  const toast = useToast();
   
   // Editor state
   const [wordCount, setWordCount] = useState(0);
@@ -119,11 +121,11 @@ export default function SubmitPage() {
   // Open save draft modal
   const handleSaveDraft = useCallback(() => {
     if (!content || content === '<p></p>') {
-      alert('Please write some content before saving a draft.');
+      toast.warning('Please write some content before saving a draft.', 'No Content');
       return;
     }
     setShowSaveDraftModal(true);
-  }, [content]);
+  }, [content, toast]);
 
   // Actually save the draft
   const handleSaveDraftConfirm = useCallback(async (name: string) => {
@@ -131,25 +133,33 @@ export default function SubmitPage() {
       throw new Error('You must be logged in to save drafts');
     }
 
-    if (currentDraftId) {
-      // Update existing draft
-      await strapiAPI.updateDraft(currentDraftId, name, content);
-    } else {
-      // Create new draft
-      const newDraft = await strapiAPI.createDraft(name, content, user.id);
-      setCurrentDraftId(newDraft.documentId);
-      
-      // Save draft ID to local storage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(getStorageKey(user.id, STORAGE_KEYS.DRAFT_ID), newDraft.documentId);
+    try {
+      if (currentDraftId) {
+        // Update existing draft
+        await strapiAPI.updateDraft(currentDraftId, name, content);
+        toast.success('Draft updated successfully');
+      } else {
+        // Create new draft
+        const newDraft = await strapiAPI.createDraft(name, content, user.id);
+        setCurrentDraftId(newDraft.documentId);
+        
+        // Save draft ID to local storage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(getStorageKey(user.id, STORAGE_KEYS.DRAFT_ID), newDraft.documentId);
+        }
+        toast.success('Draft saved successfully');
       }
+      
+      setCurrentDraftName(name);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(getStorageKey(user?.id, STORAGE_KEYS.DRAFT_NAME), name);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save draft';
+      toast.error(errorMessage, 'Save Failed');
+      throw error;
     }
-    
-    setCurrentDraftName(name);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(getStorageKey(user?.id, STORAGE_KEYS.DRAFT_NAME), name);
-    }
-  }, [user?.id, content, currentDraftId]);
+  }, [user?.id, content, currentDraftId, toast]);
 
   // Open drafts list modal
   const handleViewDrafts = useCallback(() => {
@@ -187,18 +197,22 @@ export default function SubmitPage() {
         setInitialContent(draft.content);
         setEditorKey(prev => prev + 1);
       }
+      
+      toast.success(`Draft "${draft.name}" loaded successfully`);
+    } catch (error) {
+      toast.error('Failed to load draft', 'Load Failed');
     } finally {
       setIsLoadingDraft(false);
     }
-  }, [user?.id]);
+  }, [user?.id, toast]);
 
   const handlePublish = useCallback(() => {
     if (!content || content === '<p></p>') {
-      alert('Please write some content before publishing.');
+      toast.warning('Please write some content before publishing.', 'No Content');
       return;
     }
     setShowPublishModal(true);
-  }, [content]);
+  }, [content, toast]);
 
   const handlePublishSuccess = useCallback(async () => {
     // If we were editing a draft, delete it after successful publish
@@ -218,8 +232,9 @@ export default function SubmitPage() {
       localStorage.removeItem(getStorageKey(user?.id, STORAGE_KEYS.DRAFT_NAME));
     }
     
-    router.push('/');
-  }, [router, currentDraftId, user?.id]);
+    toast.success('Article published successfully! Redirecting...', 'Success');
+    setTimeout(() => router.push('/'), 1000);
+  }, [router, currentDraftId, user?.id, toast]);
 
   const handleClear = useCallback(() => {
     if (confirm('Are you sure you want to clear all content? This will not delete saved drafts in the cloud.')) {
@@ -245,8 +260,10 @@ export default function SubmitPage() {
         setInitialContent('');
         setEditorKey(prev => prev + 1);
       }
+      
+      toast.info('Content cleared successfully');
     }
-  }, [user?.id]);
+  }, [user?.id, toast]);
 
   const handleNewArticle = useCallback(() => {
     // If there's unsaved content, confirm before clearing

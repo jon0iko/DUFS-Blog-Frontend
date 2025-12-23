@@ -23,6 +23,8 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Camera, X as CloseIcon } from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
+import { getFontClass } from '@/lib/fonts';
 
 // Storage keys for loading drafts into editor
 const STORAGE_KEY = 'tiptap_draft_content';
@@ -33,6 +35,7 @@ const STORAGE_DRAFT_NAME_KEY = 'tiptap_current_draft_name';
 export default function AccountProfile() {
   const { user, logout, updateLocalUser } = useAuth();
   const router = useRouter();
+  const toast = useToast();
   
   // Tab state
   const [activeTab, setActiveTab] = useState('information');
@@ -157,8 +160,10 @@ export default function AccountProfile() {
     try {
       await strapiAPI.removeBookmark(bookmarkDocumentId);
       setBookmarks(prev => prev.filter(b => b.bookmarkDocumentId !== bookmarkDocumentId));
+      toast.success('Bookmark removed successfully');
     } catch (err) {
       console.error('Error removing bookmark:', err);
+      toast.error('Failed to remove bookmark', 'Remove Failed');
     } finally {
       setRemovingBookmarkId(null);
     }
@@ -221,7 +226,7 @@ export default function AccountProfile() {
       setDrafts(prev => prev.filter(d => d.documentId !== draft.documentId));
     } catch (err) {
       console.error('Error deleting draft:', err);
-      alert('Failed to delete draft');
+      toast.error('Failed to delete draft', 'Delete Failed');
     } finally {
       setDeletingId(null);
     }
@@ -231,7 +236,7 @@ export default function AccountProfile() {
   const handleSaveUsername = async () => {
     if (!user) return;
     if (!newUsername.trim()) {
-      setSaveError('Username cannot be empty');
+      toast.error('Username cannot be empty');
       return;
     }
     if (newUsername === user.username) {
@@ -245,10 +250,13 @@ export default function AccountProfile() {
     try {
       const updatedUser = await updateUserData(user.id, { username: newUsername.trim() });
       updateLocalUser(updatedUser);
+      toast.success('Username updated successfully');
       setSaveSuccess('Username updated successfully');
       setIsEditingUsername(false);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to update username');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update username';
+      toast.error(errorMessage, 'Update Failed');
+      setSaveError(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -268,10 +276,13 @@ export default function AccountProfile() {
     try {
       const updatedUser = await updateUserData(user.id, { Bio: newBio.trim() });
       updateLocalUser(updatedUser);
+      toast.success('Bio updated successfully');
       setSaveSuccess('Bio updated successfully');
       setIsEditingBio(false);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to update bio');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update bio';
+      toast.error(errorMessage, 'Update Failed');
+      setSaveError(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -283,7 +294,9 @@ export default function AccountProfile() {
     
     // Validate phone number
     if (newPhone && !validatePhoneNumber(newPhone, newCountry)) {
-      setSaveError(`Invalid phone number for ${COUNTRIES.find(c => c.code === newCountry)?.name || newCountry}`);
+      const errorMessage = `Invalid phone number for ${COUNTRIES.find(c => c.code === newCountry)?.name || newCountry}`;
+      toast.error(errorMessage, 'Validation Error');
+      setSaveError(errorMessage);
       return;
     }
     
@@ -302,10 +315,13 @@ export default function AccountProfile() {
         Country: newCountry 
       });
       updateLocalUser(updatedUser);
+      toast.success('Phone number updated successfully');
       setSaveSuccess('Phone number updated successfully');
       setIsEditingPhone(false);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to update phone number');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update phone number';
+      toast.error(errorMessage, 'Update Failed');
+      setSaveError(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -314,14 +330,17 @@ export default function AccountProfile() {
   // Change password
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error('Please fill in all password fields', 'Validation Error');
       setSaveError('Please fill in all password fields');
       return;
     }
     if (newPassword !== confirmPassword) {
+      toast.error('New passwords do not match', 'Validation Error');
       setSaveError('New passwords do not match');
       return;
     }
     if (newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters', 'Validation Error');
       setSaveError('Password must be at least 6 characters');
       return;
     }
@@ -331,13 +350,16 @@ export default function AccountProfile() {
     
     try {
       await changePassword(currentPassword, newPassword);
+      toast.success('Password changed successfully');
       setSaveSuccess('Password changed successfully');
       setIsChangingPassword(false);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to change password');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to change password';
+      toast.error(errorMessage, 'Update Failed');
+      setSaveError(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -347,6 +369,7 @@ export default function AccountProfile() {
   const handleDeleteAccount = async () => {
     if (!user) return;
     if (deleteConfirmText !== 'DELETE') {
+      toast.error('Please type DELETE to confirm', 'Validation Error');
       setSaveError('Please type DELETE to confirm');
       return;
     }
@@ -356,9 +379,12 @@ export default function AccountProfile() {
     
     try {
       await deleteAccount(user.id);
+      toast.success('Account deleted successfully');
       router.push('/');
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to delete account');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete account';
+      toast.error(errorMessage, 'Delete Failed');
+      setSaveError(errorMessage);
       setIsDeleting(false);
     }
   };
@@ -394,12 +420,14 @@ export default function AccountProfile() {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file', 'Invalid File');
       setSaveError('Please select an image file');
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB', 'File Too Large');
       setSaveError('Image size must be less than 5MB');
       return;
     }
@@ -424,13 +452,16 @@ export default function AccountProfile() {
       const updatedUser = await uploadUserAvatar(user.id, file);
       updateLocalUser(updatedUser);
       setAvatarPreview(null);
+      toast.success('Avatar updated successfully');
       setSaveSuccess('Avatar updated successfully');
       // Clear the file input
       if (avatarInputRef.current) {
         avatarInputRef.current.value = '';
       }
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to upload avatar');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to upload avatar';
+      toast.error(errorMessage, 'Upload Failed');
+      setSaveError(errorMessage);
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -454,9 +485,12 @@ export default function AccountProfile() {
     try {
       const updatedUser = await removeUserAvatar(user.id);
       updateLocalUser(updatedUser);
+      toast.success('Avatar removed successfully');
       setSaveSuccess('Avatar removed successfully');
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to remove avatar');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to remove avatar';
+      toast.error(errorMessage, 'Remove Failed');
+      setSaveError(errorMessage);
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -968,14 +1002,14 @@ export default function AccountProfile() {
         <TabsContent value="drafts">
           <Card>
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-primary/10">
                     <FileText className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle>Saved Drafts</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-lg sm:text-xl">Saved Drafts</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">
                       {drafts.length > 0 
                         ? `${drafts.length} draft${drafts.length > 1 ? 's' : ''} saved`
                         : 'Your unpublished work'
@@ -987,6 +1021,7 @@ export default function AccountProfile() {
                   variant="outline" 
                   size="sm"
                   onClick={() => router.push('/submit')}
+                  className="w-full sm:w-auto"
                 >
                   <Edit3 className="h-4 w-4 mr-2" />
                   New Post
@@ -1013,41 +1048,42 @@ export default function AccountProfile() {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2.5 sm:space-y-2">
                   {drafts.map((draft) => (
                     <div
                       key={draft.documentId}
                       onClick={() => handleOpenDraft(draft)}
                       className={cn(
-                        "group flex items-center justify-between p-4 rounded-xl cursor-pointer",
+                        "group flex items-center justify-between p-3.5 sm:p-4 rounded-xl cursor-pointer",
                         "bg-gray-50 dark:bg-gray-800/50",
                         "border border-gray-100 dark:border-gray-700/50",
                         "hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10",
-                        "transition-all duration-200"
+                        "active:scale-[0.98] transition-all duration-200"
                       )}
                     >
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <h4 className="font-medium text-sm sm:text-base text-gray-900 dark:text-gray-100 truncate">
                           {draft.name}
                         </h4>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                        <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground mt-1.5 sm:mt-1">
                           <span className="flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5" />
+                            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                             {formatRelativeTime(draft.updatedAt)}
                           </span>
                           <span>•</span>
                           <span>{getWordCount(draft.content)} words</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 sm:gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={(e) => handleDeleteDraft(draft, e)}
                           disabled={deletingId === draft.documentId}
                           className={cn(
-                            "opacity-0 group-hover:opacity-100 transition-opacity",
-                            "text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            "sm:opacity-0 group-hover:opacity-100 transition-opacity",
+                            "text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20",
+                            "h-9 w-9 p-0 sm:h-8 sm:w-8"
                           )}
                         >
                           {deletingId === draft.documentId ? (
@@ -1075,8 +1111,8 @@ export default function AccountProfile() {
                   <Bookmark className="h-5 w-5 text-amber-500" />
                 </div>
                 <div>
-                  <CardTitle>Bookmarked Articles</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-lg sm:text-xl">Bookmarked Articles</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
                     {bookmarks.length > 0 
                       ? `${bookmarks.length} article${bookmarks.length > 1 ? 's' : ''} saved`
                       : 'Articles you want to read later'
@@ -1105,21 +1141,21 @@ export default function AccountProfile() {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5 sm:space-y-3">
                   {bookmarks.map((bookmark) => (
                     <Link
                       key={bookmark.bookmarkDocumentId}
                       href={`/read-article?slug=${bookmark.slug}`}
                       className={cn(
-                        "group flex gap-4 p-3 rounded-xl",
+                        "group flex gap-3 sm:gap-4 p-3 sm:p-3.5 rounded-xl",
                         "bg-gray-50 dark:bg-gray-800/50",
                         "border border-gray-100 dark:border-gray-700/50",
                         "hover:border-amber-500/30 hover:bg-amber-50/50 dark:hover:bg-amber-900/10",
-                        "transition-all duration-200"
+                        "active:scale-[0.98] transition-all duration-200"
                       )}
                     >
                       {/* Article Thumbnail */}
-                      <div className="flex-shrink-0 w-20 h-16 rounded-lg overflow-hidden relative bg-gray-100 dark:bg-gray-700">
+                      <div className="flex-shrink-0 w-20 h-16 sm:w-24 sm:h-18 rounded-lg overflow-hidden relative bg-gray-100 dark:bg-gray-700">
                         <Image
                           src={bookmark.featuredImage 
                             ? (bookmark.featuredImage.startsWith('http') 
@@ -1135,18 +1171,21 @@ export default function AccountProfile() {
                       
                       {/* Article Info */}
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100 line-clamp-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                        <h4 className={cn(
+                          "font-medium text-sm sm:text-base text-gray-900 dark:text-gray-100 line-clamp-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors leading-snug",
+                          getFontClass(bookmark.title)
+                        )}>
                           {bookmark.title}
                         </h4>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1.5">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-1.5 sm:mt-2">
                           {bookmark.authorName && (
-                            <span>{bookmark.authorName}</span>
+                            <span className={cn("truncate max-w-[120px] sm:max-w-none", getFontClass(bookmark.authorName))}>{bookmark.authorName}</span>
                           )}
                           {bookmark.authorName && bookmark.category && (
                             <span>•</span>
                           )}
                           {bookmark.category && (
-                            <span className="text-amber-600 dark:text-amber-400">{bookmark.category}</span>
+                            <span className={cn("text-amber-600 dark:text-amber-400 truncate max-w-[100px] sm:max-w-none", getFontClass(bookmark.category))}>{bookmark.category}</span>
                           )}
                         </div>
                       </div>
@@ -1159,9 +1198,9 @@ export default function AccountProfile() {
                           onClick={(e) => handleRemoveBookmark(bookmark.bookmarkDocumentId, e)}
                           disabled={removingBookmarkId === bookmark.bookmarkDocumentId}
                           className={cn(
-                            "opacity-0 group-hover:opacity-100 transition-opacity",
+                            "sm:opacity-0 group-hover:opacity-100 transition-opacity",
                             "text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20",
-                            "h-8 w-8 p-0"
+                            "h-9 w-9 p-0 sm:h-8 sm:w-8"
                           )}
                           title="Remove bookmark"
                         >

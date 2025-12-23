@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Facebook, Twitter, Linkedin, Link as LinkIcon } from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
 
 interface ShareButtonsProps {
   title: string;
@@ -9,6 +10,7 @@ interface ShareButtonsProps {
 }
 
 export default function ShareButtons({ title, url }: ShareButtonsProps) {
+  const toast = useToast();
   // Convert relative URL to absolute
   const fullUrl = `https://dufsblog.com${url}`;
   
@@ -23,7 +25,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(fullUrl);
-    alert('Link copied to clipboard!');
+    toast.success('Link copied to clipboard!');
   };
 
   return (

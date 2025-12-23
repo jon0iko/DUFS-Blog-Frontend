@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ToastProvider } from "@/components/ui/toast";
 import LayoutContent from '@/components/layout/LayoutContent';
 
 const roboto = localFont({
@@ -73,7 +74,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <LayoutContent>{children}</LayoutContent>
+            <ToastProvider>
+              <LayoutContent>{children}</LayoutContent>
+            </ToastProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
