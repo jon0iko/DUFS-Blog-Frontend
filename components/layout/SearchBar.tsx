@@ -206,7 +206,7 @@ export default function SearchBar({
       {isOpen && (
         <div
           className={cn(
-            "absolute top-full left-0 right-0 mt-0.5 bg-white dark:bg-gray-900 border border-t-0 border-gray-200 dark:border-gray-700 rounded-b-lg shadow-xl overflow-hidden z-50",
+            "absolute top-full left-0 right-0 mt-0.5 bg-white dark:bg-brand-black-100 border border-t-0 border-gray-200 dark:border-gray-700 rounded-b-lg shadow-xl overflow-hidden z-50",
             isMobile ? "max-h-[60vh]" : "max-h-[400px]"
           )}
         >
@@ -221,12 +221,12 @@ export default function SearchBar({
                     href={`/read-article?slug=${result.slug}`}
                     onClick={handleResultClick}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors",
-                      selectedIndex === index && "bg-gray-50 dark:bg-gray-800"
+                      "flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-brand-black-90 transition-colors",
+                      selectedIndex === index && "bg-gray-50 dark:bg-brand-black-90"
                     )}
                   >
                     {/* Thumbnail */}
-                    <div className="relative w-12 h-12 flex-shrink-0 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <div className="relative w-12 h-12 flex-shrink-0 rounded-md overflow-hidden bg-gray-100 dark:bg-brand-black-90">
                       <Image
                         src={result.image}
                         alt={result.title}
@@ -256,7 +256,7 @@ export default function SearchBar({
               <Link
                 href={`/browse?search=${encodeURIComponent(query)}`}
                 onClick={handleResultClick}
-                className="block px-3 py-3 text-sm text-center text-primary hover:bg-gray-50 dark:hover:bg-gray-800 border-t border-gray-100 dark:border-gray-800 font-medium"
+                className="block px-3 py-3 text-sm text-center text-primary hover:bg-gray-50 dark:hover:bg-brand-black-90 border-t border-gray-100 dark:border-gray-800 font-medium"
               >
                 View all results for &quot;{query}&quot;
               </Link>

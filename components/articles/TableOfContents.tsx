@@ -111,7 +111,7 @@ export default function TableOfContents({ content, className }: TableOfContentsP
             >
               <a
                 href={`#${heading.id}`}
-                className={`block text-sm py-1.5 px-3 rounded border-l-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all ${
+                className={`block text-sm py-1.5 px-3 rounded border-l-2 hover:bg-gray-100 dark:hover:bg-brand-black-90 transition-all ${
                   activeId === heading.id
                     ? 'border-primary bg-primary/5 text-primary font-medium'
                     : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'

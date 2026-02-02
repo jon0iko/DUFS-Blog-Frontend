@@ -35,9 +35,9 @@ function ReadArticleInner() {
   if (!slug) {
     return (
       <div className="container py-12">
-        <div className="rounded-lg border border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 p-8 text-center">
-          <h1 className="text-2xl font-bold mb-2">Article Not Specified</h1>
-          <p className="text-gray-600 dark:text-gray-400">
+        <div className="rounded-lg border border-border bg-yellow-50 dark:bg-yellow-900/20 p-8 text-center">
+          <h1 className="text-2xl font-bold mb-2 text-foreground">Article Not Specified</h1>
+          <p className="text-muted-foreground">
             Please open a URL like /articles/my-article-slug
           </p>
         </div>
@@ -53,10 +53,10 @@ export default function ReadArticlePage() {
     <Suspense fallback={
       <div className="container py-12">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+          <div className="h-8 bg-muted rounded w-3/4"></div>
+          <div className="h-4 bg-muted rounded w-full"></div>
+          <div className="h-4 bg-muted rounded w-full"></div>
+          <div className="h-4 bg-muted rounded w-2/3"></div>
         </div>
       </div>
     }>

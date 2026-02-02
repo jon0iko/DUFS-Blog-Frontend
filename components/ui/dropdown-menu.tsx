@@ -78,7 +78,7 @@ const DropdownMenu = ({ children, trigger, align = "right" }: DropdownMenuProps)
       {isOpen && isPositioned && (
         <div
           className={cn(
-            "fixed bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg min-w-[180px] animate-in fade-in zoom-in-95 duration-200",
+            "fixed bg-white dark:bg-brand-black-90 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg min-w-[180px] animate-in fade-in zoom-in-95 duration-200",
             align === "left" ? "" : ""
           )}
           style={{
@@ -112,7 +112,7 @@ const DropdownMenuItem = ({ children, onClick, className }: DropdownMenuItemProp
       onClick={onClick}
       type="button"
       className={cn(
-        "w-full text-left px-4 py-2 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 cursor-pointer",
+        "w-full text-left px-4 py-2 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-brand-black-90 transition-colors duration-150 cursor-pointer",
         className
       )}
     >

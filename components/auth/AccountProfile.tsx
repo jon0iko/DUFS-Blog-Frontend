@@ -208,7 +208,7 @@ export default function AccountProfile() {
       localStorage.setItem(STORAGE_DRAFT_NAME_KEY, draft.name);
     }
     
-    router.push('/submit');
+    router.push('/editor');
   };
 
   // Handle deleting a draft
@@ -1020,7 +1020,7 @@ export default function AccountProfile() {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => router.push('/submit')}
+                  onClick={() => router.push('/editor')}
                   className="w-full sm:w-auto"
                 >
                   <Edit3 className="h-4 w-4 mr-2" />
@@ -1035,14 +1035,14 @@ export default function AccountProfile() {
                 </div>
               ) : drafts.length === 0 ? (
                 <div className="text-center py-8">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 dark:bg-brand-black-90 flex items-center justify-center">
                     <FileText className="w-6 h-6 text-gray-400" />
                   </div>
                   <p className="text-muted-foreground mb-4">You have no saved drafts yet</p>
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => router.push('/submit')}
+                    onClick={() => router.push('/editor')}
                   >
                     Start Writing
                   </Button>
@@ -1055,7 +1055,7 @@ export default function AccountProfile() {
                       onClick={() => handleOpenDraft(draft)}
                       className={cn(
                         "group flex items-center justify-between p-3.5 sm:p-4 rounded-xl cursor-pointer",
-                        "bg-gray-50 dark:bg-gray-800/50",
+                        "bg-gray-50 dark:bg-brand-black-90/50",
                         "border border-gray-100 dark:border-gray-700/50",
                         "hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10",
                         "active:scale-[0.98] transition-all duration-200"
@@ -1128,7 +1128,7 @@ export default function AccountProfile() {
                 </div>
               ) : bookmarks.length === 0 ? (
                 <div className="text-center py-8">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 dark:bg-brand-black-90 flex items-center justify-center">
                     <Bookmark className="w-6 h-6 text-gray-400" />
                   </div>
                   <p className="text-muted-foreground mb-4">You haven&apos;t bookmarked any articles yet</p>
@@ -1148,7 +1148,7 @@ export default function AccountProfile() {
                       href={`/read-article?slug=${bookmark.slug}`}
                       className={cn(
                         "group flex gap-3 sm:gap-4 p-3 sm:p-3.5 rounded-xl",
-                        "bg-gray-50 dark:bg-gray-800/50",
+                        "bg-gray-50 dark:bg-brand-black-90/50",
                         "border border-gray-100 dark:border-gray-700/50",
                         "hover:border-amber-500/30 hover:bg-amber-50/50 dark:hover:bg-amber-900/10",
                         "active:scale-[0.98] transition-all duration-200"

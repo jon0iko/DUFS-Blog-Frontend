@@ -32,7 +32,7 @@ export default function ArticleActions({ articleId }: ArticleActionsProps) {
           <span className={cn(
             "p-2 rounded-full transition-colors",
             liked ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" : 
-            "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 group-hover:bg-blue-50 group-hover:text-blue-600 dark:group-hover:bg-blue-900/20 dark:group-hover:text-blue-400"
+            "bg-gray-100 text-gray-700 dark:bg-brand-black-90 dark:text-gray-300 group-hover:bg-blue-50 group-hover:text-blue-600 dark:group-hover:bg-blue-900/20 dark:group-hover:text-blue-400"
           )}>
             <ThumbsUp size={18} className={cn(liked && "fill-current")} />
           </span>
@@ -43,7 +43,7 @@ export default function ArticleActions({ articleId }: ArticleActionsProps) {
           href="#comments" 
           className="flex items-center gap-2 group"
         >
-          <span className="p-2 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 group-hover:bg-gray-200 dark:group-hover:bg-gray-700 transition-colors">
+          <span className="p-2 rounded-full bg-gray-100 text-gray-700 dark:bg-brand-black-90 dark:text-gray-300 group-hover:bg-gray-200 dark:group-hover:bg-gray-700 transition-colors">
             <MessageSquare size={18} />
           </span>
           <span className="text-sm font-medium">12</span>

@@ -116,7 +116,7 @@ export default function SignUp() {
         
         <FormGroup error={errors.username}>
           <FormLabel htmlFor="username" className="text-foreground font-semibold flex items-center gap-2">
-            <User className="h-4 w-4 text-primary" />
+            <User className="h-4 w-4 text-brand-accent" />
             Username
           </FormLabel>
           <Input
@@ -128,13 +128,13 @@ export default function SignUp() {
             onChange={handleChange}
             placeholder="This will be your author name"
             disabled={isLoading}
-            className="mt-1 bg-muted border-border text-foreground placeholder-muted-foreground focus:ring-primary focus:border-primary"
+            className="mt-1 bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-brand-accent focus:border-brand-accent"
           />
         </FormGroup>
         
         <FormGroup error={errors.email}>
           <FormLabel htmlFor="email" className="text-foreground font-semibold flex items-center gap-2">
-            <Mail className="h-4 w-4 text-primary" />
+            <Mail className="h-4 w-4 text-brand-accent" />
             Email Address
           </FormLabel>
           <Input
@@ -146,13 +146,13 @@ export default function SignUp() {
             onChange={handleChange}
             placeholder="Enter your email address"
             disabled={isLoading}
-            className="mt-1 bg-muted border-border text-foreground placeholder-muted-foreground focus:ring-primary focus:border-primary"
+            className="mt-1 bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-brand-accent focus:border-brand-accent"
           />
         </FormGroup>
 
         <FormGroup error={errors.Country}>
           <FormLabel htmlFor="Country" className="text-foreground font-semibold flex items-center gap-2">
-            <Globe className="h-4 w-4 text-primary" />
+            <Globe className="h-4 w-4 text-brand-accent" />
             Country
           </FormLabel>
           <select
@@ -161,7 +161,7 @@ export default function SignUp() {
             value={formData.Country}
             onChange={handleChange}
             disabled={isLoading}
-            className="mt-1 w-full px-3 py-2 bg-muted border border-border text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder-muted-foreground"
+            className="mt-1 w-full px-3 py-2 bg-background border border-border text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent placeholder:text-muted-foreground"
           >
             <option value="">Select your country</option>
             {COUNTRIES.map((country) => (
@@ -174,7 +174,7 @@ export default function SignUp() {
 
         <FormGroup error={errors.phoneNumber}>
           <FormLabel htmlFor="phoneNumber" className="text-foreground font-semibold flex items-center gap-2">
-            <Phone className="h-4 w-4 text-primary" />
+            <Phone className="h-4 w-4 text-brand-accent" />
             Phone Number
           </FormLabel>
           <Input
@@ -185,7 +185,7 @@ export default function SignUp() {
             onChange={handleChange}
             placeholder={formData.Country ? "Enter your phone number" : "Select a country first"}
             disabled={isLoading || !formData.Country}
-            className="mt-1 bg-muted border-border text-foreground placeholder-muted-foreground focus:ring-primary focus:border-primary"
+            className="mt-1 bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-brand-accent focus:border-brand-accent"
           />
           <FormDescription className="mt-1 text-xs text-muted-foreground">
             Enter a valid phone number for your country
@@ -194,7 +194,7 @@ export default function SignUp() {
         
         <FormGroup error={errors.password}>
           <FormLabel htmlFor="password" className="text-foreground font-semibold flex items-center gap-2">
-            <Lock className="h-4 w-4 text-primary" />
+            <Lock className="h-4 w-4 text-brand-accent" />
             Password
           </FormLabel>
           <Input
@@ -206,7 +206,7 @@ export default function SignUp() {
             onChange={handleChange}
             placeholder="Create a strong password"
             disabled={isLoading}
-            className="mt-1 bg-muted border-border text-foreground placeholder-muted-foreground focus:ring-primary focus:border-primary"
+            className="mt-1 bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-brand-accent focus:border-brand-accent"
           />
           <FormDescription className="mt-1 text-xs text-muted-foreground">
             Must be at least 8 characters long
@@ -215,7 +215,7 @@ export default function SignUp() {
         
         <FormGroup error={errors.confirmPassword}>
           <FormLabel htmlFor="confirmPassword" className="text-foreground font-semibold flex items-center gap-2">
-            <Lock className="h-4 w-4 text-primary" />
+            <Lock className="h-4 w-4 text-brand-accent" />
             Confirm Password
           </FormLabel>
           <Input
@@ -227,13 +227,13 @@ export default function SignUp() {
             onChange={handleChange}
             placeholder="Confirm your password"
             disabled={isLoading}
-            className="mt-1 bg-muted border-border text-foreground placeholder-muted-foreground focus:ring-primary focus:border-primary"
+            className="mt-1 bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-brand-accent focus:border-brand-accent"
           />
         </FormGroup>
         
         <Button 
           type="submit" 
-          className="w-full mt-6 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+          className="w-full mt-6 bg-brand-accent hover:bg-brand-accent/90 text-white font-semibold py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
           disabled={isLoading}
         >
           <UserPlus className="h-4 w-4" />
@@ -244,7 +244,7 @@ export default function SignUp() {
       <div className="pt-4 border-t border-border">
         <p className="text-sm text-muted-foreground text-center">
           Already have an account?{' '}
-          <Link href="/auth/signin" className="text-primary font-semibold hover:underline transition-colors duration-200">
+          <Link href="/auth/signin" className="text-brand-accent font-semibold hover:underline transition-colors duration-200">
             Sign In
           </Link>
         </p>

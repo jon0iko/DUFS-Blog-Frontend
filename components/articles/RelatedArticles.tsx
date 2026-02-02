@@ -18,8 +18,8 @@ export default function RelatedArticles({ articles }: RelatedArticlesProps) {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-serif font-bold">Related Stories</h2>
-        <div className="h-px flex-1 ml-6 bg-gradient-to-r from-gray-300 to-transparent dark:from-gray-700" />
+        <h2 className="text-3xl font-serif font-bold text-foreground">Related Stories</h2>
+        <div className="h-px flex-1 ml-6 bg-gradient-to-r from-border to-transparent" />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -49,7 +49,7 @@ export default function RelatedArticles({ articles }: RelatedArticlesProps) {
               <div>
                 {article.category && (
                   <span 
-                    className={cn("inline-block text-xs font-medium mb-2 ml-0.5 px-2 py-1 bg-black text-white dark:bg-white dark:text-black rounded-2xl", getFontClass(article.category.Name))}
+                    className={cn("inline-block text-xs font-medium mb-2 ml-0.5 px-2 py-1 bg-brand-black text-white dark:bg-white dark:text-brand-black rounded-2xl", getFontClass(article.category.Name))}
                   
                   >
                     {article.category.Name}
@@ -63,7 +63,7 @@ export default function RelatedArticles({ articles }: RelatedArticlesProps) {
                   {article.title}
                 </h3>
                 
-                <p className={cn("text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3 px-1", article.language === 'bn' && "font-kalpurush")}>
+                <p className={cn("text-sm text-muted-foreground line-clamp-2 mb-3 px-1", article.language === 'bn' && "font-kalpurush")}>
                   {article.excerpt}
                 </p>
 

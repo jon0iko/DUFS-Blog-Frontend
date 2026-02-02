@@ -228,6 +228,7 @@ class ServerStrapiAPI {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[isActive][$eq]', 'true');
     searchParams.append('sort', 'sortOrder:asc');
+    searchParams.append('populate', 'Illustration');
     
     return this.request<CategoryResponse>(
       `${config.strapi.endpoints.categories}?${searchParams.toString()}`

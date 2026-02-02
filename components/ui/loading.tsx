@@ -224,7 +224,7 @@ export function HomePageSkeleton() {
       </div>
 
       {/* Editor's choice skeleton */}
-      <section className="py-12 bg-gray-50 dark:bg-gray-900">
+      <section className="py-12 bg-gray-50 dark:bg-brand-black-90">
         <div className="container">
           <Skeleton className="w-48 h-8 mb-8" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">

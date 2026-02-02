@@ -81,6 +81,7 @@ export interface Category {
   Slug: string; // Backend uses capital S
   description?: string;
   color?: string;
+  Illustration?: StrapiMedia; // Media field for category illustration
   isActive: boolean;
   sortOrder: number;
   articlesCount?: number;

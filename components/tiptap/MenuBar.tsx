@@ -58,7 +58,7 @@ export default function MenuBar({ editor, onImageUpload }: MenuBarProps) {
   }
 
   return (
-    <div className="sticky top-0 border-b bg-background shadow-sm z-50 rounded-t-lg dark:border-white">
+    <div className="sticky top-0 border-b bg-background shadow-sm z-50 rounded-t-lg dark:border-brand-black-80">
       {/* Compact toolbar - two rows on mobile, single row on desktop */}
       <div className="flex flex-wrap lg:flex-nowrap lg:overflow-x-auto gap-0.5 p-1.5 items-center lg:min-w-max">
         {/* Text Formatting */}
@@ -111,25 +111,25 @@ export default function MenuBar({ editor, onImageUpload }: MenuBarProps) {
           >
             <DropdownMenuItem
               onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-              className={editor.isActive('heading', { level: 1 }) ? 'bg-gray-100 dark:bg-gray-800' : ''}
+              className={editor.isActive('heading', { level: 1 }) ? 'bg-gray-100 dark:bg-brand-black-90' : ''}
             >
               <Heading1 className="h-4 w-4 mr-2 inline" /> Heading 1
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-              className={editor.isActive('heading', { level: 2 }) ? 'bg-gray-100 dark:bg-gray-800' : ''}
+              className={editor.isActive('heading', { level: 2 }) ? 'bg-gray-100 dark:bg-brand-black-90' : ''}
             >
               <Heading2 className="h-4 w-4 mr-2 inline" /> Heading 2
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-              className={editor.isActive('heading', { level: 3 }) ? 'bg-gray-100 dark:bg-gray-800' : ''}
+              className={editor.isActive('heading', { level: 3 }) ? 'bg-gray-100 dark:bg-brand-black-90' : ''}
             >
               <Heading3 className="h-4 w-4 mr-2 inline" /> Heading 3
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => editor.chain().focus().setParagraph().run()}
-              className={!editor.isActive('heading') ? 'bg-gray-100 dark:bg-gray-800' : ''}
+              className={!editor.isActive('heading') ? 'bg-gray-100 dark:bg-brand-black-90' : ''}
             >
               <CaseUpper className="h-4 w-4 mr-2 inline" /> Paragraph
             </DropdownMenuItem>
@@ -156,13 +156,13 @@ export default function MenuBar({ editor, onImageUpload }: MenuBarProps) {
           >
             <DropdownMenuItem
               onClick={() => editor.chain().focus().toggleBulletList().run()}
-              className={editor.isActive('bulletList') ? 'bg-gray-100 dark:bg-gray-800' : ''}
+              className={editor.isActive('bulletList') ? 'bg-gray-100 dark:bg-brand-black-90' : ''}
             >
               <List className="h-4 w-4 mr-2 inline" /> Bullet List
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => editor.chain().focus().toggleOrderedList().run()}
-              className={editor.isActive('orderedList') ? 'bg-gray-100 dark:bg-gray-800' : ''}
+              className={editor.isActive('orderedList') ? 'bg-gray-100 dark:bg-brand-black-90' : ''}
             >
               <ListOrdered className="h-4 w-4 mr-2 inline" /> Numbered List
             </DropdownMenuItem>
@@ -191,7 +191,7 @@ export default function MenuBar({ editor, onImageUpload }: MenuBarProps) {
               onClick={() => {
                 editor.chain().focus().setTextAlign('left').run()
               }}
-              className={editor.isActive({ textAlign: 'left' }) ? 'bg-gray-100 dark:bg-gray-800' : ''}
+              className={editor.isActive({ textAlign: 'left' }) ? 'bg-gray-100 dark:bg-brand-black-90' : ''}
             >
              Align Left
             </DropdownMenuItem>
@@ -199,7 +199,7 @@ export default function MenuBar({ editor, onImageUpload }: MenuBarProps) {
               onClick={() => {
                 editor.chain().focus().setTextAlign('center').run()
               }}
-              className={editor.isActive({ textAlign: 'center' }) ? 'bg-gray-100 dark:bg-gray-800' : ''}
+              className={editor.isActive({ textAlign: 'center' }) ? 'bg-gray-100 dark:bg-brand-black-90' : ''}
             >
               Align Center
             </DropdownMenuItem>
@@ -207,7 +207,7 @@ export default function MenuBar({ editor, onImageUpload }: MenuBarProps) {
               onClick={() => {
                 editor.chain().focus().setTextAlign('right').run()
               }}
-              className={editor.isActive({ textAlign: 'right' }) ? 'bg-gray-100 dark:bg-gray-800' : ''}
+              className={editor.isActive({ textAlign: 'right' }) ? 'bg-gray-100 dark:bg-brand-black-90' : ''}
             >
               Align Right
             </DropdownMenuItem>

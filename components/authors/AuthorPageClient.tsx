@@ -19,7 +19,7 @@ export default function AuthorPageClient({ author, articles }: AuthorPageClientP
     : '/images/hero.jpg';
 
   return (
-    <div className="bg-white dark:bg-gray-900">
+    <div className="bg-white dark:bg-brand-black-90">
       <div className="container mx-auto max-w-6xl py-10 px-4 sm:px-6">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10 mb-12">
           <div className="relative w-32 h-32 rounded-full overflow-hidden">

@@ -325,11 +325,11 @@ export default function CommentSection({
       )}>
         <div className={cn(
           "flex gap-4 p-4 rounded-xl transition-all duration-200",
-          "bg-white dark:bg-gray-800/50",
-          "border border-gray-100 dark:border-gray-700/50",
-          "hover:border-gray-200 dark:hover:border-gray-600/50",
+          "bg-card dark:bg-card",
+          "border border-border",
+          "hover:border-border",
           "hover:shadow-sm",
-          isReply && "bg-gray-50/50 dark:bg-gray-900/30 p-3"
+          isReply && "bg-secondary/50 dark:bg-secondary/30 p-3"
         )}>
           {/* Avatar */}
           {renderAvatar(userInfo.name, userInfo.avatar)}
@@ -339,13 +339,13 @@ export default function CommentSection({
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-gray-900 dark:text-gray-100">
+                <span className="font-semibold text-foreground">
                   {userInfo.name}
                 </span>
-                <span className="text-xs text-gray-400 dark:text-gray-500">
+                <span className="text-xs text-muted-foreground">
                   •
                 </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-muted-foreground">
                   {formatDate(comment.CommentDateTime)}
                 </span>
                 {isReply && (
@@ -370,7 +370,7 @@ export default function CommentSection({
             </div>
 
             {/* Comment Content */}
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap text-sm">
+            <p className="text-foreground leading-relaxed whitespace-pre-wrap text-sm">
               {comment.Content}
             </p>
 
@@ -381,7 +381,7 @@ export default function CommentSection({
                 size="sm"
                 className={cn(
                   "h-7 px-2.5 text-xs gap-1.5 rounded-full",
-                  hasLiked ? "text-red-500 bg-red-50 dark:bg-red-900/20" : "text-gray-500 hover:text-gray-700"
+                  hasLiked ? "text-red-500 bg-red-50 dark:bg-red-900/20" : "text-muted-foreground hover:text-foreground"
                 )}
                 onClick={handleLike}
                 disabled={!isAuthenticated}
@@ -398,7 +398,7 @@ export default function CommentSection({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2.5 text-xs gap-1.5 rounded-full text-gray-500 hover:text-gray-700"
+                  className="h-7 px-2.5 text-xs gap-1.5 rounded-full text-muted-foreground hover:text-foreground"
                   onClick={() => setShowReplyForm(!showReplyForm)}
                   disabled={!isAuthenticated}
                   title={!isAuthenticated ? "Sign in to reply" : undefined}
@@ -445,10 +445,10 @@ export default function CommentSection({
                       placeholder={`Reply to ${userInfo.name}...`}
                       className={cn(
                         "w-full p-3 rounded-lg border text-sm resize-none",
-                        "bg-gray-50 dark:bg-gray-900",
-                        "border-gray-200 dark:border-gray-700",
+                        "bg-secondary dark:bg-secondary",
+                        "border-border",
                         "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
-                        "placeholder:text-gray-400"
+                        "placeholder:text-muted-foreground"
                       )}
                       rows={2}
                     />
@@ -505,14 +505,14 @@ export default function CommentSection({
     return (
       <div className="space-y-6">
         {/* Header with View Discussion Button */}
-        <div className="flex flex-col items-center justify-center py-12 px-6 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-gray-800/50 dark:to-gray-900/50 border border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col items-center justify-center py-12 px-6 rounded-xl bg-gradient-to-br from-secondary to-secondary/50 dark:from-secondary/50 dark:to-secondary/30 border border-border">
           <div className="w-16 h-16 mb-4 rounded-full bg-primary/10 flex items-center justify-center">
             <MessageSquare className="w-8 h-8 text-primary" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+          <h3 className="text-xl font-bold text-foreground mb-2">
             Join the Discussion
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 text-center mb-6 max-w-md">
+          <p className="text-muted-foreground text-center mb-6 max-w-md">
             {totalCount > 0 
               ? `${totalCount} ${totalCount === 1 ? 'person has' : 'people have'} shared their thoughts. See what they're saying!`
               : 'Be the first to share your thoughts on this article!'
@@ -548,10 +548,10 @@ export default function CommentSection({
         <div className="p-2 rounded-lg bg-primary/10">
           <MessageCircle className="w-5 h-5 text-primary" />
         </div>
-        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+        <h2 className="text-xl font-bold text-foreground">
           Discussion
           {totalCount > 0 && (
-            <span className="ml-2 text-base font-normal text-gray-500">
+            <span className="ml-2 text-base font-normal text-muted-foreground">
               ({totalCount})
             </span>
           )}
@@ -561,8 +561,8 @@ export default function CommentSection({
       {/* Comment Form */}
       <div className={cn(
         "p-5 rounded-xl",
-        "bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-gray-800/50 dark:to-gray-900/50",
-        "border border-gray-200 dark:border-gray-700"
+        "bg-gradient-to-br from-secondary to-secondary/50 dark:from-secondary/50 dark:to-secondary/30",
+        "border border-border"
       )}>
         {isAuthenticated && user ? (
           <form onSubmit={handleSubmitComment} className="space-y-4">
@@ -584,10 +584,10 @@ export default function CommentSection({
                   placeholder="Share your thoughts..."
                   className={cn(
                     "w-full min-h-[100px] p-4 rounded-xl border text-sm",
-                    "bg-white dark:bg-gray-900",
-                    "border-gray-200 dark:border-gray-700",
+                    "bg-card dark:bg-card",
+                    "border-border",
                     "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
-                    "placeholder:text-gray-400 resize-none"
+                    "placeholder:text-muted-foreground resize-none"
                   )}
                 />
               </div>
@@ -612,7 +612,7 @@ export default function CommentSection({
           </form>
         ) : (
           <div className="text-center py-6">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-muted-foreground mb-4">
               Join the discussion! Share your thoughts with the community.
             </p>
             <Button asChild variant="outline" className="rounded-full">
@@ -629,10 +629,10 @@ export default function CommentSection({
         </div>
       ) : comments.length === 0 ? (
         <div className="text-center py-12">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-            <MessageCircle className="w-8 h-8 text-gray-400" />
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-secondary flex items-center justify-center">
+            <MessageCircle className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+          <h3 className="text-lg font-medium text-foreground mb-2">
             No comments yet
           </h3>
           <p className="text-gray-500 dark:text-gray-400">

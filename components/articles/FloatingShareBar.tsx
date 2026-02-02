@@ -50,7 +50,7 @@ export default function FloatingShareBar({ title, url }: FloatingShareBarProps) 
   return (
     <div 
       className={cn(
-        "fixed bottom-0 left-0 w-full z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 px-4 py-2 shadow-lg transition-transform duration-300 lg:hidden",
+        "fixed bottom-0 left-0 w-full z-40 bg-white dark:bg-brand-black-90 border-t border-gray-200 dark:border-gray-800 px-4 py-2 shadow-lg transition-transform duration-300 lg:hidden",
         isVisible ? "translate-y-0" : "translate-y-full"
       )}
     >
@@ -94,7 +94,7 @@ export default function FloatingShareBar({ title, url }: FloatingShareBarProps) 
         
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 w-9 h-9 flex items-center justify-center"
+          className="rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-brand-black-90 dark:hover:bg-gray-700 w-9 h-9 flex items-center justify-center"
           aria-label="Back to top"
         >
           <svg 

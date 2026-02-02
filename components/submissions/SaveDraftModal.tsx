@@ -74,7 +74,7 @@ export default function SaveDraftModal({
       {/* Modal */}
       <div className={cn(
         "relative w-full max-w-md mx-4 p-6 rounded-2xl",
-        "bg-white dark:bg-gray-900",
+        "bg-white dark:bg-brand-black-90",
         "border border-gray-200 dark:border-gray-700",
         "shadow-2xl",
         "animate-in fade-in-0 zoom-in-95 duration-200"
@@ -85,7 +85,7 @@ export default function SaveDraftModal({
           className={cn(
             "absolute top-4 right-4 p-2 rounded-full",
             "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300",
-            "hover:bg-gray-100 dark:hover:bg-gray-800",
+            "hover:bg-gray-100 dark:hover:bg-brand-black-90",
             "transition-colors"
           )}
         >
@@ -125,7 +125,7 @@ export default function SaveDraftModal({
             autoFocus
             className={cn(
               "w-full px-4 py-3 rounded-xl",
-              "bg-gray-50 dark:bg-gray-800",
+              "bg-gray-50 dark:bg-brand-black-90",
               "border border-gray-200 dark:border-gray-700",
               "text-gray-900 dark:text-gray-100",
               "placeholder:text-gray-400",

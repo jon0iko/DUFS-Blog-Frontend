@@ -67,8 +67,18 @@ const config: Config = {
   				foreground: 'hsl(var(--card-foreground))'
   			},
   			brand: {
-  				dark: '#1a1a1a',
-  				light: '#f8f8f8',
+  				black: {
+  					DEFAULT: '#231F20',
+  					100: '#231F20',
+					90: '#141313',
+  					80: '#4F4B4C',
+  					60: '#7B7879'
+  				},
+  				white: {
+  					DEFAULT: '#FFFFFF',
+  					40: '#FFFFFF66',
+  					20: '#FFFFFF33'
+  				},
   				accent: '#1a8917'
   			},
   			popover: {

@@ -50,7 +50,7 @@ const kalpurush = localFont({
 
 export const metadata: Metadata = {
   title: "DUFS Blog - Film Publication",
-  description: "A film publication guiding film lovers.",
+  description: "A film blog created by Dhaka University Film Society.",
 };
 
 export default function RootLayout({

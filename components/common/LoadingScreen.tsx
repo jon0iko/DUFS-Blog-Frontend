@@ -64,7 +64,7 @@ export default function LoadingScreen({
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-white dark:bg-slate-950 transition-opacity duration-${fadeDuration}`}
+      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-white dark:bg-background transition-opacity duration-${fadeDuration}`}
       style={{
         opacity: isVisible ? 1 : 0,
         pointerEvents: isVisible ? 'auto' : 'none',
@@ -77,12 +77,12 @@ export default function LoadingScreen({
         {/* Animated Logo Container with Orbital Rings */}
         <div className="relative w-32 h-32 md:w-40 md:h-40 flex items-center justify-center">
           {/* Outer Ring */}
-          <div
+          {/* <div
             className="absolute inset-0 rounded-full border-2 border-border/30"
             style={{
               animation: 'pulse-ring 2s ease-in-out infinite',
             }}
-          />
+          /> */}
           
           {/* Middle Ring */}
           <div

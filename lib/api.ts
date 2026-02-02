@@ -70,7 +70,7 @@ class StrapiAPI {
    * Make authenticated requests to Strapi v5
    * Configured for NO CACHING - Always fetch fresh data
    */
-  private async request<T>(
+  public async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
@@ -115,7 +115,7 @@ class StrapiAPI {
    * Make user-authenticated requests to Strapi v5
    * Uses the user's JWT token from auth cookies
    */
-  private async userRequest<T>(
+  public async userRequest<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
@@ -476,6 +476,7 @@ class StrapiAPI {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[isActive][$eq]', 'true');
     searchParams.append('sort', 'sortOrder:asc');
+    searchParams.append('populate', 'Illustration');
     
     return this.request<CategoryResponse>(
       `${config.strapi.endpoints.categories}?${searchParams.toString()}`
@@ -1334,5 +1335,206 @@ export const transformStrapiArticleToLegacy = (strapiArticle: Article) => {
     isEditorsPick: strapiArticle.isEditorsPick
   };
 };
+
+/**
+ * Get articles by user ID (through author relation)
+ * First finds the author associated with the user, then gets their articles
+ */
+export async function getUserArticles(
+  userId: number,
+  page: number = 1,
+  pageSize: number = 10
+): Promise<{ articles: Article[]; total: number; pageCount: number }> {
+  try {
+    // First, find the author associated with this user
+    const authorSearchParams = new URLSearchParams();
+    authorSearchParams.append('filters[users_permissions_user][id][$eq]', userId.toString());
+    
+    const authorResponse = await strapiAPI.request<AuthorResponse>(
+      `${config.strapi.endpoints.authors}?${authorSearchParams.toString()}`
+    );
+    
+    if (!authorResponse.data || authorResponse.data.length === 0) {
+      // User doesn't have an author profile yet
+      return { articles: [], total: 0, pageCount: 0 };
+    }
+    
+    const author = authorResponse.data[0];
+    
+    // Now get articles by this author with pagination
+    const articlesSearchParams = new URLSearchParams();
+    articlesSearchParams.append('filters[author][documentId][$eq]', author.documentId);
+    articlesSearchParams.append('sort', 'publishedAt:desc');
+    articlesSearchParams.append('pagination[page]', page.toString());
+    articlesSearchParams.append('pagination[pageSize]', pageSize.toString());
+    
+    // Populate fields
+    const populate = ['featuredImage', 'author', 'category', 'tags'];
+    populate.forEach((field, index) => {
+      articlesSearchParams.append(`populate[${index}]`, field);
+    });
+    
+    const articlesResponse = await strapiAPI.request<ArticleResponse>(
+      `${config.strapi.endpoints.articles}?${articlesSearchParams.toString()}`
+    );
+    
+    return {
+      articles: articlesResponse.data || [],
+      total: articlesResponse.meta?.pagination?.total || 0,
+      pageCount: articlesResponse.meta?.pagination?.pageCount || 0,
+    };
+  } catch (error) {
+    console.error('Error fetching user articles:', error);
+    return { articles: [], total: 0, pageCount: 0 };
+  }
+}
+
+/**
+ * Get article statistics for a user
+ */
+export async function getUserArticleStats(userId: number): Promise<{
+  totalArticles: number;
+  totalViews: number;
+  totalLikes: number;
+  totalComments: number;
+}> {
+  try {
+    // Fetch all articles (large page size) for stats calculation
+    const { articles } = await getUserArticles(userId, 1, 1000);
+    
+    const totalArticles = articles.length;
+    const totalViews = articles.reduce((sum, article) => sum + (article.viewCount || 0), 0);
+    const totalLikes = articles.reduce((sum, article) => sum + (article.likes || 0), 0);
+    
+    // Note: Comments count would need separate API calls per article
+    // For now, we'll return 0 or implement later if needed
+    const totalComments = 0;
+    
+    return {
+      totalArticles,
+      totalViews,
+      totalLikes,
+      totalComments,
+    };
+  } catch (error) {
+    console.error('Error fetching user article stats:', error);
+    return {
+      totalArticles: 0,
+      totalViews: 0,
+      totalLikes: 0,
+      totalComments: 0,
+    };
+  }
+}
+
+/**
+ * Create a user upload entry
+ */
+export async function createUserUploadFile(
+  userId: number,
+  fileId: number,
+  filename: string
+): Promise<{ success: boolean; documentId?: string; error?: string }> {
+  try {
+    // First, find the author associated with this user
+    const authorSearchParams = new URLSearchParams();
+    authorSearchParams.append('filters[users_permissions_user][id][$eq]', userId.toString());
+    
+    const authorResponse = await strapiAPI.request<AuthorResponse>(
+      `${config.strapi.endpoints.authors}?${authorSearchParams.toString()}`
+    );
+    
+    if (!authorResponse.data || authorResponse.data.length === 0) {
+      return {
+        success: false,
+        error: 'Author profile not found. Please contact support.',
+      };
+    }
+    
+    const author = authorResponse.data[0];
+    
+    // Create user upload entry
+    const response = await strapiAPI.userRequest<{ data: { id: number; documentId: string } }>(
+      '/api/user-uploads',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          data: {
+            Filename: filename,
+            File: fileId,
+            author: { connect: [author.id] },
+            UploadTime: new Date().toISOString(),
+          },
+        }),
+      }
+    );
+    
+    return {
+      success: true,
+      documentId: response.data.documentId,
+    };
+  } catch (error) {
+    console.error('Error creating user upload:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create upload entry',
+    };
+  }
+}
+
+/**
+ * Create a user upload entry
+ */
+export async function createUserUpload(
+  userId: number,
+  fileId: number,
+  filename: string
+): Promise<{ success: boolean; documentId?: string; error?: string }> {
+  try {
+    // First, find the author associated with this user
+    const authorSearchParams = new URLSearchParams();
+    authorSearchParams.append('filters[users_permissions_user][id][$eq]', userId.toString());
+    
+    const authorResponse = await strapiAPI.request<AuthorResponse>(
+      `${config.strapi.endpoints.authors}?${authorSearchParams.toString()}`
+    );
+    
+    if (!authorResponse.data || authorResponse.data.length === 0) {
+      return {
+        success: false,
+        error: 'Author profile not found. Please contact support.',
+      };
+    }
+    
+    const author = authorResponse.data[0];
+    
+    // Create user upload entry
+    const response = await strapiAPI.userRequest<{ data: { id: number; documentId: string } }>(
+      '/api/user-uploads',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          data: {
+            Filename: filename,
+            File: fileId,
+            author: { connect: [author.id] },
+            UploadTime: new Date().toISOString(),
+          },
+        }),
+      }
+    );
+    
+    return {
+      success: true,
+      documentId: response.data.documentId,
+    };
+  } catch (error) {
+    console.error('Error creating user upload:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create upload entry',
+    };
+  }
+}
 
 export default strapiAPI; 

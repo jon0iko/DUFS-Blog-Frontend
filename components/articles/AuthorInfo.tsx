@@ -20,7 +20,7 @@ export default function AuthorInfo({ author }: AuthorProps) {
   const avatarUrl = author.avatar || '/images/avatarPlaceholder.png';
 
   return (
-    <div className="flex items-center gap-4 p-5 bg-gray-50 dark:bg-gray-800 rounded-lg">
+    <div className="flex items-center gap-4 p-5 bg-gray-50 dark:bg-brand-black-90 rounded-lg">
       <Link 
         href={`/author?slug=${authorSlug}`}
         className="relative w-16 h-16 flex-shrink-0"

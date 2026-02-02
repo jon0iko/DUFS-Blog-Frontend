@@ -66,7 +66,7 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
       TableRow,
       TableHeader.configure({
         HTMLAttributes: {
-          class: 'border border-gray-300 px-4 py-2 bg-gray-100 dark:bg-gray-800 font-bold',
+          class: 'border border-gray-300 px-4 py-2 bg-gray-100 dark:bg-brand-black-90 font-bold',
         },
       }),
       TableCell.configure({
@@ -221,7 +221,7 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
 
   return (
     <div className="w-full mx-auto h-full flex flex-col shadow-xl">
-      <div className="border rounded-t-lg bg-card shadow-lg relative flex flex-col h-full overflow-visible dark:border-white">
+      <div className="border rounded-t-lg bg-card shadow-lg relative flex flex-col h-full overflow-visible dark:border-brand-black-80">
         <MenuBar editor={editor} onImageUpload={handleImageUpload} />
         <div className="bg-background overflow-y-auto flex-1 min-h-0 relative">
           <EditorContent editor={editor} />

@@ -135,7 +135,7 @@ export const COUNTRIES = [
   { code: 'HU', name: 'Hungary', flag: 'HU' },
   { code: 'ID', name: 'Indonesia', flag: 'ID' },
   { code: 'IE', name: 'Ireland', flag: 'IE' },
-  { code: 'IL', name: 'Israel', flag: 'IL' },
+  // { code: 'IL', name: 'Israel', flag: 'IL' },
   { code: 'IM', name: 'Isle of Man', flag: 'IM' },
   { code: 'IN', name: 'India', flag: 'IN' },
   { code: 'IO', name: 'British Indian Ocean Territory', flag: 'IO' },

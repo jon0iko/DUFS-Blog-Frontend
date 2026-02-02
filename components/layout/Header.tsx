@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { Menu, Search, Moon, Sun, LogIn, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Avatar from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { getUserAvatarUrl } from '@/lib/auth'; 
+import { useScroll, useMotionValueEvent } from "framer-motion";
 
 
 export default function Header() {
@@ -19,6 +20,26 @@ export default function Header() {
   const { isAuthenticated, user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileSearchActive, setIsMobileSearchActive] = useState(false);
+  
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const { scrollY } = useScroll();
+  const lastScrollY = useRef(0);
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const currentScrollY = latest;
+    const previousScrollY = lastScrollY.current;
+    
+    // Hide header if scrolling down and past 100px
+    if (currentScrollY > previousScrollY && currentScrollY > 100) {
+      setIsHeaderVisible(false);
+    } 
+    // Show header if scrolling up
+    else if (currentScrollY < previousScrollY) {
+      setIsHeaderVisible(true);
+    }
+
+    lastScrollY.current = currentScrollY;
+  });
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -35,7 +56,12 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:border-gray-800">
+      <header 
+        className={cn(
+          "sticky top-0 z-40 w-full bg-background/95 border-b transition-transform duration-300 ease-in-out",
+          !isHeaderVisible && "-translate-y-full"
+        )}
+      >
         <div className="container pl-6 flex h-16 items-center justify-between gap-4 font-light">
           <div
             className={cn(
@@ -48,7 +74,7 @@ export default function Header() {
               size="icon"
               onClick={toggleSidebar}
               aria-label="Toggle menu"
-              className="hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="hover:bg-gray-100 dark:hover:bg-brand-black-90"
             >
               <Menu className="!w-7 !h-7 stroke-2" />
             </Button>
@@ -89,7 +115,7 @@ export default function Header() {
             <Button
               variant="ghost"
               size="icon"
-              className="hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="hover:bg-gray-100 dark:hover:bg-brand-black-90"
               aria-label="Toggle theme"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             >
@@ -103,7 +129,7 @@ export default function Header() {
               size="icon"
               onClick={toggleMobileSearch}
               aria-label="Search"
-              className="sm:hidden hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="sm:hidden hover:bg-gray-100 dark:hover:bg-brand-black-90"
             >
               <Search className="!h-6 !w-6 stroke-2" />
             </Button>
@@ -158,10 +184,10 @@ export default function Header() {
             )}
           </div>
         </div>
-        {/* Border below header */}
+        {/* Border below header
         <div className="container flex justify-center">
           <div className="w-full border-t-4 border-gray-900 dark:border-gray-100 shadow-lg rounded-full"></div>
-        </div>
+        </div> */}
 
         <div className="h-2"></div>
       </header>

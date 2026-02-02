@@ -90,3 +90,73 @@ export function fileToBase64(file: File): Promise<string> {
     reader.readAsDataURL(file)
   })
 }
+
+/**
+ * Validate document file before upload
+ */
+export function validateDocumentFile(file: File): { valid: boolean; error?: string } {
+  const validTypes = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    'text/plain',
+    'text/markdown',
+  ];
+  const validExtensions = ['.pdf', '.docx', '.txt', '.md'];
+  const maxSize = 10 * 1024 * 1024; // 10MB
+
+  // Check file extension
+  const fileExtension = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+  if (!validExtensions.includes(fileExtension)) {
+    return {
+      valid: false,
+      error: 'Invalid file type. Please upload PDF, DOCX, TXT, or MD files.',
+    };
+  }
+
+  // Check MIME type (some files may not have MIME type set)
+  if (file.type && !validTypes.includes(file.type)) {
+    return {
+      valid: false,
+      error: 'Invalid file type. Please upload PDF, DOCX, TXT, or MD files.',
+    };
+  }
+
+  if (file.size > maxSize) {
+    return {
+      valid: false,
+      error: 'File size exceeds 10MB limit.',
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Upload a document to Strapi Media Library
+ */
+export async function uploadDocumentToStrapi(
+  file: File,
+  token?: string
+): Promise<UploadResponse> {
+  const formData = new FormData();
+  formData.append('files', file);
+
+  const headers: HeadersInit = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${STRAPI_URL}/api/upload`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Upload failed: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data[0];
+}
+

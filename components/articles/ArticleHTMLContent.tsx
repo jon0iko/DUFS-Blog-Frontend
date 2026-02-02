@@ -102,7 +102,7 @@ export default function ArticleHTMLContent({
     
     // Style code blocks
     html = html.replace(/<code([^>]*)>([^<]*)<\/code>/gi, (match, attrs, content) => {
-      return `<code${attrs} class="bg-gray-100 dark:bg-gray-900 text-pink-600 dark:text-pink-400 px-2 py-1 rounded font-mono text-sm">` + content + '</code>';
+      return `<code${attrs} class="bg-gray-100 dark:bg-brand-black-90 text-pink-600 dark:text-pink-400 px-2 py-1 rounded font-mono text-sm">` + content + '</code>';
     });
     
     // Style lists with better spacing

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AnimatePresence, motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 import { Article } from "@/types";
 import { getArticleData, getArticleImage } from "@/lib/strapi-helpers";
 import { getFontClass } from "@/lib/fonts";
@@ -13,170 +13,179 @@ interface HeroCarouselProps {
   articles: Article[];
 }
 
+const SLIDE_DURATION = 6000; // 6 seconds per slide
+
 export default function HeroCarousel({ articles }: HeroCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [autoplay, setAutoplay] = useState(true);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
 
-  // Auto-rotate carousel
+  // Memoize article data for performance
+  const processedArticles = useMemo(() => {
+    return articles.map(article => ({
+      ...getArticleData(article),
+      imageSrc: getArticleImage(article)
+    })).filter(a => a !== null);
+  }, [articles]);
+
+  const handleNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % processedArticles.length);
+  }, [processedArticles.length]);
+
+  const handlePrev = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + processedArticles.length) % processedArticles.length);
+  }, [processedArticles.length]);
+
+  /* Loading State */
+  const [isImageLoading, setIsImageLoading] = useState(true);
+  const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
+
+  // Reset loading state when index changes
   useEffect(() => {
-    if (!autoplay || articles.length <= 1) return;
+    setIsImageLoading(true);
+  }, [currentIndex]);
 
-    const interval = setInterval(() => {
-      setIsTransitioning(true);
-      setCurrentIndex((prev) => (prev + 1) % articles.length);
-    }, 5000); // Change slide every 5 seconds
-
-    return () => clearInterval(interval);
-  }, [autoplay, articles.length]);
-
-  // Resume autoplay after 10 seconds of inactivity
+  // Autoplay Logic - Paused when image is loading
   useEffect(() => {
-    if (autoplay || articles.length <= 1) return;
+    if (!isPlaying || isImageLoading || processedArticles.length <= 1) return;
 
-    const timer = setTimeout(() => {
-      setAutoplay(true);
-    }, 5000); // Resume after 10 seconds
+    const timer = setInterval(() => {
+      handleNext();
+    }, SLIDE_DURATION);
 
-    return () => clearTimeout(timer);
-  }, [autoplay, articles.length]);
+    return () => clearInterval(timer);
+  }, [isPlaying, isImageLoading, processedArticles.length, handleNext]);
 
-  // Reset transitioning state
-  useEffect(() => {
-    if (!isTransitioning) return;
-    const timer = setTimeout(() => setIsTransitioning(false), 500);
-    return () => clearTimeout(timer);
-  }, [isTransitioning]);
 
-  const goToPrevious = () => {
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => (prev - 1 + articles.length) % articles.length);
-    setAutoplay(false);
-  };
+  if (processedArticles.length === 0) return null;
 
-  const goToNext = () => {
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => (prev + 1) % articles.length);
-    setAutoplay(false);
-  };
-
-  const goToSlide = (index: number) => {
-    setIsTransitioning(true);
-    setCurrentIndex(index);
-    setAutoplay(false);
-  };
-
-  const currentArticle = articles[currentIndex];
-  const articleData = useMemo(() => getArticleData(currentArticle), [currentArticle]);
-  const imageSrc = useMemo(() => getArticleImage(currentArticle), [currentArticle]);
+  const currentArticle = processedArticles[currentIndex];
   
-  // Compute font classes based on current article data
-  const titleFontClass = useMemo(
-    () => (articleData ? getFontClass(articleData.title) : 'font-roboto'),
-    [articleData]
-  );
-  const excerptFontClass = useMemo(
-    () => (articleData ? getFontClass(articleData.excerpt) : 'font-roboto'),
-    [articleData]
-  );
-
-  if (!articleData) {
-    return null;
-  }
+  // Font classes
+  const titleFontClass = currentArticle?.title ? getFontClass(currentArticle.title) : 'font-roboto';
+  const excerptFontClass = currentArticle?.excerpt ? getFontClass(currentArticle.excerpt) : 'font-roboto';
 
   return (
+    <>
     <section 
-      className="relative h-[60vh] md:h-[60vh] lg:h-[70vh] w-full overflow-hidden group"
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
+      className="relative h-[60vh] lg:h-[80vh] w-full overflow-hidden bg-black cursor-pointer"
+      onMouseEnter={() => setIsPlaying(false)}
+      onMouseLeave={() => setIsPlaying(true)}
     >
-      {/* Black and white background image with overlay */}
-      <div className="absolute inset-0">
-        <Image
-          src={imageSrc}
-          alt={articleData.title}
-          fill
-          priority
-          className={`object-cover grayscale transition-all duration-700 ease-out ${
-            isTransitioning ? "scale-105" : "scale-100 opacity-100"
-          }`}
-          sizes="100vw"
+      {/* Loading Overlay - Only for initial load */}
+      {!hasLoadedInitial && (
+        <div className="absolute inset-0 z-40 bg-black flex items-center justify-center">
+           <Loader2 className="w-12 h-12 text-white animate-spin" />
+        </div>
+      )}
+
+      {/* Main Content Group - Isolated from Navigation */}
+      <div className="group absolute inset-0 w-full h-full">
+        <Link 
+          href={`/read-article?slug=${currentArticle?.slug}`}
+          className="absolute inset-0 z-10"
+          aria-label={`Read ${currentArticle?.title}`}
         />
-        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+
+        <AnimatePresence>
+          <motion.div
+            key={currentIndex}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1, ease: "easeInOut" }}
+            className="absolute inset-0 w-full h-full"
+          >
+            {/* Background Image with Ken Burns Effect */}
+            {currentArticle?.imageSrc && (
+               <div className="relative w-full h-full overflow-hidden">
+                  <motion.div
+                    className="relative w-full h-full"
+                    initial={{ scale: 1 }}
+                    animate={{ scale: 1.1 }}
+                    transition={{ duration: SLIDE_DURATION / 1000 + 0.5, ease: "linear" }}
+                  >
+                    <Image
+                      src={currentArticle.imageSrc}
+                      alt={currentArticle.title || "Hero Image"}
+                      fill
+                      priority
+                      onLoad={() => {
+                        setIsImageLoading(false);
+                        setHasLoadedInitial(true);
+                      }}
+                      className="object-cover grayscale"
+                      sizes="100vw"
+                    />
+                    <div className="absolute inset-0 bg-black/50" />
+                  </motion.div>
+               </div>
+            )}
+
+            {/* Content Overlay */}
+            <div className="absolute inset-0 flex flex-col justify-end pb-12 md:pb-20 pointer-events-none z-20">
+               <div className="container px-14 md:px-6">
+                  <div className="max-w-4xl">
+                    {/* Text Animation */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3, duration: 0.6 }}
+                    >
+                       <h1 className={`${titleFontClass} text-2xl md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-6 group-hover:underline decoration-white underline-offset-8 transition-all leading-tight shadow-black drop-shadow-lg`}>
+                         {currentArticle?.title}
+                       </h1>
+                      <p className={`${excerptFontClass} text-xs md:text-lg text-white/90 line-clamp-2 md:line-clamp-3 max-w-2xl drop-shadow-md`}>
+                         {currentArticle?.excerpt}
+                      </p>
+                    </motion.div>
+                  </div>
+               </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      {/* Content overlay */}
-      <Link href={`/read-article?slug=${articleData.slug}`} key={currentIndex}>
-        <div className="absolute inset-0 flex flex-col justify-end">
-          <div className="container pl-6 pb-12">
-            <div className="max-w-5xl">
-              <h1
-                key={`title-${currentIndex}`}
-                className={`${titleFontClass} text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 transition-all duration-700 ease-out ${
-                  isTransitioning ? "translate-y-2" : "opacity-100 translate-y-0"
-                } ${
-                  isHovering ? "underline decoration-white decoration-2 underline-offset-4" : ""
-                }`}
-              >
-                {articleData.title}
-              </h1>
-              <p
-                key={`excerpt-${currentIndex}`}
-                className={`${excerptFontClass} text-lg md:text-xl text-white/80 transition-all duration-700 ease-out delay-100 ${
-                  isTransitioning ? "translate-y-2" : "opacity-100 translate-y-0"
-                }`}
-              >
-                {articleData.excerpt}
-              </p>
-            </div>
-          </div>
-        </div>
-      </Link>
-
-      {/* Previous Button */}
-      {articles.length > 1 && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={goToPrevious}
-          className="absolute left-6 top-1/2 -translate-y-1/2 z-20 bg-white/30 hover:bg-white/50 text-white opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out rounded-full p-3 backdrop-blur-sm border border-white/40 hover:scale-110 active:scale-95"
-          aria-label="Previous slide"
+      {/* Navigation - Custom SVG Arrows - Sibling to Group */}
+      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 md:px-8 pointer-events-none z-30">
+        <button 
+          onClick={handlePrev}
+          className="pointer-events-auto opacity-70 hover:opacity-100 transition-opacity hover:scale-110 duration-200"
+          aria-label="Previous Slide"
         >
-          <ChevronLeft className="h-7 w-7 stroke-[2.5] transition-transform duration-300 ease-out group-hover:-translate-x-1" />
-        </Button>
-      )}
-
-      {/* Next Button */}
-      {articles.length > 1 && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={goToNext}
-          className="absolute right-6 top-1/2 -translate-y-1/2 z-20 bg-white/30 hover:bg-white/50 text-white opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out rounded-full p-3 backdrop-blur-sm border border-white/40 hover:scale-110 active:scale-95"
-          aria-label="Next slide"
+           <Image 
+             src="/images/ep_arrow-left-bold.svg"
+             alt="Previous"
+             width={48}
+             height={48}
+             className="w-8 h-8 md:w-16 md:h-16 invert"
+           />
+        </button>
+        <button 
+          onClick={handleNext}
+          className="pointer-events-auto opacity-70 hover:opacity-100 transition-opacity hover:scale-110 duration-200"
+          aria-label="Next Slide"
         >
-          <ChevronRight className="h-7 w-7 stroke-[2.5] transition-transform duration-300 ease-out group-hover:translate-x-1" />
-        </Button>
-      )}
-
-      {/* Dot indicators */}
-      {articles.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-3">
-          {articles.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`rounded-full transition-all duration-500 ease-out ${
-                index === currentIndex
-                  ? "bg-white w-8 h-2 shadow-lg scale-100"
-                  : "bg-white/50 hover:bg-white/80 w-2 h-2 hover:scale-125 active:scale-90"
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      )}
+           <Image 
+             src="/images/ep_arrow-right-bold.svg"
+             alt="Next"
+             width={48}
+             height={48}
+             className="w-8 h-8 md:w-16 md:h-16 invert"
+           />
+        </button>
+      </div>
     </section>
+
+    {/* Progress Line - Outside the Carousel Section */}
+    <div className="w-full h-1 bg-white/20">
+       {isPlaying && !isImageLoading && (
+          <div 
+             key={currentIndex}
+             className="h-full bg-foreground animate-progress origin-left"
+             style={{ animationDuration: `${SLIDE_DURATION}ms` }}
+          />
+       )}
+    </div>
+    </>
   );
 }

@@ -12,14 +12,15 @@ interface LayoutContentProps {
 
 export default function LayoutContent({ children }: LayoutContentProps) {
   const pathname = usePathname();
-  const isSubmitPage = pathname === '/submit/';
+  const isEditorPage = pathname === '/editor' || pathname === '/editor/';
+  const isAuthPage = pathname.startsWith('/auth/');
 
   return (
     <div className="flex min-h-screen flex-col">
-      {!isSubmitPage && <Header />}
+      {!isEditorPage && !isAuthPage && <Header />}
       <main className="flex-1">{children}</main>
-      {!isSubmitPage && <FloatingBanner />}
-      {!isSubmitPage && <Footer/> }
+      {!isEditorPage && !isAuthPage && <FloatingBanner />}
+      {!isEditorPage && !isAuthPage && <Footer/> }
     </div>
   );
 }

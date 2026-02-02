@@ -13,7 +13,7 @@ export default function ReadingProgressBar({ targetId, className }: ReadingProgr
   const completion = useReadProgress({ targetId });
     return (
     <div className={cn(
-      "fixed top-0 left-0 w-full h-1 z-50 bg-gray-200 dark:bg-gray-800",
+      "fixed top-0 left-0 w-full h-1 z-50 bg-gray-200 dark:bg-brand-black-90",
       className
     )}>
       <div 

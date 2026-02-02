@@ -10,16 +10,16 @@ export default async function EditorChoice() {
 
     if (!articles || articles.length === 0) {
       return (
-        <section className="py-12 bg-gray-100 dark:bg-gray-900">
+        <section className="py-12 bg-secondary dark:bg-brand-black-90">
           <div className="container">
             <div className="flex justify-center mb-8">
-              <h2 className="text-2xl font-semibold relative">
+              <h2 className="text-2xl font-semibold relative text-foreground">
                 <span className="relative z-10">Editor&apos;s Choice</span>
-                <span className="absolute left-0 right-0 bottom-0 h-[1px] bg-gray-300 dark:bg-gray-700"></span>
+                <span className="absolute left-0 right-0 bottom-0 h-[1px] bg-border"></span>
               </h2>
             </div>
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-8 text-center">
-              <p className="text-gray-600 dark:text-gray-400">No editor&apos;s choice articles found. Mark some articles in Strapi CMS.</p>
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900 rounded-lg p-8 text-center">
+              <p className="text-muted-foreground">No editor&apos;s choice articles found. Mark some articles in Strapi CMS.</p>
             </div>
           </div>
         </section>
@@ -33,16 +33,16 @@ export default async function EditorChoice() {
 
     if (validArticles.length === 0) {
       return (
-        <section className="py-12 bg-gray-100 dark:bg-gray-900">
+        <section className="py-12 bg-secondary dark:bg-brand-black-90">
           <div className="container">
             <div className="flex justify-center mb-8">
-              <h2 className="text-2xl font-semibold relative">
+              <h2 className="text-2xl font-semibold relative text-foreground">
                 <span className="relative z-10">Editor&apos;s Choice</span>
-                <span className="absolute left-0 right-0 bottom-0 h-[1px] bg-gray-300 dark:bg-gray-700"></span>
+                <span className="absolute left-0 right-0 bottom-0 h-[1px] bg-border"></span>
               </h2>
             </div>
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-8 text-center">
-              <p className="text-gray-600 dark:text-gray-400">editor&apos;s choice articles contain invalid data. Please check your CMS content.</p>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg p-8 text-center">
+              <p className="text-muted-foreground">editor&apos;s choice articles contain invalid data. Please check your CMS content.</p>
             </div>
           </div>
         </section>
@@ -50,12 +50,12 @@ export default async function EditorChoice() {
     }
 
     return (
-      <section className="py-12 bg-gray-100 dark:bg-gray-900">
+      <section className="py-12 bg-secondary dark:bg-brand-black-90">
         <div className="container">
           <div className="flex justify-center mb-8">
-            <h2 className="text-2xl font-semibold relative">
+            <h2 className="text-2xl font-semibold relative text-foreground">
               <span className="relative z-10">Editor&apos;s Choice</span>
-              <span className="absolute left-0 right-0 bottom-0 h-[1px] bg-gray-300 dark:bg-gray-700"></span>
+              <span className="absolute left-0 right-0 bottom-0 h-[1px] bg-border"></span>
             </h2>
           </div>
 
@@ -74,17 +74,17 @@ export default async function EditorChoice() {
   } catch (error) {
     console.error('Failed to load editors choice articles:', error);
     return (
-      <section className="py-12 bg-gray-100 dark:bg-gray-900">
+      <section className="py-12 bg-secondary dark:bg-brand-black-90">
         <div className="container">
           <div className="flex justify-center mb-8">
-            <h2 className="text-2xl font-semibold relative">
+            <h2 className="text-2xl font-semibold relative text-foreground">
               <span className="relative z-10">Editor&apos;s Choice</span>
-              <span className="absolute left-0 right-0 bottom-0 h-[1px] bg-gray-300 dark:bg-gray-700"></span>
+              <span className="absolute left-0 right-0 bottom-0 h-[1px] bg-border"></span>
             </h2>
           </div>
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-8 text-center">
-            <p className="text-gray-700 dark:text-gray-300">Failed to load editor&apos;s choice articles. Please check your connection.</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{error instanceof Error ? error.message : 'Unknown error'}</p>
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg p-8 text-center">
+            <p className="text-foreground">Failed to load editor&apos;s choice articles. Please check your connection.</p>
+            <p className="text-sm text-muted-foreground mt-2">{error instanceof Error ? error.message : 'Unknown error'}</p>
           </div>
         </div>
       </section>

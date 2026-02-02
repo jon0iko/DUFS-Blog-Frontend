@@ -13,7 +13,6 @@ interface ArticleSubmissionData {
 }
 
 export async function submitNewArticle(data: ArticleSubmissionData) {
-  console.log('submitNewArticle CALLED'); // Aggressive logging
   const {
     title,
     slug,

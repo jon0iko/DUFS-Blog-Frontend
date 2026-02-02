@@ -83,13 +83,13 @@ export default function SignIn() {
           <Input
             id="identifier"
             name="identifier"
-            type="email"
+            type="text"
             autoComplete="email"
             value={formData.identifier}
             onChange={handleChange}
             placeholder="Enter your email or username"
             disabled={isLoading}
-            className="mt-1 bg-muted border-border text-foreground placeholder-muted-foreground focus:ring-primary focus:border-primary"
+            className="mt-1 bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-brand-accent focus:border-brand-accent"
           />
           {errors.identifier && (
             <p className="mt-1 text-xs text-destructive">{errors.identifier}</p>
@@ -103,7 +103,7 @@ export default function SignIn() {
             </FormLabel>
             <Link 
               href="/auth/forgot-password" 
-              className="text-xs text-primary hover:underline font-medium"
+              className="text-xs text-brand-accent hover:underline font-medium"
             >
               Forgot password?
             </Link>
@@ -117,7 +117,7 @@ export default function SignIn() {
             onChange={handleChange}
             placeholder="Enter your password"
             disabled={isLoading}
-            className="mt-1 bg-muted border-border text-foreground placeholder-muted-foreground focus:ring-primary focus:border-primary"
+            className="mt-1 bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-brand-accent focus:border-brand-accent"
           />
           {errors.password && (
             <p className="mt-1 text-xs text-destructive">{errors.password}</p>
@@ -126,7 +126,7 @@ export default function SignIn() {
         
         <Button 
           type="submit" 
-          className="w-full mt-6 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+          className="w-full mt-6 bg-brand-accent hover:bg-brand-accent/90 text-white font-semibold py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
           disabled={isLoading}
         >
           <LogIn className="h-4 w-4" />
@@ -137,7 +137,7 @@ export default function SignIn() {
       <div className="pt-4 border-t border-border">
         <p className="text-sm text-muted-foreground text-center">
           Don&apos;t have an account?{' '}
-          <Link href="/auth/signup" className="text-primary font-semibold hover:underline transition-colors duration-200">
+          <Link href="/auth/signup" className="text-brand-accent font-semibold hover:underline transition-colors duration-200">
             Sign Up
           </Link>
         </p>

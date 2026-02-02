@@ -2,13 +2,10 @@
 
 import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams, usePathname, useRouter } from 'next/navigation'
-import { X } from 'lucide-react'
-import CategoryTabs from '@/components/browse/CategoryTabs'
-import FilterOptions from '@/components/browse/FilterOptions'
-import ArticlesList from '@/components/browse/ArticlesList'
 import LoadingScreen from '@/components/common/LoadingScreen'
 import { strapiAPI } from '@/lib/api'
 import { Category } from '@/types'
+import BrowseInteractiveBlocks from '@/components/browse/BrowseInteractiveBlocks'
 
 function BrowsePageContent() {
   const searchParams = useSearchParams()
@@ -86,59 +83,16 @@ function BrowsePageContent() {
     <>
       <LoadingScreen isLoading={isLoading} />
       
-      <div className="container py-8 px-4 md:px-6">
-        <div className="mb-8 max-w-3xl">
-          <h1 className="text-4xl font-bold mb-4 tracking-tight">
-            {searchQuery ? 'SEARCH RESULTS' : 'BROWSE'}
-          </h1>        
-          {searchQuery ? (
-            <div className="flex items-center gap-3 flex-wrap">
-              <p className="text-lg text-muted-foreground">
-                Results for &quot;{searchQuery}&quot;
-              </p>
-              <button 
-                onClick={handleClearSearch}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              >
-                <X className="w-3.5 h-3.5" />
-                Clear search
-              </button>
-            </div>
-          ) : (
-            <p className="text-lg text-muted-foreground">
-              Browse articles by categories. Find film discussions you didn&apos;t know you were looking for.
-            </p>
-          )}
-        </div>
-      
-        {/* Category Tabs - hide when searching */}
-        {!searchQuery && (
-          <div className="border-t border-border pt-4 mb-4">
-            <CategoryTabs 
-              categories={categories} 
-              activeCategory={activeCategory} 
-              setActiveCategory={setActiveCategory}
-            />
-          </div>
-        )}
-
-        {/* Filter Options */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mt-8 mb-10 gap-6">
-          <FilterOptions 
-            language={language} 
-            sortBy={sortBy}
-            onFilterChange={handleFilterChange}
-          />
-        </div>
-      
-        {/* Articles Grid */}
-        <ArticlesList 
-          category={searchQuery ? 'all' : activeCategory}
-          language={language}
-          sortBy={sortBy}
-          searchQuery={searchQuery}
-        />
-      </div>
+      <BrowseInteractiveBlocks 
+        categories={categories}
+        activeCategory={activeCategory}
+        setActiveCategory={setActiveCategory}
+        language={language}
+        sortBy={sortBy}
+        onFilterChange={handleFilterChange}
+        searchQuery={searchQuery}
+        onClearSearch={handleClearSearch}
+      />
     </>
   )
 }

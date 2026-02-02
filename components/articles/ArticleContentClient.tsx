@@ -229,8 +229,8 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
     return (
       <div className="container m-20 max-w-7xl mx-auto px-4 py-12 pt-18">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">Error!</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-8">
+          <h1 className="text-4xl font-bold mb-4 text-foreground">Error!</h1>
+          <p className="text-muted-foreground mb-8">
             {error || 'The article you are looking for does not exist.'}
           </p>
           <Button onClick={() => router.push('/')}>
@@ -291,11 +291,13 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                 {/* Category Badge */}
                 {article.category && (
                   <Badge 
-                    className="mb-4 text-sm px-4 py-1 bg-black text-white"
+                    className="mb-4 text-sm px-4 py-1 bg-black text-white cursor-pointer transition"
                   >
+                    <Link href={`/browse/?category=${article.category.Slug}`}>
                     <span className={getFontClass(article.category.Name)}>
                       {article.category.Name}
                     </span>
+                    </Link>
                   </Badge>
                 )}
 
@@ -364,8 +366,8 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
             <aside className="hidden lg:block sticky top-24 h-fit w-16">
               <div className="flex flex-col items-center gap-4">
                 {/* Font Size Control */}
-                <div className="flex flex-col items-center gap-2 pb-4 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-xs text-gray-500 mb-1">Font</span>
+                <div className="flex flex-col items-center gap-2 pb-4 border-b border-border">
+                  <span className="text-xs text-muted-foreground mb-1">Font</span>
                   <Button
                     variant={fontSize === 'small' ? 'default' : 'ghost'}
                     size="sm"
@@ -449,7 +451,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
 
               {/* Tags */}
               {article.tags && article.tags.length > 0 && (
-                <div className="lg:hidden  mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+                <div className="lg:hidden  mt-12 pt-8 border-t border-border">
                   <div className="flex flex-wrap gap-2">
                     {article.tags.map((tag) => (
                       <Link 
@@ -470,7 +472,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
 
               {/* Author Bio */}
               {article.author && (
-                <div className="mt-12 p-6 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+                <div className="mt-12 p-6 rounded-lg bg-secondary dark:bg-secondary border border-border">
                   <Link 
                     href={`/author?slug=${article.author.slug}`}
                     className="flex gap-4 group"
@@ -488,7 +490,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                     <div>
                       <h3 className={cn("text-xl font-semibold mb-2 group-hover:text-primary transition-colors", getFontClass(article.author.Name))}>{article.author.Name}</h3>
                       {article.author.Bio && (
-                        <p className={cn("text-gray-600 dark:text-gray-400", getFontClass(article.author.Bio))}>
+                        <p className={cn("text-muted-foreground", getFontClass(article.author.Bio))}>
                           {article.author.Bio}
                         </p>
                       )}
@@ -510,8 +512,8 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
             <aside className="hidden xl:block sticky top-24 h-fit w-64 space-y-6">
               {/* Category */}
               {article.category && (
-                <div className="p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-600 dark:text-gray-400">
+                <div className="p-4 rounded-lg bg-card border border-border">
+                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground">
                     <FolderOpen className="w-4 h-4" />
                     <span>Category</span>
                   </div>
@@ -525,7 +527,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                       {article.category.Name}
                     </Badge>
                   </Link>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                  <p className="text-xs text-muted-foreground mt-2 text-center">
                     Click to explore more
                   </p>
                 </div>
@@ -533,8 +535,8 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
 
               {/* Tags */}
               {article.tags && article.tags.length > 0 && (
-                <div className="p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-600 dark:text-gray-400">
+                <div className="p-4 rounded-lg bg-card border border-border">
+                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground">
                     <Tag className="w-4 h-4" />
                     <span>Tags</span>
                   </div>
@@ -561,7 +563,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
 
         {/* Related Articles */}
         {relatedArticles.length > 0 && (
-          <div className="bg-gray-50 dark:bg-gray-900/50 py-16">
+          <div className="bg-secondary dark:bg-brand-black-90 py-16">
             <div className="container max-w-7xl mx-auto px-4">
               <RelatedArticles articles={relatedArticles} />
             </div>
@@ -571,7 +573,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
         
 
         {/* Mobile Actions Bar */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 px-4 py-3 z-40 shadow-lg">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border px-4 py-3 z-40 shadow-lg">
           <div className="flex items-center justify-around max-w-md mx-auto">
             {/* Like Button */}
             <button
@@ -581,7 +583,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                 "flex flex-col items-center gap-0.5 p-2 rounded-xl transition-all",
                 hasLiked 
                   ? "text-red-500" 
-                  : "text-gray-600 dark:text-gray-400",
+                  : "text-muted-foreground",
                 !isAuthenticated && "opacity-50"
               )}
               title={isAuthenticated ? (hasLiked ? "Unlike article" : "Like article") : "Sign in to like"}
@@ -598,7 +600,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                 "flex flex-col items-center gap-0.5 p-2 rounded-xl transition-all",
                 isBookmarked 
                   ? "text-amber-500" 
-                  : "text-gray-600 dark:text-gray-400",
+                  : "text-muted-foreground",
                 !isAuthenticated && "opacity-50"
               )}
               title={isAuthenticated ? (isBookmarked ? "Remove bookmark" : "Add bookmark") : "Sign in to bookmark"}
@@ -610,7 +612,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
             {/* Share Button */}
             <button
               onClick={handleShare}
-              className="flex flex-col items-center gap-0.5 p-2 rounded-xl text-gray-600 dark:text-gray-400 transition-all"
+              className="flex flex-col items-center gap-0.5 p-2 rounded-xl text-muted-foreground transition-all"
               title="Share article"
             >
               <Share2 className="w-6 h-6" />
@@ -619,12 +621,12 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
 
             {/* Font Size Selector */}
             <div className="flex flex-col items-center gap-0.5">
-              <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-1 text-muted-foreground">
                 <span className="text-base font-bold">A</span>
                 <select
                   value={fontSize}
                   onChange={(e) => setFontSize(e.target.value as 'small' | 'medium' | 'large')}
-                  className="text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg px-1.5 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="text-sm font-medium border border-border rounded-lg px-1.5 py-1.5 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                   title="Change font size"
                 >
                   <option value="small">Small</option>
@@ -632,7 +634,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                   <option value="large">Large</option>
                 </select>
               </div>
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Font</span>
+              <span className="text-xs font-medium text-muted-foreground">Font</span>
             </div>
           </div>
         </div>
