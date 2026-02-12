@@ -6,7 +6,7 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { Article } from "@/types";
-import { getArticleData, getArticleImage } from "@/lib/strapi-helpers";
+import { getArticleData, getArticleImage, getAuthorAvatar, formatPublishDate } from "@/lib/strapi-helpers";
 import { getFontClass } from "@/lib/fonts";
 
 interface HeroCarouselProps {
@@ -17,7 +17,7 @@ const SLIDE_DURATION = 6000; // 6 seconds per slide
 
 export default function HeroCarousel({ articles }: HeroCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
+  // const [isPlaying, setIsPlaying] = useState(true);
 
   // Memoize article data for performance
   const processedArticles = useMemo(() => {
@@ -46,30 +46,33 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
 
   // Autoplay Logic - Paused when image is loading
   useEffect(() => {
-    if (!isPlaying || isImageLoading || processedArticles.length <= 1) return;
+    if (isImageLoading || processedArticles.length <= 1) return;
 
     const timer = setInterval(() => {
       handleNext();
     }, SLIDE_DURATION);
 
     return () => clearInterval(timer);
-  }, [isPlaying, isImageLoading, processedArticles.length, handleNext]);
+  }, [isImageLoading, processedArticles.length, handleNext]);
 
 
   if (processedArticles.length === 0) return null;
 
   const currentArticle = processedArticles[currentIndex];
+  console.log('Current Article:', currentArticle);
   
   // Font classes
   const titleFontClass = currentArticle?.title ? getFontClass(currentArticle.title) : 'font-roboto';
   const excerptFontClass = currentArticle?.excerpt ? getFontClass(currentArticle.excerpt) : 'font-roboto';
+  const authorFontClass = currentArticle?.author?.name ? getFontClass(currentArticle.author.name) : 'font-roboto';
+
 
   return (
     <>
     <section 
       className="relative h-[60vh] lg:h-[80vh] w-full overflow-hidden bg-black cursor-pointer"
-      onMouseEnter={() => setIsPlaying(false)}
-      onMouseLeave={() => setIsPlaying(true)}
+      // onMouseEnter={() => setIsPlaying(false)}
+      // onMouseLeave={() => setIsPlaying(true)}
     >
       {/* Loading Overlay - Only for initial load */}
       {!hasLoadedInitial && (
@@ -131,6 +134,35 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3, duration: 0.6 }}
                     >
+                       {/* Author & Date Info */}
+                       <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+                         {currentArticle?.author && (
+                           <>
+                             <div className="w-7 h-7 md:w-10 md:h-10 rounded-full overflow-hidden border-2 border-white/80 flex-shrink-0">
+                               <Image
+                                 src={getAuthorAvatar(currentArticle.author.avatar)}
+                                 alt={currentArticle.author.name || 'Staff'}
+                                 width={40}
+                                 height={40}
+                                 className="w-full h-full object-cover"
+                               />
+                             </div>
+                             <span className={`${authorFontClass} text-white/90 text-xs md:text-base font-bold drop-shadow-md`}>
+                               {currentArticle.author.name || 'Staff'}
+                             </span>
+                           </>
+                         )}
+                         {currentArticle?.publishedAt && (
+                           <>
+                             <span className="text-white/60 text-xs md:text-base">•</span>
+                             <span className="text-white/80 text-xs md:text-sm drop-shadow-md font-bold">
+                               {formatPublishDate(currentArticle.publishedAt)}
+                             </span>
+                           </>
+                         )}
+                         
+                       </div>
+
                        <h1 className={`${titleFontClass} text-2xl md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-6 group-hover:underline decoration-white underline-offset-8 transition-all leading-tight shadow-black drop-shadow-lg`}>
                          {currentArticle?.title}
                        </h1>
@@ -174,11 +206,27 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
            />
         </button>
       </div>
+
+      {/* Navigation Dots */}
+      <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 md:gap-3 z-30 pointer-events-none">
+        {processedArticles.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            className={`pointer-events-auto transition-all duration-300 rounded-full ${
+              index === currentIndex
+                ? 'w-8 md:w-12 h-2 md:h-2.5 bg-white'
+                : 'w-2 md:w-2.5 h-2 md:h-2.5 bg-white/50 hover:bg-white/75'
+            }`}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
     </section>
 
     {/* Progress Line - Outside the Carousel Section */}
     <div className="w-full h-1 bg-white/20">
-       {isPlaying && !isImageLoading && (
+       {!isImageLoading && (
           <div 
              key={currentIndex}
              className="h-full bg-foreground animate-progress origin-left"

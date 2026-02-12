@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Menu, Search, Moon, Sun, LogIn, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,16 +19,44 @@ import { useScroll, useMotionValueEvent } from "framer-motion";
 export default function Header() {
   const { theme, setTheme } = useTheme();
   const { isAuthenticated, user, logout } = useAuth();
+  const pathname = usePathname();
+  const isHomePage = pathname === '/' || pathname === '';
+  
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileSearchActive, setIsMobileSearchActive] = useState(false);
   
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
   const { scrollY } = useScroll();
   const lastScrollY = useRef(0);
+
+  // Initialize hero state when page changes or on mount
+  useEffect(() => {
+    if (isHomePage && typeof window !== 'undefined') {
+      const currentScrollY = window.scrollY;
+      const isMobile = window.innerWidth < 1024;
+      const carouselHeight = window.innerHeight * (isMobile ? 0.60 : 0.80) + 4;
+      setIsScrolledPastHero(currentScrollY > carouselHeight);
+    } else {
+      setIsScrolledPastHero(true);
+    }
+  }, [isHomePage]);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const currentScrollY = latest;
     const previousScrollY = lastScrollY.current;
+    
+    // Only apply hero threshold logic on homepage
+    if (isHomePage && typeof window !== 'undefined') {
+      // Carousel is 60vh on mobile (<1024px) and 80vh on desktop (>=1024px)
+      // Add progress bar height (4px) for accurate calculation
+      const isMobile = window.innerWidth < 1024;
+      const carouselHeight = window.innerHeight * (isMobile ? 0.60 : 0.80) + 4;
+      setIsScrolledPastHero(currentScrollY > carouselHeight);
+    } else {
+      // On other pages, always show solid background
+      setIsScrolledPastHero(true);
+    }
     
     // Hide header if scrolling down and past 100px
     if (currentScrollY > previousScrollY && currentScrollY > 100) {
@@ -58,8 +87,12 @@ export default function Header() {
     <>
       <header 
         className={cn(
-          "sticky top-0 z-40 w-full bg-background/95 border-b transition-transform duration-300 ease-in-out",
-          !isHeaderVisible && "-translate-y-full"
+          "top-0 z-50 w-full border-b transition-all duration-300 ease-in-out",
+          isHomePage ? "fixed" : "sticky",
+          !isHeaderVisible && "-translate-y-full",
+          isScrolledPastHero 
+            ? "bg-background backdrop-blur-md border-border shadow-lg" 
+            : "border-transparent"
         )}
       >
         <div className="container pl-6 flex h-16 items-center justify-between gap-4 font-light">
@@ -74,7 +107,12 @@ export default function Header() {
               size="icon"
               onClick={toggleSidebar}
               aria-label="Toggle menu"
-              className="hover:bg-gray-100 dark:hover:bg-brand-black-90"
+              className={cn(
+                "transition-colors duration-300",
+                isScrolledPastHero 
+                  ? "hover:bg-gray-100 dark:hover:bg-brand-black-90" 
+                  : "text-white hover:bg-white/20"
+              )}
             >
               <Menu className="!w-7 !h-7 stroke-2" />
             </Button>
@@ -115,7 +153,12 @@ export default function Header() {
             <Button
               variant="ghost"
               size="icon"
-              className="hover:bg-gray-100 dark:hover:bg-brand-black-90"
+              className={cn(
+                "transition-colors duration-300",
+                isScrolledPastHero 
+                  ? "hover:bg-gray-100 dark:hover:bg-brand-black-90" 
+                  : "text-white hover:bg-white/20"
+              )}
               aria-label="Toggle theme"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             >
@@ -129,14 +172,24 @@ export default function Header() {
               size="icon"
               onClick={toggleMobileSearch}
               aria-label="Search"
-              className="sm:hidden hover:bg-gray-100 dark:hover:bg-brand-black-90"
+              className={cn(
+                "sm:hidden transition-colors duration-300",
+                isScrolledPastHero 
+                  ? "hover:bg-gray-100 dark:hover:bg-brand-black-90" 
+                  : "text-white hover:bg-white/20"
+              )}
             >
               <Search className="!h-6 !w-6 stroke-2" />
             </Button>
 
             {/* Desktop Search Input (Visible >= sm breakpoint) */}
             <SearchBar
-              className="hidden sm:block w-40 md:w-64 lg:w-80 border rounded border-black"
+              className={cn(
+                "hidden sm:block w-40 md:w-64 lg:w-80 rounded transition-all duration-300",
+                isScrolledPastHero 
+                  ? "border border-input bg-background" 
+                  : "border border-white/30 bg-white/10 backdrop-blur-sm placeholder:text-white/70 text-white"
+              )}
             />
 
             {/* Auth Links */}
@@ -145,8 +198,11 @@ export default function Header() {
                 <Link
                   href="/auth/signin"
                   className={cn(
-                    "items-center text-base font-bold text-foreground hover:text-blue-600 dark:hover:text-blue-400 transition-colors",
-                    "hidden sm:inline-flex"
+                    "items-center text-base font-bold transition-colors",
+                    "hidden sm:inline-flex",
+                    isScrolledPastHero 
+                      ? "text-foreground hover:text-blue-600 dark:hover:text-blue-400" 
+                      : "text-white hover:text-white/80"
                   )}
                 >
                   <LogIn className="mr-2 h-6 w-6 stroke-2" />
