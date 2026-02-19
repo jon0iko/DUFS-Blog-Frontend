@@ -27,6 +27,7 @@ interface SearchBarProps {
   onClose?: () => void;
   autoFocus?: boolean;
   isMobile?: boolean;
+  isOverlay?: boolean;
 }
 
 export default function SearchBar({
@@ -36,6 +37,7 @@ export default function SearchBar({
   onClose,
   autoFocus = false,
   isMobile = false,
+  isOverlay = false,
 }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -159,7 +161,10 @@ export default function SearchBar({
     setQuery("");
     setResults([]);
     setIsOpen(false);
-    inputRef.current?.focus();
+    // Refocus input after clearing, but wait for the state to update
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
   };
 
   // Handle result click
@@ -172,7 +177,10 @@ export default function SearchBar({
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-5 w-5 stroke-2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+        <Search className={cn(
+          "absolute left-3 top-1/2 h-5 w-5 stroke-2 -translate-y-1/2 pointer-events-none z-10",
+          isOverlay ? "text-white/80" : "text-muted-foreground"
+        )} />
         <Input
           ref={inputRef}
           type="text"
@@ -182,7 +190,7 @@ export default function SearchBar({
           onFocus={() => query.trim().length >= 2 && setIsOpen(true)}
           placeholder={placeholder}
           className={cn(
-            "h-10 w-full pl-10 pr-10 bg-background border font-medium",
+            "h-10 w-full pl-10 pr-10 border font-medium",
             isOpen ? "rounded-t-md rounded-b-none border-b-0" : "rounded-md",
             inputClassName
           )}
@@ -191,7 +199,10 @@ export default function SearchBar({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className={cn(
+              "absolute right-3 top-1/2 -translate-y-1/2 transition-opacity z-10",
+              isOverlay ? "text-white/80 hover:text-white" : "text-muted-foreground hover:opacity-70"
+            )}
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -206,12 +217,16 @@ export default function SearchBar({
       {isOpen && (
         <div
           className={cn(
-            "absolute top-full left-0 right-0 mt-0.5 bg-white dark:bg-brand-black-100 border border-t-0 border-gray-200 dark:border-gray-700 rounded-b-lg shadow-xl overflow-hidden z-50",
-            isMobile ? "max-h-[60vh]" : "max-h-[400px]"
+            "absolute top-full left-0 right-0 border border-t-0 rounded-b-lg shadow-xl z-50 transition-all duration-300",
+            isMobile ? "max-h-[60vh]" : "max-h-[400px]",
+            isOverlay ? "border-white/30" : "border-border"
           )}
         >
           {results.length > 0 ? (
-            <div className="overflow-y-auto max-h-[inherit]">
+            <div className={cn(
+              "overflow-y-auto max-h-[inherit] rounded-b-lg",
+              isOverlay ? "bg-white/15 backdrop-blur-md" : "bg-background"
+            )}>
               
               {results.map((result, index) => {
                 const titleFontClass = getFontClass(result.title);
@@ -221,12 +236,17 @@ export default function SearchBar({
                     href={`/read-article?slug=${result.slug}`}
                     onClick={handleResultClick}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-brand-black-90 transition-colors",
-                      selectedIndex === index && "bg-gray-50 dark:bg-brand-black-90"
+                      "flex items-center gap-3 px-3 py-2.5 transition-colors",
+                      isOverlay 
+                        ? "hover:bg-white/20" + (selectedIndex === index ? " bg-white/20" : "")
+                        : "hover:bg-muted/50" + (selectedIndex === index ? " bg-muted/50" : "")
                     )}
                   >
                     {/* Thumbnail */}
-                    <div className="relative w-12 h-12 flex-shrink-0 rounded-md overflow-hidden bg-gray-100 dark:bg-brand-black-90">
+                    <div className={cn(
+                      "relative w-12 h-12 flex-shrink-0 rounded-md overflow-hidden",
+                      isOverlay ? "bg-white/20" : "bg-muted"
+                    )}>
                       <Image
                         src={result.image}
                         alt={result.title}
@@ -239,12 +259,16 @@ export default function SearchBar({
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <h4 className={cn(
-                        "font-semibold text-sm line-clamp-1 text-foreground",
+                        "font-semibold text-sm line-clamp-1",
+                        isOverlay ? "text-white" : "text-foreground",
                         titleFontClass
                       )}>
                         {result.title}
                       </h4>
-                      <p className="text-xs text-muted-foreground line-clamp-1">
+                      <p className={cn(
+                        "text-xs line-clamp-1",
+                        isOverlay ? "text-white/70" : "text-muted-foreground"
+                      )}>
                         {result.authorName}
                       </p>
                     </div>
@@ -256,13 +280,21 @@ export default function SearchBar({
               <Link
                 href={`/browse?search=${encodeURIComponent(query)}`}
                 onClick={handleResultClick}
-                className="block px-3 py-3 text-sm text-center text-primary hover:bg-gray-50 dark:hover:bg-brand-black-90 border-t border-gray-100 dark:border-gray-800 font-medium"
+                className={cn(
+                  "block px-3 py-3 text-sm text-center font-medium border-t",
+                  isOverlay
+                    ? "text-white hover:bg-white/20 border-white/30"
+                    : "text-primary hover:bg-muted/50 border-border"
+                )}
               >
                 View all results for &quot;{query}&quot;
               </Link>
             </div>
           ) : (
-            <div className="px-4 py-8 text-center text-muted-foreground">
+            <div className={cn(
+              "px-4 py-8 text-center rounded-b-lg",
+              isOverlay ? "bg-white/15 backdrop-blur-md text-white/80" : "bg-background text-muted-foreground"
+            )}>
               <p className="text-sm">No results found for &quot;{query}&quot;</p>
               <p className="text-xs mt-1">Try different keywords</p>
             </div>

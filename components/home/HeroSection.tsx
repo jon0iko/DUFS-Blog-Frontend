@@ -9,7 +9,7 @@ export default async function HeroSection() {
     
     if (!heroArticlesResponse.data || heroArticlesResponse.data.length === 0) {
       return (
-        <section className="relative h-[60vh] md:h-[60vh] lg:h-[70vh] w-full overflow-hidden bg-brand-black-90 flex items-center justify-center">
+        <section className="relative h-[80vh] w-full overflow-hidden bg-brand-black-90 flex items-center justify-center">
           <div className="text-center text-white px-4">
             <h2 className="text-2xl md:text-3xl font-bold mb-2">No Hero Articles Found</h2>
             <p className="text-gray-400">Please mark an article as hero in the content manager</p>
@@ -22,7 +22,7 @@ export default async function HeroSection() {
   } catch (error) {
     console.error('Failed to load hero section:', error);
     return (
-      <section className="relative h-[60vh] md:h-[60vh] lg:h-[70vh] w-full overflow-hidden bg-red-900 flex items-center justify-center">
+      <section className="relative h-[80vh] w-full overflow-hidden bg-red-900 flex items-center justify-center">
         <div className="text-center text-white px-4">
           <h2 className="text-2xl md:text-3xl font-bold mb-2">Error Loading</h2>
           <p className="text-gray-200">Failed to connect to the server. Please check your connection.</p>

@@ -1,7 +1,7 @@
 export const config = {
   // Strapi Configuration
   strapi: {
-    url: process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337',
+    url: process.env.NEXT_PUBLIC_STRAPI_URL || 'http://192.168.68.109:1337',
     apiToken: process.env.NEXT_PUBLIC_STRAPI_API_TOKEN || '',
     endpoints: {
       articles: '/api/articles',

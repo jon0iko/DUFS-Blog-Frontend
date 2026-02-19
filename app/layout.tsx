@@ -39,6 +39,43 @@ const roboto = localFont({
   display: "swap",
 });
 
+const montserrat = localFont({
+  src: [
+    {
+      path: "../public/fonts/Montserrat-Thin.ttf",
+      weight: "100",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/Montserrat-Light.ttf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/Montserrat-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/Montserrat-SemiBold.ttf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/Montserrat-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/Montserrat-Black.ttf",
+      weight: "900",
+      style: "normal",
+    },
+  ],
+  variable: "--font-montserrat", // Assign CSS variable for Montserrat
+  display: "swap",
+});
+
 // --- Load Kalpurush Font (using TTF) ---
 const kalpurush = localFont({
   src: "../public/fonts/kalpurush.ttf", 
@@ -64,6 +101,7 @@ export default function RootLayout({
         className={cn(
           "min-h-screen bg-background font-sans antialiased",
           roboto.variable,
+          montserrat.variable,
           kalpurush.variable
         )}
       >

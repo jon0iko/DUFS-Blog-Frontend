@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
@@ -14,10 +14,22 @@ interface HeroCarouselProps {
 }
 
 const SLIDE_DURATION = 6000; // 6 seconds per slide
+const IMAGE_LOAD_TIMEOUT = 3000; // Fallback if image onLoad/onError never fires
 
 export default function HeroCarousel({ articles }: HeroCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  // const [isPlaying, setIsPlaying] = useState(true);
+  const [isImageLoading, setIsImageLoading] = useState(true);
+  const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
+  const [progressKey, setProgressKey] = useState(0);
+  const [progressDuration, setProgressDuration] = useState(SLIDE_DURATION);
+  const [isUserInteracting, setIsUserInteracting] = useState(false);
+
+  // Refs for robust timer management (immune to stale closures)
+  const autoplayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const safetyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const slideStartTime = useRef(Date.now());
+  const remainingTime = useRef(SLIDE_DURATION);
+  const slideReady = useRef(false);
 
   // Memoize article data for performance
   const processedArticles = useMemo(() => {
@@ -27,33 +39,140 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
     })).filter(a => a !== null);
   }, [articles]);
 
+  const articleCount = processedArticles.length;
+
   const handleNext = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % processedArticles.length);
-  }, [processedArticles.length]);
+    setCurrentIndex((prev) => (prev + 1) % articleCount);
+  }, [articleCount]);
 
   const handlePrev = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + processedArticles.length) % processedArticles.length);
-  }, [processedArticles.length]);
+    setCurrentIndex((prev) => (prev - 1 + articleCount) % articleCount);
+  }, [articleCount]);
 
-  /* Loading State */
-  const [isImageLoading, setIsImageLoading] = useState(true);
-  const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
+  // Stable ref for handleNext — avoids stale closures in setTimeout/event listeners
+  const handleNextRef = useRef(handleNext);
+  useEffect(() => { handleNextRef.current = handleNext; }, [handleNext]);
 
-  // Reset loading state when index changes
+  // Schedule next slide transition after `duration` ms
+  const startAutoplay = useCallback((duration: number = SLIDE_DURATION) => {
+    if (autoplayTimer.current) clearTimeout(autoplayTimer.current);
+    if (articleCount <= 1) return;
+
+    slideStartTime.current = Date.now();
+    remainingTime.current = duration;
+
+    autoplayTimer.current = setTimeout(() => {
+      handleNextRef.current();
+    }, duration);
+  }, [articleCount]);
+
+  // Called when the current slide is ready (image loaded, errored, or safety timeout)
+  const onSlideReady = useCallback((duration: number = SLIDE_DURATION) => {
+    if (slideReady.current) return; // Debounce — only fire once per slide
+    slideReady.current = true;
+
+    setIsImageLoading(false);
+    setHasLoadedInitial(true);
+
+    if (safetyTimer.current) {
+      clearTimeout(safetyTimer.current);
+      safetyTimer.current = null;
+    }
+
+    setProgressDuration(duration);
+    setProgressKey((k) => k + 1);
+    startAutoplay(duration);
+  }, [startAutoplay]);
+
+  // Stable ref for onSlideReady
+  const onSlideReadyRef = useRef(onSlideReady);
+  useEffect(() => { onSlideReadyRef.current = onSlideReady; }, [onSlideReady]);
+
+  // When slide index changes — reset state and arm safety fallback
   useEffect(() => {
+    slideReady.current = false;
     setIsImageLoading(true);
+
+    if (autoplayTimer.current) {
+      clearTimeout(autoplayTimer.current);
+      autoplayTimer.current = null;
+    }
+
+    // Safety: if onLoad/onError never fire (cache quirk, browser optimization, etc.)
+    safetyTimer.current = setTimeout(() => {
+      onSlideReadyRef.current();
+    }, IMAGE_LOAD_TIMEOUT);
+
+    return () => {
+      if (safetyTimer.current) {
+        clearTimeout(safetyTimer.current);
+        safetyTimer.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex]);
 
-  // Autoplay Logic - Paused when image is loading
+  // Pause autoplay when tab is hidden, resume/advance when visible
   useEffect(() => {
-    if (isImageLoading || processedArticles.length <= 1) return;
+    const handleVisibility = () => {
+      if (document.hidden) {
+        // Tab hidden — snapshot remaining time and clear timer
+        if (autoplayTimer.current) {
+          const elapsed = Date.now() - slideStartTime.current;
+          remainingTime.current = Math.max(0, remainingTime.current - elapsed);
+          clearTimeout(autoplayTimer.current);
+          autoplayTimer.current = null;
+        }
+      } else {
+        // Tab visible — resume only if slide image is ready
+        if (!slideReady.current || articleCount <= 1) return;
 
-    const timer = setInterval(() => {
-      handleNext();
-    }, SLIDE_DURATION);
+        if (remainingTime.current < 1000) {
+          // Slide should have transitioned while hidden — advance now for fresh animations
+          handleNextRef.current();
+        } else {
+          // Resume with remaining time, restart progress bar to match
+          setProgressDuration(remainingTime.current);
+          setProgressKey((k) => k + 1);
 
-    return () => clearInterval(timer);
-  }, [isImageLoading, processedArticles.length, handleNext]);
+          if (autoplayTimer.current) clearTimeout(autoplayTimer.current);
+          slideStartTime.current = Date.now();
+          autoplayTimer.current = setTimeout(() => {
+            handleNextRef.current();
+          }, remainingTime.current);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [articleCount]);
+
+  // Pause autoplay when user interacts with navigation dots
+  useEffect(() => {
+    if (isUserInteracting) {
+      // Clear autoplay timer but keep zoom animation running
+      if (autoplayTimer.current) {
+        clearTimeout(autoplayTimer.current);
+        autoplayTimer.current = null;
+      }
+    } else {
+      // User stopped interacting - restart autoplay with full duration if slide is ready
+      if (slideReady.current && articleCount > 1) {
+        setProgressDuration(SLIDE_DURATION);
+        setProgressKey((k) => k + 1);
+        startAutoplay(SLIDE_DURATION);
+      }
+    }
+  }, [isUserInteracting, articleCount, startAutoplay]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (autoplayTimer.current) clearTimeout(autoplayTimer.current);
+      if (safetyTimer.current) clearTimeout(safetyTimer.current);
+    };
+  }, []);
 
 
   if (processedArticles.length === 0) return null;
@@ -70,7 +189,7 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
   return (
     <>
     <section 
-      className="relative h-[60vh] lg:h-[80vh] w-full overflow-hidden bg-black cursor-pointer"
+      className="relative h-[90vh] w-full overflow-hidden bg-black cursor-pointer"
       // onMouseEnter={() => setIsPlaying(false)}
       // onMouseLeave={() => setIsPlaying(true)}
     >
@@ -107,27 +226,28 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
                     animate={{ scale: 1.1 }}
                     transition={{ duration: SLIDE_DURATION / 1000 + 0.5, ease: "linear" }}
                   >
+                  
                     <Image
                       src={currentArticle.imageSrc}
                       alt={currentArticle.title || "Hero Image"}
                       fill
                       priority
-                      onLoad={() => {
-                        setIsImageLoading(false);
-                        setHasLoadedInitial(true);
-                      }}
-                      className="object-cover grayscale"
+                      onLoad={() => onSlideReadyRef.current()}
+                      onError={() => onSlideReadyRef.current()}
+                      className="object-cover"
                       sizes="100vw"
                     />
-                    <div className="absolute inset-0 bg-black/50" />
+                    {/* Cinematic Gradient Overlay - Fades from bottom and top for cinematic effect */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-transparent" />
                   </motion.div>
                </div>
             )}
 
             {/* Content Overlay */}
             <div className="absolute inset-0 flex flex-col justify-end pb-12 md:pb-20 pointer-events-none z-20">
-               <div className="container px-14 md:px-6">
-                  <div className="max-w-4xl">
+               <div className="container px-6 md:px-6">
+                  <div className="max-w-5xl">
                     {/* Text Animation */}
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
@@ -163,10 +283,10 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
                          
                        </div>
 
-                       <h1 className={`${titleFontClass} text-2xl md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-6 group-hover:underline decoration-white underline-offset-8 transition-all leading-tight shadow-black drop-shadow-lg`}>
+                       <h1 className={`${titleFontClass} text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-6 group-hover:underline decoration-white underline-offset-8 transition-all leading-tight shadow-black drop-shadow-lg`}>
                          {currentArticle?.title}
                        </h1>
-                      <p className={`${excerptFontClass} text-xs md:text-lg text-white/90 line-clamp-2 md:line-clamp-3 max-w-2xl drop-shadow-md`}>
+                      <p className={`${excerptFontClass} text-xs font-light md:text-lg text-white/90 line-clamp-2 md:line-clamp-3 max-w-2xl drop-shadow-md`}>
                          {currentArticle?.excerpt}
                       </p>
                     </motion.div>
@@ -208,7 +328,13 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
       </div>
 
       {/* Navigation Dots */}
-      <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 md:gap-3 z-30 pointer-events-none">
+      <div 
+        className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 md:gap-3 z-30 pointer-events-none"
+        onMouseEnter={() => setIsUserInteracting(true)}
+        onMouseLeave={() => setIsUserInteracting(false)}
+        onTouchStart={() => setIsUserInteracting(true)}
+        onTouchEnd={() => setIsUserInteracting(false)}
+      >
         {processedArticles.map((_, index) => (
           <button
             key={index}
@@ -225,12 +351,12 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
     </section>
 
     {/* Progress Line - Outside the Carousel Section */}
-    <div className="w-full h-1 bg-white/20">
-       {!isImageLoading && (
+    <div className="w-full h-1 bg-[#E0D5D0]">
+       {!isImageLoading && !isUserInteracting && (
           <div 
-             key={currentIndex}
-             className="h-full bg-foreground animate-progress origin-left"
-             style={{ animationDuration: `${SLIDE_DURATION}ms` }}
+             key={progressKey}
+             className="h-full bg-black dark:bg-black animate-progress origin-left"
+             style={{ animationDuration: `${progressDuration}ms` }}
           />
        )}
     </div>

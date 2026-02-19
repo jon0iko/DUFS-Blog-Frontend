@@ -23,13 +23,17 @@ const config: Config = {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'var(--font-roboto)',
+  				'var(--font-montserrat)',
                     ...defaultTheme.fontFamily.sans
                 ],
   			roboto: [
   				'var(--font-roboto)',
                     ...defaultTheme.fontFamily.sans
                 ],
+			montserrat: [
+				'var(--font-montserrat)',
+					...defaultTheme.fontFamily.sans
+			],
   			kalpurush: [
   				'var(--font-kalpurush)',
   				'var(--font-roboto)',
@@ -79,7 +83,20 @@ const config: Config = {
   					40: '#FFFFFF66',
   					20: '#FFFFFF33'
   				},
-  				accent: '#1a8917'
+  				accent: {
+					DEFAULT: '#231F20', // main
+					dark: '',
+					50: '#F5F3FF',      // Lightest (Backgrounds)
+					100: '#EDE9FE',     // Light (Tags)
+					200: '#DDD6FE',     // Borders
+					300: '#C4B5FD',     // Muted
+					400: '#A78BFA',     // Bright
+					500: '#8B5CF6',     // DEFAULT (Buttons)
+					600: '#7C3AED',     // Hover (Darker)
+					700: '#6D28D9',     // Active
+					800: '#5B21B6',     // Dark Text
+					900: '#4C1D95'      // Deepest
+				}
   			},
   			popover: {
   				DEFAULT: 'hsl(var(--popover))',

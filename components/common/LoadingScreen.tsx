@@ -86,7 +86,7 @@ export default function LoadingScreen({
           
           {/* Middle Ring */}
           <div
-            className="absolute inset-3 rounded-full border-2 border-border/50"
+            className="absolute inset-3 rounded-full border-2 border-foreground/25 dark:border-white/55"
             style={{
               animation: 'pulse-ring 2s ease-in-out infinite 0.4s',
             }}
@@ -94,7 +94,7 @@ export default function LoadingScreen({
           
           {/* Inner Ring */}
           <div
-            className="absolute inset-6 rounded-full border-2 border-primary/40"
+            className="absolute inset-6 rounded-full border-2 border-primary/60 dark:border-primary"
             style={{
               animation: 'pulse-ring 2s ease-in-out infinite 0.8s',
             }}
@@ -102,7 +102,7 @@ export default function LoadingScreen({
 
           {/* Logo with Gentle Float */}
           <div
-            className="relative z-10 w-24 h-24 md:w-28 md:h-28 flex items-center justify-center rounded-full bg-white dark:bg-white shadow-lg p-3"
+            className="relative z-10 w-24 h-24 md:w-28 md:h-28 flex items-center justify-center rounded-full bg-white dark:bg-white shadow-lg dark:shadow-[0_0_24px_4px_rgba(139,92,246,0.25)] p-3"
             style={{
               animation: 'float 3s ease-in-out infinite',
             }}
@@ -165,11 +165,11 @@ export default function LoadingScreen({
         @keyframes pulse-ring {
           0%, 100% {
             transform: scale(1);
-            opacity: 0.3;
+            opacity: 0.45;
           }
           50% {
             transform: scale(1.1);
-            opacity: 0.6;
+            opacity: 0.9;
           }
         }
 

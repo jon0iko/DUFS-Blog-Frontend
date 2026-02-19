@@ -21,7 +21,7 @@
     --secondary-foreground: 0 2% 12.5%;
 
     --muted: 0 0% 95%; /* Subtle background */
-    --muted-foreground: 0 1% 47%; /* 60% black shade */
+    --muted-foreground: 0 1% 40%; /* Darker for better readability */
 
     --accent: 0 0% 92%; /* Slightly darker than secondary */
     --accent-foreground: 0 2% 12.5%;
@@ -54,7 +54,7 @@
     --secondary-foreground: 0 0% 100%;
 
     --muted: 0 1% 29%; /* 80% black shade */
-    --muted-foreground: 0 0% 70%; /* Light gray text */
+    --muted-foreground: 0 0% 85%; /* Lighter for better readability */
 
     --accent: 0 1% 35%; /* Between 80% and 60% */
     --accent-foreground: 0 0% 100%;
@@ -156,5 +156,15 @@
 
   .animate-progress {
     animation: progress linear forwards;
+  }
+
+  /* Spin reveal animation - spins 3 times */
+  @keyframes spin-reveal {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(1080deg); }
+  }
+
+  .animate-spin-reveal {
+    animation: spin-reveal 4s ease-in-out;
   }
 }

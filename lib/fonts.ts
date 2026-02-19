@@ -18,7 +18,7 @@ export const isBengaliText = (text: string): boolean => {
  * Get appropriate font class for text
  */
 export const getFontClass = (text: string): string => {
-  return isBengaliText(text) ? 'font-kalpurush' : 'font-roboto'
+  return isBengaliText(text) ? 'font-kalpurush' : 'font-montserrat'
 }
 
 /**

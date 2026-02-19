@@ -1,26 +1,28 @@
 import HeroSection from '@/components/home/HeroSection';
-import FeaturedArticles from '@/components/home/FeaturedArticles';
 import EditorChoice from '@/components/home/EditorChoice';
-import MorePostsButton from '@/components/home/MorePostsButton';
-import CategoriesSection from '@/components/home/CategoriesSection';
+import BrowseContentSectionWrapper from '@/components/home/BrowseContentSectionWrapper';
+import PublicationsSection from '@/components/home/PublicationsSection';
 import ScrollReveal from '@/components/ui/ScrollReveal';
+import CurveDivider from '@/components/home/CurveDivider';
 
 export default function Home() {
   return (
     <div>
       <HeroSection />
-
-      <CategoriesSection />
+      <CurveDivider />
 
       <ScrollReveal>
-        <FeaturedArticles />
+        <BrowseContentSectionWrapper />
       </ScrollReveal>
       
-      <MorePostsButton />
+      {/* <MorePostsButton /> */}
+
+      <EditorChoice />
 
       <ScrollReveal>
-        <EditorChoice />
+        <PublicationsSection />
       </ScrollReveal>
+      
     </div>
   );
 }
