@@ -84,18 +84,7 @@ const config: Config = {
   					20: '#FFFFFF33'
   				},
   				accent: {
-					DEFAULT: '#231F20', // main
-					dark: '',
-					50: '#F5F3FF',      // Lightest (Backgrounds)
-					100: '#EDE9FE',     // Light (Tags)
-					200: '#DDD6FE',     // Borders
-					300: '#C4B5FD',     // Muted
-					400: '#A78BFA',     // Bright
-					500: '#8B5CF6',     // DEFAULT (Buttons)
-					600: '#7C3AED',     // Hover (Darker)
-					700: '#6D28D9',     // Active
-					800: '#5B21B6',     // Dark Text
-					900: '#4C1D95'      // Deepest
+					DEFAULT: '#E0D5D0',
 				}
   			},
   			popover: {
@@ -131,11 +120,16 @@ const config: Config = {
   				to: {
   					height: '0'
   				}
-  			}
+  			},
+  			'text-reel': {
+  				'0%': { transform: 'translateX(0)' },
+  				'100%': { transform: 'translateX(-50%)' },
+  			},
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'text-reel': 'text-reel 25s linear infinite',
   		}
   	}
   },

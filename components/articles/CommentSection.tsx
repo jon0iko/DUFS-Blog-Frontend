@@ -1,15 +1,25 @@
-'use client'
+﻿'use client'
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Comment as StrapiComment } from '@/types';
-import { MessageCircle, ThumbsUp, Reply, Loader2, Trash2, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
+import {
+  MessageCircle,
+  ThumbsUp,
+  Reply,
+  Loader2,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  Send,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { strapiAPI } from '@/lib/api';
 import { config } from '@/lib/config';
 import { getUserAvatarUrl } from '@/lib/auth';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface CommentSectionProps {
   articleId: number;
@@ -20,151 +30,101 @@ interface CommentSectionProps {
 
 const COMMENTS_PER_PAGE = 10;
 
-export default function CommentSection({ 
-  articleId, 
+export default function CommentSection({
+  articleId,
   articleDocumentId,
   initialComments = [],
-  totalCommentsCount: initialTotalCount = 0
+  totalCommentsCount: initialTotalCount = 0,
 }: CommentSectionProps) {
   const { user, isAuthenticated } = useAuth();
-  const [comments, setComments] = useState<StrapiComment[]>([]);
+  const [comments, setComments] = useState<StrapiComment[]>(initialComments);
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showDiscussion, setShowDiscussion] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMoreComments, setHasMoreComments] = useState(true);
   const [totalCount, setTotalCount] = useState(initialTotalCount || initialComments.length);
 
-  // Fetch comment count on mount
-  useEffect(() => {
-    const fetchCommentCount = async () => {
-      if (articleDocumentId) {
-        try {
-          const count = await strapiAPI.getCommentCountForArticle(articleDocumentId);
-          setTotalCount(count);
-        } catch (err) {
-          console.error('Error fetching comment count:', err);
-        }
-      }
-    };
-
-    fetchCommentCount();
-  }, [articleDocumentId]);
-
-  // Format date to relative time
+  // Relative-time formatter
   const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffMins < 1) return 'Just now';
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffMins < 1) return 'just now';
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays === 1) return 'Yesterday';
+    if (diffDays === 1) return 'yesterday';
     if (diffDays < 7) return `${diffDays}d ago`;
     if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
     if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`;
     return `${Math.floor(diffDays / 365)}y ago`;
   }, []);
 
-  // Load comments with pagination
-  const loadComments = useCallback(async (page: number, append: boolean = false) => {
+  // Paginated loader
+  const loadComments = useCallback(async (page: number, append = false) => {
     setIsLoadingComments(true);
     try {
       const result = await strapiAPI.getCommentsByArticlePaginated(
-        articleDocumentId, 
-        page, 
+        articleDocumentId,
+        page,
         COMMENTS_PER_PAGE
       );
-      
-      if (append) {
-        setComments(prev => [...prev, ...result.comments]);
-      } else {
-        setComments(result.comments);
-      }
-      
+      setComments(prev => (append ? [...prev, ...result.comments] : result.comments));
       setTotalCount(result.total);
       setHasMoreComments(page * COMMENTS_PER_PAGE < result.total);
       setCurrentPage(page);
-    } catch (err) {
-      console.error('Error loading comments:', err);
-      setError('Failed to load comments. Please try again.');
+    } catch {
+      // silently fail; count still visible
     } finally {
       setIsLoadingComments(false);
     }
   }, [articleDocumentId]);
 
-  // Open discussion and load first batch
-  const handleViewDiscussion = async () => {
-    setShowDiscussion(true);
+  // Auto-load on mount
+  useEffect(() => {
+    if (articleDocumentId) loadComments(1);
+  }, [articleDocumentId, loadComments]);
+
+  const handleLoadMore = () => loadComments(currentPage + 1, true);
+
+  const refreshComments = useCallback(async () => {
     await loadComments(1);
-  };
+  }, [loadComments]);
 
-  // Load more comments
-  const handleLoadMore = async () => {
-    await loadComments(currentPage + 1, true);
-  };
-
-  // Submit a new comment
+  // Submit top-level comment
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newComment.trim() === '' || !isAuthenticated || !user) return;
-    
+    if (!newComment.trim() || !isAuthenticated || !user) return;
     setIsSubmitting(true);
-    setError(null);
-
+    setSubmitError(null);
     try {
-      const createdComment = await strapiAPI.createComment(
-        articleId,
-        newComment.trim(),
-        user.id
-      );
-      
-      // Add the new comment with user info
-      const commentWithUser = {
-        ...createdComment,
-        users_permissions_user: { 
-          username: user.username, 
-          id: user.id
-        },
+      const created = await strapiAPI.createComment(articleId, newComment.trim(), user.id);
+      const withUser = {
+        ...created,
+        users_permissions_user: { username: user.username, id: user.id },
         replies: [],
       };
-      
-      setComments(prev => [commentWithUser, ...prev]);
+      setComments(prev => [withUser, ...prev]);
       setTotalCount(prev => prev + 1);
       setNewComment('');
-      
-      // If discussion wasn't open, open it now
-      if (!showDiscussion) {
-        setShowDiscussion(true);
-      }
-    } catch (err) {
-      console.error('Error creating comment:', err);
-      setError('Failed to post comment. Please try again.');
+    } catch {
+      setSubmitError('Failed to post comment. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Refresh comments from server
-  const refreshComments = useCallback(async () => {
-    if (showDiscussion) {
-      await loadComments(1);
-    }
-  }, [showDiscussion, loadComments]);
-
-  // Comment Item Component
-  const CommentItem = ({ 
-    comment, 
+  // â”€â”€â”€ CommentItem â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const CommentItem = ({
+    comment,
     isReply = false,
-    onReplyAdded
-  }: { 
-    comment: StrapiComment; 
+    onReplyAdded,
+  }: {
+    comment: StrapiComment;
     isReply?: boolean;
     onReplyAdded?: () => void;
   }) => {
@@ -176,261 +136,184 @@ export default function CommentSection({
     const [showReplies, setShowReplies] = useState(true);
     const [localReplies, setLocalReplies] = useState<StrapiComment[]>(comment.replies || []);
 
-    // Extract user info from users_permissions_user relation
+    // Resolve display name + avatar from relation
     const userInfo = (() => {
       if (!comment.users_permissions_user) return { name: 'Anonymous', avatar: null };
       if (typeof comment.users_permissions_user === 'object') {
-        const userData = comment.users_permissions_user as { 
-          username?: string; 
+        const u = comment.users_permissions_user as {
+          username?: string;
           Avatar?: { url?: string } | null;
         };
-        // Get username - handle both 'username' and potentially nested structures
-        const username = userData.username;
-        // Get avatar URL - could be direct or nested (Strapi uses capital A for Avatar)
         let avatarUrl: string | null = null;
-        if (userData.Avatar?.url) {
-          avatarUrl = userData.Avatar.url.startsWith('http') 
-            ? userData.Avatar.url 
-            : `${config.strapi.url}${userData.Avatar.url}`;
+        if (u.Avatar?.url) {
+          avatarUrl = u.Avatar.url.startsWith('http')
+            ? u.Avatar.url
+            : `${config.strapi.url}${u.Avatar.url}`;
         }
-        return { 
-          name: username || 'Anonymous',
-          avatar: avatarUrl
-        };
+        return { name: u.username || 'Anonymous', avatar: avatarUrl };
       }
       return { name: 'Anonymous', avatar: null };
     })();
 
-    // Check if current user owns this comment
     const isOwner = Boolean(
-      user && 
-      comment.users_permissions_user && 
-      typeof comment.users_permissions_user === 'object' &&
-      (comment.users_permissions_user as { id?: number }).id === user.id
+      user &&
+        comment.users_permissions_user &&
+        typeof comment.users_permissions_user === 'object' &&
+        (comment.users_permissions_user as { id?: number }).id === user.id
     );
 
-    // Generate avatar with gradient based on name
-    const getAvatarFallback = (name: string) => {
-      const colors = [
-        'from-blue-500 to-purple-600',
-        'from-emerald-500 to-teal-600',
-        'from-pink-500 to-rose-600',
-        'from-amber-500 to-orange-600',
-        'from-indigo-500 to-violet-600',
-        'from-cyan-500 to-blue-600',
-        'from-fuchsia-500 to-pink-600',
-        'from-lime-500 to-green-600',
-      ];
-      const colorIndex = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
-      const initial = name.charAt(0).toUpperCase();
-      
+    const AvatarEl = ({ size = 'md' }: { size?: 'sm' | 'md' }) => {
+      const dim = size === 'sm' ? 'w-7 h-7' : 'w-9 h-9';
+      const imgSrc = userInfo.avatar || '/images/avatarPlaceholder.png';
       return (
-        <div className={cn(
-          "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm",
-          "bg-gradient-to-br shadow-md",
-          colors[colorIndex]
-        )}>
-          {initial}
+        <div className={cn('flex-shrink-0 rounded-full overflow-hidden relative', dim)}>
+          <Image src={imgSrc} alt={userInfo.name} fill className="object-cover" />
         </div>
       );
     };
 
-    // Render avatar - image or fallback to placeholder
-    const renderAvatar = (name: string, avatarUrl: string | null) => {
-      const imgSrc = avatarUrl || '/images/avatarPlaceholder.png';
-      return (
-        <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden relative">
-          <Image
-            src={imgSrc}
-            alt={name}
-            fill
-            className="object-cover"
-          />
-        </div>
-      );
-    };
-
-    // Handle like
     const handleLike = async () => {
       if (!isAuthenticated) return;
-      
-      const newLikeCount = hasLiked ? likeCount - 1 : likeCount + 1;
+      const next = hasLiked ? likeCount - 1 : likeCount + 1;
       setHasLiked(!hasLiked);
-      setLikeCount(newLikeCount);
-      
+      setLikeCount(next);
       try {
-        await strapiAPI.updateCommentLikes(comment.documentId, newLikeCount);
-      } catch (err) {
-        console.error('Error updating likes:', err);
-        // Revert on error
+        await strapiAPI.updateCommentLikes(comment.documentId, next);
+      } catch {
         setHasLiked(hasLiked);
         setLikeCount(likeCount);
       }
     };
 
-    // Handle reply submission
     const handleSubmitReply = async (e: React.FormEvent) => {
       e.preventDefault();
-      if (replyContent.trim() === '' || !isAuthenticated || !user) return;
-
+      if (!replyContent.trim() || !isAuthenticated || !user) return;
       setIsSubmittingReply(true);
-
       try {
-        const createdReply = await strapiAPI.createCommentReply(
+        const created = await strapiAPI.createCommentReply(
           comment.id,
           articleId,
           replyContent.trim(),
           user.id
         );
-
-        const replyWithUser = {
-          ...createdReply,
-          users_permissions_user: { 
-            username: user.username, 
-            id: user.id
-          },
+        const withUser = {
+          ...created,
+          users_permissions_user: { username: user.username, id: user.id },
         };
-
-        setLocalReplies(prev => [...prev, replyWithUser]);
+        setLocalReplies(prev => [...prev, withUser]);
         setReplyContent('');
         setShowReplyForm(false);
         setTotalCount(prev => prev + 1);
         onReplyAdded?.();
-      } catch (err) {
-        console.error('Error creating reply:', err);
+      } catch {
+        // could surface toast
       } finally {
         setIsSubmittingReply(false);
       }
     };
 
-    // Handle delete
     const handleDelete = async () => {
-      if (!confirm('Are you sure you want to delete this comment?')) return;
-
+      if (!confirm('Delete this comment?')) return;
       try {
         await strapiAPI.deleteComment(comment.documentId);
         setTotalCount(prev => prev - 1 - localReplies.length);
         refreshComments();
-      } catch (err) {
-        console.error('Error deleting comment:', err);
+      } catch {
+        // silently fail
       }
     };
 
-    const repliesCount = localReplies.length;
-
     return (
-      <div className={cn(
-        "group",
-        isReply && "ml-12 mt-3"
-      )}>
-        <div className={cn(
-          "flex gap-4 p-4 rounded-xl transition-all duration-200",
-          "bg-card dark:bg-card",
-          "border border-border",
-          "hover:border-border",
-          "hover:shadow-sm",
-          isReply && "bg-secondary/50 dark:bg-secondary/30 p-3"
-        )}>
-          {/* Avatar */}
-          {renderAvatar(userInfo.name, userInfo.avatar)}
-
-          {/* Content */}
+      <div className={cn(isReply && 'ml-10 pl-4 border-l-2 border-border')}>
+        <div className="flex gap-3 group">
+          <AvatarEl />
           <div className="flex-1 min-w-0">
             {/* Header */}
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-start justify-between gap-2 mb-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-foreground">
+                <span className="text-sm font-semibold text-foreground leading-none">
                   {userInfo.name}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  •
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {formatDate(comment.CommentDateTime)}
                 </span>
-                {isReply && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
-                    Reply
-                  </span>
-                )}
               </div>
-
-              {/* Delete button for owner */}
               {isOwner && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 h-8 w-8 p-0"
+                <button
                   onClick={handleDelete}
-                  title="Delete comment"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500 p-0.5 rounded shrink-0"
+                  title="Delete"
                 >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               )}
             </div>
 
-            {/* Comment Content */}
-            <p className="text-foreground leading-relaxed whitespace-pre-wrap text-sm">
+            {/* Body */}
+            <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap break-words">
               {comment.Content}
             </p>
 
-            {/* Actions */}
-            <div className="flex items-center gap-2 mt-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-7 px-2.5 text-xs gap-1.5 rounded-full",
-                  hasLiked ? "text-red-500 bg-red-50 dark:bg-red-900/20" : "text-muted-foreground hover:text-foreground"
-                )}
+            {/* Action row */}
+            <div className="flex items-center gap-1 mt-2.5">
+              {/* Like */}
+              <button
                 onClick={handleLike}
                 disabled={!isAuthenticated}
-                title={!isAuthenticated ? "Sign in to like" : undefined}
+                className={cn(
+                  'flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full transition-colors',
+                  hasLiked
+                    ? 'text-red-500 bg-red-50 dark:bg-red-950/30'
+                    : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
+                  !isAuthenticated && 'opacity-50 cursor-default'
+                )}
+                title={!isAuthenticated ? 'Sign in to like' : undefined}
               >
-                <ThumbsUp className={cn(
-                  "w-3.5 h-3.5",
-                  hasLiked && "fill-current"
-                )} />
-                {likeCount > 0 && <span>{likeCount}</span>}
-              </Button>
+                <ThumbsUp className={cn('w-3.5 h-3.5', hasLiked && 'fill-current')} />
+                {likeCount > 0 && <span className="tabular-nums">{likeCount}</span>}
+              </button>
 
+              {/* Reply */}
               {!isReply && comment.isReplyable !== false && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2.5 text-xs gap-1.5 rounded-full text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowReplyForm(!showReplyForm)}
+                <button
+                  onClick={() => setShowReplyForm(v => !v)}
                   disabled={!isAuthenticated}
-                  title={!isAuthenticated ? "Sign in to reply" : undefined}
+                  className={cn(
+                    'flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full transition-colors',
+                    showReplyForm
+                      ? 'text-primary bg-primary/10'
+                      : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
+                    !isAuthenticated && 'opacity-50 cursor-default'
+                  )}
+                  title={!isAuthenticated ? 'Sign in to reply' : undefined}
                 >
                   <Reply className="w-3.5 h-3.5" />
                   Reply
-                </Button>
+                </button>
               )}
 
-              {/* Show/Hide Replies Toggle */}
-              {!isReply && repliesCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2.5 text-xs gap-1.5 rounded-full text-primary hover:text-primary/80"
-                  onClick={() => setShowReplies(!showReplies)}
+              {/* Toggle replies */}
+              {!isReply && localReplies.length > 0 && (
+                <button
+                  onClick={() => setShowReplies(v => !v)}
+                  className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full text-primary hover:bg-primary/10 transition-colors"
                 >
                   {showReplies ? (
                     <ChevronUp className="w-3.5 h-3.5" />
                   ) : (
                     <ChevronDown className="w-3.5 h-3.5" />
                   )}
-                  {repliesCount} {repliesCount === 1 ? 'reply' : 'replies'}
-                </Button>
+                  {localReplies.length}{' '}
+                  {localReplies.length === 1 ? 'reply' : 'replies'}
+                </button>
               )}
             </div>
 
-            {/* Reply Form */}
+            {/* Inline reply composer */}
             {showReplyForm && isAuthenticated && (
-              <form onSubmit={handleSubmitReply} className="mt-4">
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden relative">
+              <form onSubmit={handleSubmitReply} className="mt-3">
+                <div className="flex gap-2">
+                  <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden relative mt-0.5">
                     <Image
                       src={getUserAvatarUrl(user)}
                       alt={user?.username || 'User'}
@@ -441,39 +324,35 @@ export default function CommentSection({
                   <div className="flex-1">
                     <textarea
                       value={replyContent}
-                      onChange={(e) => setReplyContent(e.target.value)}
-                      placeholder={`Reply to ${userInfo.name}...`}
-                      className={cn(
-                        "w-full p-3 rounded-lg border text-sm resize-none",
-                        "bg-secondary dark:bg-secondary",
-                        "border-border",
-                        "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
-                        "placeholder:text-muted-foreground"
-                      )}
+                      onChange={e => setReplyContent(e.target.value)}
+                      placeholder={`Reply to ${userInfo.name}â€¦`}
                       rows={2}
+                      className={cn(
+                        'w-full p-2.5 rounded-lg border text-sm resize-none',
+                        'bg-secondary/50 border-border',
+                        'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
+                        'placeholder:text-muted-foreground'
+                      )}
                     />
-                    <div className="flex justify-end gap-2 mt-2">
+                    <div className="flex justify-end gap-2 mt-1.5">
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
-                          setShowReplyForm(false);
-                          setReplyContent('');
-                        }}
-                        className="text-xs"
+                        className="h-7 text-xs px-3"
+                        onClick={() => { setShowReplyForm(false); setReplyContent(''); }}
                       >
                         Cancel
                       </Button>
-                      <Button 
-                        type="submit" 
+                      <Button
+                        type="submit"
                         size="sm"
-                        disabled={replyContent.trim() === '' || isSubmittingReply}
-                        className="gap-2 rounded-full px-4 text-xs"
+                        disabled={!replyContent.trim() || isSubmittingReply}
+                        className="h-7 text-xs px-3 gap-1.5"
                       >
-                        {isSubmittingReply && (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        )}
+                        {isSubmittingReply
+                          ? <Loader2 className="w-3 h-3 animate-spin" />
+                          : <Send className="w-3 h-3" />}
                         Reply
                       </Button>
                     </div>
@@ -484,15 +363,11 @@ export default function CommentSection({
           </div>
         </div>
 
-        {/* Replies List */}
+        {/* Threaded replies */}
         {!isReply && showReplies && localReplies.length > 0 && (
-          <div className="space-y-2 mt-2">
-            {localReplies.map((reply) => (
-              <CommentItem 
-                key={reply.id || reply.documentId} 
-                comment={reply} 
-                isReply={true} 
-              />
+          <div className="mt-4 space-y-4">
+            {localReplies.map(reply => (
+              <CommentItem key={reply.id || reply.documentId} comment={reply} isReply />
             ))}
           </div>
         )}
@@ -500,175 +375,116 @@ export default function CommentSection({
     );
   };
 
-  // If discussion not yet opened, show "View Discussion" button
-  if (!showDiscussion) {
-    return (
-      <div className="space-y-6">
-        {/* Header with View Discussion Button */}
-        <div className="flex flex-col items-center justify-center py-12 px-6 rounded-xl bg-gradient-to-br from-secondary to-secondary/50 dark:from-secondary/50 dark:to-secondary/30 border border-border">
-          <div className="w-16 h-16 mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-            <MessageSquare className="w-8 h-8 text-primary" />
-          </div>
-          <h3 className="text-xl font-bold text-foreground mb-2">
-            Join the Discussion
-          </h3>
-          <p className="text-muted-foreground text-center mb-6 max-w-md">
-            {totalCount > 0 
-              ? `${totalCount} ${totalCount === 1 ? 'person has' : 'people have'} shared their thoughts. See what they're saying!`
-              : 'Be the first to share your thoughts on this article!'
-            }
-          </p>
-          <Button 
-            onClick={handleViewDiscussion}
-            disabled={isLoadingComments}
-            className="gap-2 rounded-full px-6"
-            size="lg"
-          >
-            {isLoadingComments ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <MessageCircle className="w-4 h-4" />
-            )}
-            View Discussion
-            {totalCount > 0 && (
-              <span className="ml-1 px-2 py-0.5 rounded-full bg-white/20 text-xs">
-                {totalCount}
-              </span>
-            )}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
+  // â”€â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <MessageCircle className="w-5 h-5 text-primary" />
-        </div>
-        <h2 className="text-xl font-bold text-foreground">
+    <section className="space-y-8">
+      {/* Heading */}
+      <div className="flex items-center gap-2.5">
+        <MessageCircle className="w-5 h-5 text-primary flex-shrink-0" />
+        <h2 className="text-lg font-bold text-foreground">
           Discussion
           {totalCount > 0 && (
-            <span className="ml-2 text-base font-normal text-muted-foreground">
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
               ({totalCount})
             </span>
           )}
         </h2>
       </div>
 
-      {/* Comment Form */}
-      <div className={cn(
-        "p-5 rounded-xl",
-        "bg-gradient-to-br from-secondary to-secondary/50 dark:from-secondary/50 dark:to-secondary/30",
-        "border border-border"
-      )}>
+      {/* Composer */}
+      <div className="rounded-xl border border-border bg-card p-4">
         {isAuthenticated && user ? (
-          <form onSubmit={handleSubmitComment} className="space-y-4">
-            <div className="flex gap-4">
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full overflow-hidden relative">
-                  <Image
-                    src={getUserAvatarUrl(user)}
-                    alt={user.username}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
+          <form onSubmit={handleSubmitComment}>
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-9 h-9 rounded-full overflow-hidden relative">
+                <Image src={getUserAvatarUrl(user)} alt={user.username} fill className="object-cover" />
               </div>
               <div className="flex-1">
                 <textarea
                   value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Share your thoughts..."
+                  onChange={e => setNewComment(e.target.value)}
+                  placeholder="Share your thoughtsâ€¦"
+                  rows={3}
                   className={cn(
-                    "w-full min-h-[100px] p-4 rounded-xl border text-sm",
-                    "bg-card dark:bg-card",
-                    "border-border",
-                    "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
-                    "placeholder:text-muted-foreground resize-none"
+                    'w-full p-3 rounded-lg border text-sm resize-none',
+                    'bg-secondary/40 border-border',
+                    'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
+                    'placeholder:text-muted-foreground'
                   )}
                 />
-              </div>
-            </div>
-            
-            {error && (
-              <p className="text-sm text-red-500 ml-14">{error}</p>
-            )}
-            
-            <div className="flex justify-end">
-              <Button 
-                type="submit" 
-                disabled={newComment.trim() === '' || isSubmitting}
-                className="gap-2 rounded-full px-6"
-              >
-                {isSubmitting && (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                {submitError && (
+                  <p className="text-xs text-red-500 mt-1">{submitError}</p>
                 )}
-                Post Comment
-              </Button>
+                <div className="flex justify-end mt-2">
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={!newComment.trim() || isSubmitting}
+                    className="gap-2 px-4"
+                  >
+                    {isSubmitting
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <Send className="w-3.5 h-3.5" />}
+                    Post
+                  </Button>
+                </div>
+              </div>
             </div>
           </form>
         ) : (
-          <div className="text-center py-6">
-            <p className="text-muted-foreground mb-4">
-              Join the discussion! Share your thoughts with the community.
-            </p>
-            <Button asChild variant="outline" className="rounded-full">
-              <a href="/auth/signin">Sign in to comment</a>
-            </Button>
+          <div className="flex items-center gap-4 py-1">
+            <MessageCircle className="w-8 h-8 text-muted-foreground/30 flex-shrink-0" />
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">
+                Join the discussion and share your thoughts.
+              </p>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/auth/signin">Sign in to comment</Link>
+              </Button>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Comments List */}
+      {/* List */}
       {isLoadingComments && comments.length === 0 ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="flex justify-center py-10">
+          <Loader2 className="w-6 h-6 animate-spin text-primary/50" />
         </div>
       ) : comments.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-secondary flex items-center justify-center">
-            <MessageCircle className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-medium text-foreground mb-2">
-            No comments yet
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400">
-            Be the first to share your thoughts!
-          </p>
+        <div className="text-center py-10 text-muted-foreground">
+          <MessageCircle className="w-8 h-8 mx-auto mb-3 opacity-25" />
+          <p className="text-sm">No comments yet â€” be the first!</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {comments.map((comment) => (
-            <CommentItem 
-              key={comment.id || comment.documentId} 
+        <div className="space-y-6">
+          {comments.map(comment => (
+            <CommentItem
+              key={comment.id || comment.documentId}
               comment={comment}
               onReplyAdded={refreshComments}
             />
           ))}
 
-          {/* Load More Button */}
           {hasMoreComments && (
-            <div className="flex justify-center pt-4">
+            <div className="flex justify-center pt-2">
               <Button
                 variant="outline"
+                size="sm"
                 onClick={handleLoadMore}
                 disabled={isLoadingComments}
-                className="gap-2 rounded-full"
+                className="gap-2 rounded-full text-xs"
               >
-                {isLoadingComments ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
-                )}
-                Load More Comments
+                {isLoadingComments
+                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  : <ChevronDown className="w-3.5 h-3.5" />}
+                Load more comments
               </Button>
             </div>
           )}
         </div>
       )}
-    </div>
+    </section>
   );
 }
+

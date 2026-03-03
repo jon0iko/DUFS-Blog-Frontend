@@ -189,7 +189,7 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
   return (
     <>
     <section 
-      className="relative h-[90vh] w-full overflow-hidden bg-black cursor-pointer"
+      className="relative h-[90svh] md:h-[90vh] w-full overflow-hidden bg-black cursor-pointer"
       // onMouseEnter={() => setIsPlaying(false)}
       // onMouseLeave={() => setIsPlaying(true)}
     >
@@ -220,11 +220,10 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
             {/* Background Image with Ken Burns Effect */}
             {currentArticle?.imageSrc && (
                <div className="relative w-full h-full overflow-hidden">
-                  <motion.div
-                    className="relative w-full h-full"
-                    initial={{ scale: 1 }}
-                    animate={{ scale: 1.1 }}
-                    transition={{ duration: SLIDE_DURATION / 1000 + 0.5, ease: "linear" }}
+                  {/* CSS-driven Ken Burns — runs on the compositor thread, not the JS main thread */}
+                  <div
+                    className="relative w-full h-full animate-kenburns"
+                    style={{ animationDuration: `${SLIDE_DURATION / 1000 + 0.5}s` }}
                   >
                   
                     <Image
@@ -240,7 +239,7 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
                     {/* Cinematic Gradient Overlay - Fades from bottom and top for cinematic effect */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
                     <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-transparent" />
-                  </motion.div>
+                  </div>
                </div>
             )}
 

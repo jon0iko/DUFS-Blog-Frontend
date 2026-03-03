@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Form, FormGroup, FormLabel } from '@/components/ui/form';
 import { LoginData } from '@/lib/auth';
-import { LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
 
 export default function SignIn() {
   const { login, isLoading } = useAuth();
@@ -15,6 +15,7 @@ export default function SignIn() {
     identifier: '',
     password: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,8 +36,8 @@ export default function SignIn() {
     
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
     }
     
     setErrors(newErrors);
@@ -62,10 +63,10 @@ export default function SignIn() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-foreground tracking-tight">Welcome Back</h2>
-        <p className="text-sm text-muted-foreground">
-          Sign in to your account to continue
+      <div className="space-y-2 text-center">
+        <h2 className="text-2xl font-black text-white tracking-tight uppercase">Welcome Back</h2>
+        <p className="text-sm text-white/50">
+          Sign in to your account
         </p>
       </div>
       
@@ -77,7 +78,7 @@ export default function SignIn() {
         )}
         
         <FormGroup error={errors.identifier}>
-          <FormLabel htmlFor="identifier" className="text-foreground font-semibold">
+          <FormLabel htmlFor="identifier" className="text-white/80 font-semibold tracking-wide uppercase text-xs">
             Email or Username
           </FormLabel>
           <Input
@@ -89,7 +90,7 @@ export default function SignIn() {
             onChange={handleChange}
             placeholder="Enter your email or username"
             disabled={isLoading}
-            className="mt-1 bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-brand-accent focus:border-brand-accent"
+            className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
           />
           {errors.identifier && (
             <p className="mt-1 text-xs text-destructive">{errors.identifier}</p>
@@ -98,35 +99,45 @@ export default function SignIn() {
         
         <FormGroup error={errors.password}>
           <div className="flex items-center justify-between">
-            <FormLabel htmlFor="password" className="text-foreground font-semibold">
+            <FormLabel htmlFor="password" className="text-white/80 font-semibold tracking-wide uppercase text-xs">
               Password
             </FormLabel>
             <Link 
               href="/auth/forgot-password" 
-              className="text-xs text-brand-accent hover:underline font-medium"
+              className="text-xs text-white/50 hover:text-white font-medium transition-colors duration-200"
             >
               Forgot password?
             </Link>
           </div>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Enter your password"
-            disabled={isLoading}
-            className="mt-1 bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-brand-accent focus:border-brand-accent"
-          />
-          {errors.password && (
+          <div className="relative mt-1">
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+              disabled={isLoading}
+              className="bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:[ring-white]/30 focus:border-white/30 pr-10 rounded-md mb-6"
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-white/40 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          {/* {errors.password && (
             <p className="mt-1 text-xs text-destructive">{errors.password}</p>
-          )}
+          )} */}
         </FormGroup>
         
         <Button 
           type="submit" 
-          className="w-full mt-6 bg-brand-accent hover:bg-brand-accent/90 text-white font-semibold py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+          className="w-full mt-6 bg-white hover:bg-white/70 text-black font-black uppercase tracking-widest py-2 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 text-sm"
           disabled={isLoading}
         >
           <LogIn className="h-4 w-4" />
@@ -134,10 +145,10 @@ export default function SignIn() {
         </Button>
       </Form>
       
-      <div className="pt-4 border-t border-border">
-        <p className="text-sm text-muted-foreground text-center">
-          Don&apos;t have an account?{' '}
-          <Link href="/auth/signup" className="text-brand-accent font-semibold hover:underline transition-colors duration-200">
+      <div className="pt-4 border-t border-white/10">
+        <p className="text-sm text-white/50 text-center">
+          Don&apos;t have an account?{' '}<span className="md:hidden"><br /></span>
+          <Link href="/auth/signup" className="text-white font-bold underline hover:no-underline transition-colors duration-200">
             Sign Up
           </Link>
         </p>

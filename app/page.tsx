@@ -4,6 +4,8 @@ import BrowseContentSectionWrapper from '@/components/home/BrowseContentSectionW
 import PublicationsSection from '@/components/home/PublicationsSection';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import CurveDivider from '@/components/home/CurveDivider';
+import TextReel from '@/components/home/TextReel';
+import BackToTopButton from '@/components/home/BackToTopButton';
 
 export default function Home() {
   return (
@@ -11,10 +13,8 @@ export default function Home() {
       <HeroSection />
       <CurveDivider />
 
-      <ScrollReveal>
-        <BrowseContentSectionWrapper />
-      </ScrollReveal>
-      
+      <BrowseContentSectionWrapper />
+
       {/* <MorePostsButton /> */}
 
       <EditorChoice />
@@ -22,7 +22,10 @@ export default function Home() {
       <ScrollReveal>
         <PublicationsSection />
       </ScrollReveal>
-      
+
+      <TextReel />
+
+      <BackToTopButton />
     </div>
   );
 }

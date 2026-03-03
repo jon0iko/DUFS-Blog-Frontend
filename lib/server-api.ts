@@ -85,6 +85,16 @@ class ServerStrapiAPI {
     return fields.map((field, index) => `populate[${index}]=${field}`).join('&');
   }
 
+  //Get 'Content' text field of single-type: 'text-reel-homepage'
+  async getTextReelContent(): Promise<string> {
+    const response = await this.request<{ data: { Content: string } }>(
+      config.strapi.endpoints.textReel
+    );
+    return response.data?.Content ?? '';
+  }
+    
+    
+
   /**
    * Get hero article (isHero = true)
    */

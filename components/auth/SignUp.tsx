@@ -1,26 +1,44 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Form, FormGroup, FormLabel, FormDescription } from '@/components/ui/form';
-import { RegisterData } from '@/lib/auth';
-import { UserPlus, Lock, Mail, User, Phone, Globe } from 'lucide-react';
+import { RegisterData, register as registerApi, uploadUserAvatar } from '@/lib/auth';
+import { UserPlus, Lock, Mail, User, Phone, Globe, Camera, X as XIcon, ImageIcon, FileText } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { COUNTRIES, validatePhoneNumber } from '@/lib/phone-validation';
+import AvatarCropModal from './AvatarCropModal';
+import { useToast } from '@/components/ui/toast';
 
 export default function SignUp() {
-  const { register, isLoading } = useAuth();
+  const { refreshUser } = useAuth();
+  const toast = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [formData, setFormData] = useState<RegisterData>({
     username: '',
     email: '',
     password: '',
     phoneNumber: '',
     Country: '',
+    Bio: '',
   });
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ─── Avatar state ─────────────────────────────────────────────────────────
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
+  const [rawFileName, setRawFileName] = useState<string>('avatar.png');
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [croppedAvatarFile, setCroppedAvatarFile] = useState<File | null>(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -81,42 +99,195 @@ export default function SignUp() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // ─── Avatar handlers ───────────────────────────────────────────────────────
+
+  const handleAvatarInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setErrors((prev) => ({ ...prev, avatar: 'Please select an image file' }));
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setErrors((prev) => ({ ...prev, avatar: 'Image must be under 10 MB' }));
+      return;
+    }
+
+    setRawFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setRawImageSrc(reader.result as string);
+      setShowCropModal(true);
+    };
+    reader.readAsDataURL(file);
+    // Reset so same file can be re-selected
+    e.target.value = '';
+  };
+
+  const handleCropComplete = useCallback((file: File) => {
+    setCroppedAvatarFile(file);
+    setAvatarPreviewUrl(URL.createObjectURL(file));
+    setShowCropModal(false);
+    setRawImageSrc(null);
+    setErrors((prev) => ({ ...prev, avatar: '' }));
+  }, []);
+
+  const handleCropCancel = useCallback(() => {
+    setShowCropModal(false);
+    setRawImageSrc(null);
+  }, []);
+
+  const handleRemoveAvatar = () => {
+    setCroppedAvatarFile(null);
+    if (avatarPreviewUrl) {
+      URL.revokeObjectURL(avatarPreviewUrl);
+      setAvatarPreviewUrl(null);
+    }
+  };
+
+  // ─── Form submit ───────────────────────────────────────────────────────────
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateForm()) return;
-    
+
+    setIsSubmitting(true);
     try {
-      await register(formData);
+      // Step 1: Register (sets JWT + user in cookies internally)
+      const response = await registerApi(formData);
+
+      // Step 2: Upload avatar if one was cropped
+      if (croppedAvatarFile && response.user?.id) {
+        try {
+          await uploadUserAvatar(response.user.id, croppedAvatarFile);
+        } catch (avatarErr) {
+          console.error('Avatar upload failed (non-fatal):', avatarErr);
+          toast.warning(
+            'You can retry adding it from your Account Settings page.',
+            'Profile photo upload failed'
+          );
+        }
+      }
+
+      // Step 3: Sync AuthContext state
+      await refreshUser();
+
+      // Step 4: Navigate
+      const redirectUrl = searchParams.get('redirect') || '/';
+      router.push(redirectUrl);
     } catch (error) {
       console.error('Registration error:', error);
-      // Set a general form error
-      setErrors((prev) => ({ 
-        ...prev, 
-        form: 'Registration failed. This email or username might already be in use.'
+      setErrors((prev) => ({
+        ...prev,
+        form: 'Registration failed. This email or username might already be in use.',
       }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-foreground tracking-tight">Join Our Community</h2>
-        <p className="text-sm text-muted-foreground">
-          Create an account to start sharing your film insights
-        </p>
+    <>
+      {/* Crop modal – rendered above the auth card */}
+      {showCropModal && rawImageSrc && (
+        <AvatarCropModal
+          imageSrc={rawImageSrc}
+          fileName={rawFileName}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
+
+      <div className="space-y-6">
+      <div className="space-y-2 text-center">
+        <h2 className="text-2xl font-black text-white tracking-tight uppercase">Join DUFS Community</h2>
+        <p className="text-sm text-white/50">Create an account</p>
       </div>
-      
+
       <Form onSubmit={handleSubmit} className="space-y-4">
         {errors.form && (
           <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
             <p className="text-sm font-medium text-destructive">{errors.form}</p>
           </div>
         )}
-        
+
+        {/* ─── Avatar upload ─── */}
+        <div className="flex flex-col items-center gap-3 py-2">
+          <div className="relative group">
+            {/* Circle preview / placeholder */}
+            <div
+              className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-white/20 group-hover:ring-white/40 transition-all duration-200 cursor-pointer bg-white/5 flex items-center justify-center"
+              onClick={() => avatarInputRef.current?.click()}
+              title="Choose a profile photo"
+            >
+              {avatarPreviewUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarPreviewUrl} alt="Avatar preview" className="w-full h-full object-cover" />
+              ) : (
+                <ImageIcon className="h-8 w-8 text-white/20" />
+              )}
+            </div>
+
+            {/* Camera button */}
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-white text-black flex items-center justify-center shadow-lg hover:bg-white/90 transition-colors"
+              title="Upload photo"
+            >
+              <Camera className="h-3.5 w-3.5" />
+            </button>
+
+            {/* Remove button */}
+            {croppedAvatarFile && (
+              <button
+                type="button"
+                onClick={handleRemoveAvatar}
+                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md hover:bg-red-400 transition-colors"
+                title="Remove photo"
+              >
+                <XIcon className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+
+          <div className="text-center">
+            <p className="text-xs font-semibold text-white/50 uppercase tracking-wide">
+              {croppedAvatarFile ? 'Photo selected ✓' : 'Profile Photo'}
+            </p>
+            <p className="text-xs text-white/25 mt-0.5">
+              {croppedAvatarFile ? (
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="text-white/50 hover:text-white/70 underline transition-colors"
+                >
+                  Change photo
+                </button>
+              ) : (
+                'Optional · click to upload'
+              )}
+            </p>
+          </div>
+
+          {errors.avatar && (
+            <p className="text-xs text-destructive">{errors.avatar}</p>
+          )}
+
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarInputChange}
+            tabIndex={-1}
+          />
+        </div>
+
         <FormGroup error={errors.username}>
-          <FormLabel htmlFor="username" className="text-foreground font-semibold flex items-center gap-2">
-            <User className="h-4 w-4 text-brand-accent" />
+          <FormLabel htmlFor="username" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
+            <User className="h-4 w-4 text-white/60" />
             Username
           </FormLabel>
           <Input
@@ -127,14 +298,14 @@ export default function SignUp() {
             value={formData.username}
             onChange={handleChange}
             placeholder="This will be your author name"
-            disabled={isLoading}
-            className="mt-1 bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-brand-accent focus:border-brand-accent"
+            disabled={isSubmitting}
+            className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
           />
         </FormGroup>
         
         <FormGroup error={errors.email}>
-          <FormLabel htmlFor="email" className="text-foreground font-semibold flex items-center gap-2">
-            <Mail className="h-4 w-4 text-brand-accent" />
+          <FormLabel htmlFor="email" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
+            <Mail className="h-4 w-4 text-white/60" />
             Email Address
           </FormLabel>
           <Input
@@ -145,14 +316,14 @@ export default function SignUp() {
             value={formData.email}
             onChange={handleChange}
             placeholder="Enter your email address"
-            disabled={isLoading}
-            className="mt-1 bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-brand-accent focus:border-brand-accent"
+            disabled={isSubmitting}
+            className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
           />
         </FormGroup>
 
         <FormGroup error={errors.Country}>
-          <FormLabel htmlFor="Country" className="text-foreground font-semibold flex items-center gap-2">
-            <Globe className="h-4 w-4 text-brand-accent" />
+          <FormLabel htmlFor="Country" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
+            <Globe className="h-4 w-4 text-white/60" />
             Country
           </FormLabel>
           <select
@@ -160,8 +331,8 @@ export default function SignUp() {
             name="Country"
             value={formData.Country}
             onChange={handleChange}
-            disabled={isLoading}
-            className="mt-1 w-full px-3 py-2 bg-background border border-border text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent placeholder:text-muted-foreground"
+            disabled={isSubmitting}
+            className="mt-1 w-full px-3 py-2 bg-white/5 border border-white/15 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/30 [&>option]:bg-black [&>option]:text-white"
           >
             <option value="">Select your country</option>
             {COUNTRIES.map((country) => (
@@ -173,8 +344,8 @@ export default function SignUp() {
         </FormGroup>
 
         <FormGroup error={errors.phoneNumber}>
-          <FormLabel htmlFor="phoneNumber" className="text-foreground font-semibold flex items-center gap-2">
-            <Phone className="h-4 w-4 text-brand-accent" />
+          <FormLabel htmlFor="phoneNumber" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
+            <Phone className="h-4 w-4 text-white/60" />
             Phone Number
           </FormLabel>
           <Input
@@ -183,18 +354,41 @@ export default function SignUp() {
             type="tel"
             value={formData.phoneNumber}
             onChange={handleChange}
-            placeholder={formData.Country ? "Enter your phone number" : "Select a country first"}
-            disabled={isLoading || !formData.Country}
-            className="mt-1 bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-brand-accent focus:border-brand-accent"
+            placeholder={formData.Country ? 'Enter your phone number' : 'Select a country first'}
+            disabled={isSubmitting || !formData.Country}
+            className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
           />
-          <FormDescription className="mt-1 text-xs text-muted-foreground">
+          <FormDescription className="mt-1 text-xs text-white/30">
             Enter a valid phone number for your country
           </FormDescription>
         </FormGroup>
         
+        {/* ─── Bio ─── */}
+        <FormGroup>
+          <FormLabel htmlFor="Bio" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
+            <FileText className="h-4 w-4 text-white/60" />
+            Bio
+          </FormLabel>
+          <Textarea
+            id="Bio"
+            name="Bio"
+            value={formData.Bio}
+            onChange={(e) => setFormData((prev) => ({ ...prev, Bio: e.target.value }))}
+            placeholder="Tell readers a little about yourself…"
+            disabled={isSubmitting}
+            rows={3}
+            maxLength={300}
+            className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md resize-none"
+          />
+          <FormDescription className="mt-1 text-xs text-white/30 flex justify-between">
+            <span>Optional · shown on your author profile</span>
+            <span>{(formData.Bio?.length ?? 0)}/300</span>
+          </FormDescription>
+        </FormGroup>
+
         <FormGroup error={errors.password}>
-          <FormLabel htmlFor="password" className="text-foreground font-semibold flex items-center gap-2">
-            <Lock className="h-4 w-4 text-brand-accent" />
+          <FormLabel htmlFor="password" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
+            <Lock className="h-4 w-4 text-white/60" />
             Password
           </FormLabel>
           <Input
@@ -205,17 +399,17 @@ export default function SignUp() {
             value={formData.password}
             onChange={handleChange}
             placeholder="Create a strong password"
-            disabled={isLoading}
-            className="mt-1 bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-brand-accent focus:border-brand-accent"
+            disabled={isSubmitting}
+            className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
           />
-          <FormDescription className="mt-1 text-xs text-muted-foreground">
+          <FormDescription className="mt-1 text-xs text-white/30">
             Must be at least 8 characters long
           </FormDescription>
         </FormGroup>
         
         <FormGroup error={errors.confirmPassword}>
-          <FormLabel htmlFor="confirmPassword" className="text-foreground font-semibold flex items-center gap-2">
-            <Lock className="h-4 w-4 text-brand-accent" />
+          <FormLabel htmlFor="confirmPassword" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
+            <Lock className="h-4 w-4 text-white/60" />
             Confirm Password
           </FormLabel>
           <Input
@@ -226,29 +420,42 @@ export default function SignUp() {
             value={confirmPassword}
             onChange={handleChange}
             placeholder="Confirm your password"
-            disabled={isLoading}
-            className="mt-1 bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-brand-accent focus:border-brand-accent"
+            disabled={isSubmitting}
+            className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
           />
         </FormGroup>
         
-        <Button 
-          type="submit" 
-          className="w-full mt-6 bg-brand-accent hover:bg-brand-accent/90 text-white font-semibold py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-          disabled={isLoading}
+        <Button
+          type="submit"
+          className="w-full mt-6 bg-white hover:bg-white/90 text-black font-black uppercase tracking-widest py-2 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 text-sm"
+          disabled={isSubmitting}
         >
-          <UserPlus className="h-4 w-4" />
-          {isLoading ? 'Creating account...' : 'Create Account'}
+          {isSubmitting ? (
+            <>
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+              Creating account...
+            </>
+          ) : (
+            <>
+              <UserPlus className="h-4 w-4" />
+              Create Account
+            </>
+          )}
         </Button>
       </Form>
       
-      <div className="pt-4 border-t border-border">
-        <p className="text-sm text-muted-foreground text-center">
-          Already have an account?{' '}
-          <Link href="/auth/signin" className="text-brand-accent font-semibold hover:underline transition-colors duration-200">
+      <div className="pt-4 border-t border-white/10">
+        <p className="text-sm text-white/50 text-center">
+          Already have an account?{' '}<span className="md:hidden"><br /></span>
+          <Link href="/auth/signin" className="text-white font-bold underline hover:no-underline transition-colors duration-200">
             Sign In
           </Link>
         </p>
       </div>
     </div>
+    </>
   );
 }

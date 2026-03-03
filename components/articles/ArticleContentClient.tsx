@@ -43,6 +43,9 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
   const [error, setError] = useState<string | null>(null);
   const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
   
+  // View count state
+  const [viewCount, setViewCount] = useState(0);
+
   // Like state
   const [likes, setLikes] = useState(0);
   const [hasLiked, setHasLiked] = useState(false);
@@ -77,6 +80,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
 
         setArticle(articleData);
         setLikes(articleData.likes || 0);
+        setViewCount(articleData.viewCount || 0);
 
         // Fetch related articles
         if (articleData.category?.Slug && articleData.documentId) {
@@ -100,6 +104,28 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
       fetchArticleData();
     }
   }, [slug]);
+
+  // Fire-and-forget view count increment (once per session per slug)
+  useEffect(() => {
+    if (!article?.documentId) return;
+
+    const key = `viewed_${slug}`;
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, '1');
+      fetch(`${config.strapi.url}/api/articles/${slug}/view`, { method: 'POST' })
+        .then((res) => {
+          if (res.ok) return res.json();
+        })
+        .then((data) => {
+          if (data?.viewCount !== undefined) {
+            setViewCount(data.viewCount);
+          }
+        })
+        .catch(() => {
+          // Silently ignore errors — view count is non-critical
+        });
+    }
+  }, [article?.documentId, slug]);
 
   // Check if user has liked/bookmarked the article
   useEffect(() => {
@@ -264,7 +290,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
       
       <article className="relative">
         {/* Hero Section with Cinematic Feel */}
-        <div className="relative h-[60vh] min-h-[500px] bg-black overflow-hidden">
+        <div className="relative h-[60vh] min-h-[510px] bg-black overflow-hidden">
           <Image
             src={imageUrl}
             alt={article.title}
@@ -291,7 +317,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                 {/* Category Badge */}
                 {article.category && (
                   <Badge 
-                    className="mb-4 text-sm px-4 py-1 bg-black text-white cursor-pointer transition"
+                    className="md:hidden mb-4 text-sm px-4 py-1 bg-white text-black cursor-pointer hover:bg-black hover:text-white"
                   >
                     <Link href={`/browse/?category=${article.category.Slug}`}>
                     <span className={getFontClass(article.category.Name)}>
@@ -307,7 +333,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                 </h1>
 
                 {/* Excerpt */}
-                <p className={cn("text-xl text-gray-300 mb-8 leading-relaxed", getFontClass(article.excerpt))}>
+                <p className={cn("text-base md:text-lg text-gray-300 mb-6 leading-relaxed max-w-2xl", getFontClass(article.excerpt))}>
                   {article.excerpt}
                 </p>
 
@@ -351,7 +377,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
 
                   <div className="flex items-center gap-2">
                     <Eye className="w-4 h-4" />
-                    <span>{article.viewCount?.toLocaleString() || 0} views</span>
+                    <span>{viewCount.toLocaleString()} views</span>
                   </div>
                 </div>
               </div>
@@ -360,172 +386,174 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
         </div>
 
         {/* Main Content Area */}
-        <div className="container max-w-7xl mx-auto px-4 py-12">
-          <div className="flex gap-8 lg:gap-12">
+        <div className="container mx-auto px-4 py-10">
+          <div className="grid grid-cols-1 lg:grid-cols-[56px_1fr] xl:grid-cols-[56px_1fr_220px] gap-8">
             {/* Left Sidebar - Share & Actions (Desktop) */}
-            <aside className="hidden lg:block sticky top-24 h-fit w-16">
-              <div className="flex flex-col items-center gap-4">
-                {/* Font Size Control */}
-                <div className="flex flex-col items-center gap-2 pb-4 border-b border-border">
-                  <span className="text-xs text-muted-foreground mb-1">Font</span>
+            <aside className="hidden lg:flex flex-col items-center sticky top-24 self-start h-fit gap-3">
+              {/* Font Size Control */}
+              <div className="flex flex-col items-center gap-1.5 pb-4 border-b border-border w-full">
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Font</span>
+                <div className="flex flex-col items-center gap-1 w-full">
                   <Button
-                    variant={fontSize === 'small' ? 'default' : 'ghost'}
+                    variant={fontSize === 'small' ? 'secondary' : 'ghost'}
                     size="sm"
-                    className="w-10 h-10 p-0"
+                    className="w-10 h-8 p-0 font-bold"
                     onClick={() => setFontSize('small')}
                     title="Small font"
                   >
-                    <span className="text-xs font-bold">A</span>
+                    <span className="text-xs">A</span>
                   </Button>
                   <Button
-                    variant={fontSize === 'medium' ? 'default' : 'ghost'}
+                    variant={fontSize === 'medium' ? 'secondary' : 'ghost'}
                     size="sm"
-                    className="w-12 h-12 p-0"
+                    className="w-10 h-8 p-0 font-bold"
                     onClick={() => setFontSize('medium')}
                     title="Medium font"
                   >
-                    <span className="text-base font-bold">A</span>
+                    <span className="text-sm">A</span>
                   </Button>
                   <Button
-                    variant={fontSize === 'large' ? 'default' : 'ghost'}
+                    variant={fontSize === 'large' ? 'secondary' : 'ghost'}
                     size="sm"
-                    className="w-14 h-14 p-0"
+                    className="w-10 h-8 p-0 font-bold"
                     onClick={() => setFontSize('large')}
                     title="Large font"
                   >
-                    <span className="text-lg font-bold">A</span>
+                    <span className="text-base">A</span>
                   </Button>
                 </div>
-
-                {/* Social Actions */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "w-12 h-12 p-0 flex flex-col gap-1",
-                    hasLiked && "text-red-500"
-                  )}
-                  onClick={handleLike}
-                  disabled={!isAuthenticated || isLikeLoading}
-                  title={isAuthenticated ? "Like article" : "Sign in to like"}
-                >
-                  <Heart className={cn("w-5 h-5", hasLiked && "fill-current")} />
-                  <span className="text-xs">{likes}</span>
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "w-12 h-12 p-0",
-                    isBookmarked && "text-amber-500"
-                  )}
-                  onClick={handleBookmark}
-                  disabled={!isAuthenticated || isBookmarkLoading}
-                  title={isAuthenticated ? "Bookmark" : "Sign in to bookmark"}
-                >
-                  <Bookmark className={cn("w-5 h-5", isBookmarked && "fill-current")} />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-12 h-12 p-0"
-                  onClick={handleShare}
-                  title="Share article"
-                >
-                  <Share2 className="w-5 h-5" />
-                </Button>
               </div>
+
+              {/* Like */}
+              <button
+                onClick={handleLike}
+                disabled={!isAuthenticated || isLikeLoading}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 w-10 py-1.5 rounded-xl transition-all",
+                  hasLiked ? "text-red-500" : "text-muted-foreground hover:text-foreground",
+                  (!isAuthenticated) && "opacity-50"
+                )}
+                title={isAuthenticated ? (hasLiked ? "Unlike" : "Like") : "Sign in to like"}
+              >
+                <Heart className={cn("w-5 h-5", hasLiked && "fill-current")} />
+                <span className="text-xs font-medium tabular-nums">{likes}</span>
+              </button>
+
+              {/* Bookmark */}
+              <button
+                onClick={handleBookmark}
+                disabled={!isAuthenticated || isBookmarkLoading}
+                className={cn(
+                  "flex items-center justify-center w-10 h-10 rounded-xl transition-all",
+                  isBookmarked ? "text-amber-500" : "text-muted-foreground hover:text-foreground",
+                  (!isAuthenticated) && "opacity-50"
+                )}
+                title={isAuthenticated ? (isBookmarked ? "Remove bookmark" : "Bookmark") : "Sign in to bookmark"}
+              >
+                <Bookmark className={cn("w-5 h-5", isBookmarked && "fill-current")} />
+              </button>
+
+              {/* Share */}
+              <button
+                onClick={handleShare}
+                className="flex items-center justify-center w-10 h-10 rounded-xl text-muted-foreground hover:text-foreground transition-all"
+                title="Share article"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
             </aside>
 
             {/* Main Article Content */}
-            <div className="flex-1 max-w-4xl">
-              {/* Article content with ID for progress tracking */}
-              <div id="article-content" ref={contentRef}>
-                <ArticleHTMLContent 
-                  content={article.content} 
-                  fontSize={fontSize}
-                />
-              </div>
-
-              {/* Tags */}
-              {article.tags && article.tags.length > 0 && (
-                <div className="lg:hidden  mt-12 pt-8 border-t border-border">
-                  <div className="flex flex-wrap gap-2">
-                    {article.tags.map((tag) => (
-                      <Link 
-                        key={tag.id}
-                        href={`/browse?search=${encodeURIComponent(tag.name)}&category=all`}
-                      >
-                        <Badge 
-                          variant="outline"
-                          className="text-sm cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                        >
-                          #{tag.name}
-                        </Badge>
-                      </Link>
-                    ))}
-                  </div>
+            <div className="min-w-0 pb-24 lg:pb-4">
+              <div className="max-w-[900px]">
+                {/* Article content with ID for progress tracking */}
+                <div id="article-content" ref={contentRef}>
+                  <ArticleHTMLContent 
+                    content={article.content} 
+                    fontSize={fontSize}
+                  />
                 </div>
-              )}
 
-              {/* Author Bio */}
-              {article.author && (
-                <div className="mt-12 p-6 rounded-lg bg-secondary dark:bg-secondary border border-border">
-                  <Link 
-                    href={`/author?slug=${article.author.slug}`}
-                    className="flex gap-4 group"
-                  >
-                    {authorAvatar && (
-                      <div className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0 group-hover:opacity-80 transition-opacity">
+                {/* Tags - mobile only */}
+                {article.tags && article.tags.length > 0 && (
+                  <div className="xl:hidden mt-10 pt-8 border-t border-border">
+                    <div className="flex items-center gap-2 mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <Tag className="w-3.5 h-3.5" />
+                      <span>Tags</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {article.tags.map((tag) => (
+                        <Link 
+                          key={tag.id}
+                          href={`/browse?search=${encodeURIComponent(tag.name)}&category=all`}
+                        >
+                          <span className="inline-block text-xs px-2.5 py-1 rounded-full border border-border bg-secondary hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors cursor-pointer">
+                            #{tag.name}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Author Bio */}
+                {article.author && (
+                  <div className="mt-10 rounded-xl border border-border bg-card overflow-hidden">
+                    <Link 
+                      href={`/author?slug=${article.author.slug}`}
+                      className="flex gap-4 p-5 group"
+                    >
+                      <div className="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0 border-2 border-border group-hover:border-primary transition-colors">
                         <Image
-                          src={authorAvatar}
+                          src={authorAvatar || '/images/avatarPlaceholder.png'}
                           alt={article.author.Name}
                           fill
                           className="object-cover"
                         />
                       </div>
-                    )}
-                    <div>
-                      <h3 className={cn("text-xl font-semibold mb-2 group-hover:text-primary transition-colors", getFontClass(article.author.Name))}>{article.author.Name}</h3>
-                      {article.author.Bio && (
-                        <p className={cn("text-muted-foreground", getFontClass(article.author.Bio))}>
-                          {article.author.Bio}
-                        </p>
-                      )}
-                    </div>
-                  </Link>
-                </div>
-              )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-0.5">Written by</p>
+                        <h3 className={cn("text-base font-semibold group-hover:text-primary transition-colors", getFontClass(article.author.Name))}>{article.author.Name}</h3>
+                        {article.author.Bio && (
+                          <p className={cn("text-sm text-muted-foreground mt-1 line-clamp-2", getFontClass(article.author.Bio))}>
+                            {article.author.Bio}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  </div>
+                )}
 
               {/* Comments Section */}
-              <div className="mt-16">
+              <div className="mt-12">
                 <CommentSection 
                   articleId={article.id}
                   articleDocumentId={article.documentId}
                 />
               </div>
-            </div>
+              </div>{/* end max-w-[700px] */}
+            </div>{/* end main column */}
 
             {/* Right Sidebar - Category & Tags (Desktop) */}
-            <aside className="hidden xl:block sticky top-24 h-fit w-64 space-y-6">
+            <aside className="hidden xl:flex flex-col sticky top-24 self-start h-fit space-y-4">
               {/* Category */}
               {article.category && (
-                <div className="p-4 rounded-lg bg-card border border-border">
-                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground">
-                    <FolderOpen className="w-4 h-4" />
+                <div className="p-4 rounded-xl bg-card border border-border">
+                  <div className="flex items-center gap-2 mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <FolderOpen className="w-3.5 h-3.5" />
                     <span>Category</span>
                   </div>
                   <Link 
                     href={`/browse?category=${article.category.Slug}`}
                     className="block"
                   >
-                    <Badge 
-                      className={cn("w-full justify-center py-2 text-sm cursor-pointer hover:opacity-80 transition bg-brand-accent hover:bg-brand-accent", getFontClass(article.category.Name))}
-                    >
+                    <div className={cn(
+                      "w-full text-center py-2 px-3 rounded-lg text-sm font-medium cursor-pointer transition-opacity hover:opacity-80",
+                      "bg-foreground text-background",
+                      getFontClass(article.category.Name)
+                    )}>
                       {article.category.Name}
-                    </Badge>
+                    </div>
                   </Link>
                   <p className="text-xs text-muted-foreground mt-2 text-center">
                     Click to explore more
@@ -535,23 +563,20 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
 
               {/* Tags */}
               {article.tags && article.tags.length > 0 && (
-                <div className="p-4 rounded-lg bg-card border border-border">
-                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground">
-                    <Tag className="w-4 h-4" />
+                <div className="p-4 rounded-xl bg-card border border-border">
+                  <div className="flex items-center gap-2 mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <Tag className="w-3.5 h-3.5" />
                     <span>Tags</span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {article.tags.map((tag) => (
                       <Link 
                         key={tag.id}
                         href={`/browse?search=${encodeURIComponent(tag.name)}&category=all`}
                       >
-                        <Badge 
-                          variant="outline"
-                          className="text-xs cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                        >
+                        <span className="inline-block text-xs px-2.5 py-1 rounded-full border border-border bg-secondary hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors cursor-pointer">
                           #{tag.name}
-                        </Badge>
+                        </span>
                       </Link>
                     ))}
                   </div>
@@ -563,78 +588,74 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
 
         {/* Related Articles */}
         {relatedArticles.length > 0 && (
-          <div className="bg-secondary dark:bg-brand-black-90 py-16">
-            <div className="container max-w-7xl mx-auto px-4">
+          <div className="bg-secondary dark:bg-brand-black-90 py-14">
+            <div className="container mx-auto px-4">
               <RelatedArticles articles={relatedArticles} />
             </div>
           </div>
         )}
 
-        
-
         {/* Mobile Actions Bar */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border px-4 py-3 z-40 shadow-lg">
-          <div className="flex items-center justify-around max-w-md mx-auto">
-            {/* Like Button */}
-            <button
-              onClick={handleLike}
-              disabled={!isAuthenticated || isLikeLoading}
-              className={cn(
-                "flex flex-col items-center gap-0.5 p-2 rounded-xl transition-all",
-                hasLiked 
-                  ? "text-red-500" 
-                  : "text-muted-foreground",
-                !isAuthenticated && "opacity-50"
-              )}
-              title={isAuthenticated ? (hasLiked ? "Unlike article" : "Like article") : "Sign in to like"}
-            >
-              <Heart className={cn("w-6 h-6", hasLiked && "fill-current")} />
-              <span className="text-xs font-medium">{likes}</span>
-            </button>
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40">
+          {/* safe area inset for notched phones */}
+          <div className="bg-card/95 backdrop-blur-md border-t border-border shadow-2xl px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
+            <div className="flex items-center justify-around max-w-sm mx-auto">
+              {/* Like */}
+              <button
+                onClick={handleLike}
+                disabled={!isAuthenticated || isLikeLoading}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all",
+                  hasLiked ? "text-red-500" : "text-muted-foreground",
+                  !isAuthenticated && "opacity-50"
+                )}
+              >
+                <Heart className={cn("w-5 h-5", hasLiked && "fill-current")} />
+                <span className="text-[11px] font-medium tabular-nums">{likes}</span>
+              </button>
 
-            {/* Bookmark Button */}
-            <button
-              onClick={handleBookmark}
-              disabled={!isAuthenticated || isBookmarkLoading}
-              className={cn(
-                "flex flex-col items-center gap-0.5 p-2 rounded-xl transition-all",
-                isBookmarked 
-                  ? "text-amber-500" 
-                  : "text-muted-foreground",
-                !isAuthenticated && "opacity-50"
-              )}
-              title={isAuthenticated ? (isBookmarked ? "Remove bookmark" : "Add bookmark") : "Sign in to bookmark"}
-            >
-              <Bookmark className={cn("w-6 h-6", isBookmarked && "fill-current")} />
-              <span className="text-xs font-medium">Save</span>
-            </button>
+              {/* Bookmark */}
+              <button
+                onClick={handleBookmark}
+                disabled={!isAuthenticated || isBookmarkLoading}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all",
+                  isBookmarked ? "text-amber-500" : "text-muted-foreground",
+                  !isAuthenticated && "opacity-50"
+                )}
+              >
+                <Bookmark className={cn("w-5 h-5", isBookmarked && "fill-current")} />
+                <span className="text-[11px] font-medium">Save</span>
+              </button>
 
-            {/* Share Button */}
-            <button
-              onClick={handleShare}
-              className="flex flex-col items-center gap-0.5 p-2 rounded-xl text-muted-foreground transition-all"
-              title="Share article"
-            >
-              <Share2 className="w-6 h-6" />
-              <span className="text-xs font-medium">Share</span>
-            </button>
+              {/* Share */}
+              <button
+                onClick={handleShare}
+                className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-muted-foreground"
+              >
+                <Share2 className="w-5 h-5" />
+                <span className="text-[11px] font-medium">Share</span>
+              </button>
 
-            {/* Font Size Selector */}
-            <div className="flex flex-col items-center gap-0.5">
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <span className="text-base font-bold">A</span>
-                <select
-                  value={fontSize}
-                  onChange={(e) => setFontSize(e.target.value as 'small' | 'medium' | 'large')}
-                  className="text-sm font-medium border border-border rounded-lg px-1.5 py-1.5 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  title="Change font size"
-                >
-                  <option value="small">Small</option>
-                  <option value="medium">Medium</option>
-                  <option value="large">Large</option>
-                </select>
+              {/* Divider */}
+              <div className="w-px h-8 bg-border mx-1" />
+
+              {/* Font Size */}
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-bold text-muted-foreground">A</span>
+                  <select
+                    value={fontSize}
+                    onChange={(e) => setFontSize(e.target.value as 'small' | 'medium' | 'large')}
+                    className="text-xs font-medium border border-border rounded-md px-1 py-1 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none pr-4"
+                  >
+                    <option value="small">S</option>
+                    <option value="medium">M</option>
+                    <option value="large">L</option>
+                  </select>
+                </div>
+                <span className="text-[11px] font-medium text-muted-foreground">Font</span>
               </div>
-              <span className="text-xs font-medium text-muted-foreground">Font</span>
             </div>
           </div>
         </div>

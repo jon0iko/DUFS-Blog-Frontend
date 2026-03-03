@@ -2,37 +2,71 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-secondary via-background to-secondary dark:from-brand-black dark:via-brand-black-80 dark:to-brand-black-60">
-      <div className="w-full max-w-md">
+    <div className="relative min-h-screen flex items-center justify-center px-4 py-12 overflow-hidden">
+      {/* Full-bleed background image — desktop */}
+      <Image
+        src="/images/Authbg.webp"
+        alt=""
+        fill
+        priority
+        className=" object-cover object-center select-none pointer-events-none"
+        quality={90}
+      />
+      {/* Full-bleed background image — mobile */}
+      {/* <Image
+        src="/images/Authbg_mobile.webp"
+        alt=""
+        fill
+        priority
+        className="md:hidden object-cover object-center select-none pointer-events-none"
+        quality={90}
+      /> */}
+
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-black/70" />
+
+      {/* Top-left back button */}
+      <Link
+        href="/"
+        className="absolute top-4 left-4 z-20 md:top-5 md:left-5 flex items-center gap-1.5 text-white/70 hover:text-white transition-colors duration-200 group"
+      >
+        <ArrowLeft className="w-4 h-4 md:w-4 md:h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+        <span className="text-xs md:text-sm font-medium uppercase tracking-widest">Home</span>
+      </Link>
+
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-md">
         {/* Logo and Slogan Section */}
-        <div className="mb-8 text-center">
+        {/* <div className="mb-8 text-center">
           <div className="flex justify-center mb-4">
             <Image
               src="/images/Dufs_logo.png"
               alt="DUFS Logo"
               width={80}
               height={80}
-              className="w-20 h-20 object-contain"
+              className="w-20 h-20 object-contain brightness-0 invert"
             />
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">DUFS Blog</h1>
-          <p className="text-lg font-semibold text-muted-foreground tracking-wide">
+          <h1 className="text-3xl font-black text-white mb-2 tracking-tight uppercase">DUFS Blog</h1>
+          <p className="text-sm font-medium text-white/50 tracking-[0.2em] uppercase">
             Better Film Better Viewers
           </p>
-        </div>
+        </div> */}
 
         {/* Form Card */}
-        <div className="bg-card backdrop-blur-sm rounded-xl shadow-2xl border border-border p-8">
+        <div className="bg-black/85 md:bg-black/60 md:backdrop-blur-2xl rounded-xl border border-white/10 p-8 shadow-[0_0_60px_rgba(0,0,0,0.8)]">
           {children}
         </div>
 
         {/* Footer */}
         <div className="mt-6 text-center">
-          <p className="text-xs text-muted-foreground">
-            © 2025 DUFS Blog. All rights reserved.
+          <p className="text-xs text-white/80  uppercase">
+            © {new Date().getFullYear()} DUFS.<span className="md:hidden"><br /></span> All rights reserved.
           </p>
         </div>
       </div>

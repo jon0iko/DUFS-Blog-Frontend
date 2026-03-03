@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, Moon, Sun, LogIn, UserPlus, LogOut, Palette } from "lucide-react";
+import { Menu, Moon, Sun, LogIn, UserPlus, LogOut, Palette, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import Sidebar from "./Sidebar";
@@ -29,6 +29,7 @@ export default function Header() {
   const { scrollY } = useScroll();
   const lastScrollY = useRef(0);
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // Initialize hero state when page changes or on mount
   useEffect(() => {
@@ -93,9 +94,41 @@ export default function Header() {
             : "border-transparent"
         )}
       >
-        <div className="container flex h-16 items-center justify-between gap-6 px-6">
-          {/* Left Group: Menu Button + Logo + Site Title */}
-          <div className="flex items-center gap-4 flex-shrink-0">
+        <div className="container flex h-16 items-center justify-between gap-2 px-4 md:gap-6 md:px-6">
+
+          {/* Mobile inline search takeover */}
+          {isSearchOpen && (
+            <div className="flex md:hidden items-center gap-2 w-full">
+              <SearchBar
+                className="flex-1"
+                inputClassName={cn(
+                  isScrolledPastHero
+                    ? "bg-background border-input text-foreground placeholder:text-muted-foreground"
+                    : "bg-white/15 backdrop-blur-md border-white/30 text-white placeholder:text-white/80"
+                )}
+                isOverlay={!isScrolledPastHero}
+                autoFocus
+                onClose={() => setIsSearchOpen(false)}
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Close search"
+                onClick={() => setIsSearchOpen(false)}
+                className={cn(
+                  "flex-shrink-0 transition-colors duration-300",
+                  isScrolledPastHero
+                    ? "hover:bg-gray-100 dark:hover:bg-brand-black-90"
+                    : "text-white hover:bg-white/20"
+                )}
+              >
+                <X className="!h-5 !w-5 stroke-[2.5]" />
+              </Button>
+            </div>
+          )}
+
+          {/* Left Zone: Hamburger + Logo — hidden on mobile when search is open */}
+          <div className={cn("flex items-center gap-2 md:gap-4 flex-shrink-0", isSearchOpen && "hidden md:flex")}>
             <Button
               variant="ghost"
               size="icon"
@@ -111,7 +144,7 @@ export default function Header() {
               <Menu className="!w-6 !h-6 stroke-[2.5]" />
             </Button>
 
-            <Link href="/" className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-2 md:gap-3">
               <img 
                 src="/images/logoo.png" 
                 alt="DUFS Blog Logo" 
@@ -119,7 +152,7 @@ export default function Header() {
               />
               <span 
                 className={cn(
-                  "text-2xl font-black tracking-tight transition-colors duration-300 font-montserrat",
+                  "text-xl md:text-2xl font-black tracking-tight transition-colors duration-300 font-montserrat",
                   isScrolledPastHero 
                     ? "text-foreground" 
                     : "text-white drop-shadow-lg"
@@ -130,11 +163,11 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Right Group: Search Bar + Auth Actions */}
-          <div className="flex items-center gap-3 flex-1 justify-end max-w-3xl">
-            {/* Search Bar */}
+          {/* Right Zone: Search + Auth Actions — hidden on mobile when search is open */}
+          <div className={cn("flex items-center gap-2 md:gap-3 flex-1 justify-end md:max-w-3xl", isSearchOpen && "hidden md:flex")}>
+            {/* Desktop Search Bar — hidden on mobile */}
             <SearchBar
-              className="w-full max-w-md transition-all duration-300"
+              className="hidden md:block w-full max-w-md transition-all duration-300"
               inputClassName={cn(
                 isScrolledPastHero 
                   ? "bg-background border-input text-foreground placeholder:text-muted-foreground" 
@@ -143,14 +176,30 @@ export default function Header() {
               isOverlay={!isScrolledPastHero}
             />
 
+            {/* Mobile Search Icon Button — hidden on md+ */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "flex md:hidden flex-shrink-0 transition-colors duration-300",
+                isScrolledPastHero 
+                  ? "hover:bg-gray-100 dark:hover:bg-brand-black-90" 
+                  : "text-white hover:bg-white/20"
+              )}
+              aria-label="Search"
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
+            >
+              <Search className="!h-5 !w-5 stroke-[2.5]" />
+            </Button>
+
             {!isAuthenticated ? (
               <>
-                {/* Login Button */}
+                {/* Login Button — hidden on mobile */}
                 <Button
                   asChild
                   variant="ghost"
                   className={cn(
-                    "flex items-center gap-2 font-semibold transition-all duration-300 whitespace-nowrap",
+                    "hidden md:flex items-center gap-2 font-semibold transition-all duration-300 whitespace-nowrap",
                     isScrolledPastHero 
                       ? "text-foreground hover:bg-gray-100 dark:hover:bg-brand-black-90" 
                       : "text-white hover:bg-white/20"
@@ -162,11 +211,11 @@ export default function Header() {
                   </Link>
                 </Button>
 
-                {/* Sign Up Button */}
+                {/* Sign Up Button — hidden on mobile */}
                 <Button
                   asChild
                   className={cn(
-                    "flex items-center gap-2 font-semibold transition-all duration-300 whitespace-nowrap",
+                    "hidden md:flex items-center gap-2 font-semibold transition-all duration-300 whitespace-nowrap",
                     isScrolledPastHero 
                       ? "bg-primary text-primary-foreground hover:bg-primary/90" 
                       : "bg-white text-gray-900 hover:bg-white/90"
@@ -178,12 +227,12 @@ export default function Header() {
                   </Link>
                 </Button>
 
-                {/* Theme Toggle */}
+                {/* Theme Toggle — hidden on mobile (moved to sidebar) */}
                 <Button
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    "transition-colors duration-300 flex-shrink-0",
+                    "hidden md:flex transition-colors duration-300 flex-shrink-0",
                     isScrolledPastHero 
                       ? "hover:bg-gray-100 dark:hover:bg-brand-black-90" 
                       : "text-white hover:bg-white/20"
@@ -203,9 +252,9 @@ export default function Header() {
                     <Avatar
                       src={getUserAvatarUrl(user)}
                       initials={user?.username?.charAt(0).toUpperCase() || "U"}
-                      size="md"
+                      size="sm"
                       className={cn(
-                        "cursor-pointer transition-all duration-300 ring-2",
+                        "cursor-pointer transition-all duration-300 ring-2 md:w-10 md:h-10 md:text-sm",
                         isScrolledPastHero
                           ? "ring-gray-200 dark:ring-gray-700 hover:ring-primary dark:hover:ring-primary"
                           : "ring-white/40 hover:ring-white/60"

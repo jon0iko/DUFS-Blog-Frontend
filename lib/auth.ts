@@ -54,6 +54,7 @@ export interface RegisterData {
   password: string;
   phoneNumber: string;
   Country: string;
+  Bio?: string;
 }
 
 const STRAPI_URL = config.strapi.url;
@@ -171,12 +172,13 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
     setToken(responseData.jwt);
     setUser(responseData.user);
 
-    // Step 2: Update user with custom fields (phoneNumber, Country)
-    if (data.phoneNumber || data.Country) {
+    // Step 2: Update user with custom fields (phoneNumber, Country, Bio)
+    if (data.phoneNumber || data.Country || data.Bio) {
       try {
         await updateUserProfile(responseData.user.id, {
           phoneNumber: data.phoneNumber,
           Country: data.Country,
+          ...(data.Bio ? { Bio: data.Bio } : {}),
         }, responseData.jwt);
         
         // Update stored user with new fields
@@ -184,6 +186,7 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
           ...responseData.user,
           phoneNumber: data.phoneNumber,
           Country: data.Country,
+          ...(data.Bio ? { Bio: data.Bio } : {}),
         };
         setUser(updatedUser);
         responseData.user = updatedUser;
@@ -214,7 +217,7 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
  */
 async function updateUserProfile(
   userId: number,
-  profileData: { phoneNumber?: string; Country?: string },
+  profileData: { phoneNumber?: string; Country?: string; Bio?: string },
   token: string
 ): Promise<void> {
   const response = await fetch(`${STRAPI_URL}/api/users/${userId}`, {

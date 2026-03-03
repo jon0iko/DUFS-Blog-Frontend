@@ -10,6 +10,9 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext'; // Import useAuth hook
 import { getUserAvatarUrl } from '@/lib/auth'; // Import avatar helper
+import { useTheme } from 'next-themes';
+import { Sun, Moon, Palette } from 'lucide-react';
+import { useRef } from 'react';
 
 interface NavigationItem {
   title: string;
@@ -25,21 +28,65 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarProps) {
   const { isAuthenticated, user, logout } = useAuth(); // Use authentication context
+  const { theme, setTheme } = useTheme();
   const closeSidebar = () => setIsOpen(false);
+
+  // Swipe-to-close gesture
+  const touchStartX = useRef<number | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = touchStartX.current - e.changedTouches[0].clientX;
+    if (delta > 60) {
+      closeSidebar();
+    }
+    touchStartX.current = null;
+  };
 
   // Fallback navigation if none provided
   const navItems = navigation.length > 0 ? navigation : [
     { title: 'Home', href: '/' },
     { title: 'Browse', href: '/browse' },
-    { title: 'Submit Article', href: '/submit' },
+    { title: 'Write Content', href: '/submit' },
   ];
+
+  // Theme pill switcher
+  const ThemePill = () => (
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-muted-foreground font-medium">Theme</span>
+      <div className="flex rounded-full border border-border overflow-hidden">
+        {([
+          { value: 'light', icon: Sun, label: 'Light' },
+          { value: 'dark', icon: Moon, label: 'Dark' },
+          { value: 'system', icon: Palette, label: 'System' },
+        ] as const).map(({ value, icon: Icon, label }) => (
+          <button
+            key={value}
+            onClick={() => setTheme(value)}
+            className={cn(
+              'flex items-center gap-1 px-2 py-1.5 text-xs font-medium transition-colors',
+              theme === value
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-muted'
+            )}
+            aria-label={label}
+          >
+            <Icon className="h-3 w-3 stroke-2" />
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <>
       {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-45 bg-black/50 backdrop-blur-sm md:hidden" // Keep overlay logic as is, usually just for mobile
+          className="fixed inset-0 z-[59] bg-black/50 backdrop-blur-sm md:hidden"
           onClick={closeSidebar}
           aria-hidden="true"
         />
@@ -48,17 +95,20 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
       {/* Sidebar itself */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 h-screen w-80 flex-shrink-0 ", // Increased width from w-64 to w-80
-          "flex flex-col border-r-4 border-r-gray-800 dark:border-r-white bg-background p-6 shadow-lg ", // Added bold right border with white color in dark mode
-          "overflow-y-auto scrollbar-hide", // Added scrollbar-hide to hide the scrollbar
-          "transition-transform duration-300 ease-in-out", // Animation
-          isOpen ? 'translate-x-0' : '-translate-x-full' // Control visibility
+          "fixed inset-y-0 left-0 z-[60] h-[100dvh]",
+          "w-full min-[375px]:w-[85vw] sm:w-80",
+          "flex flex-col border-r-4 border-r-gray-800 dark:border-r-white bg-background p-6 shadow-lg ",
+          "overflow-y-auto scrollbar-hide",
+          "transition-transform duration-300 ease-in-out",
+          isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
         aria-label="Sidebar Navigation"
-        style={{ 
-          // CSS to hide scrollbars but keep scrolling functionality
-          scrollbarWidth: 'none', // Firefox
-          msOverflowStyle: 'none' // IE and Edge
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 24px))',
         }}
       >
         {/* Header section (will now scroll with content if needed) */}
@@ -82,68 +132,69 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
 
         {/* User Authentication Section */}
         {isAuthenticated ? (
-          <div className="mb-6 py-3 px-4 bg-muted/50 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center mr-3 relative">
-                  <Image
-                    src={getUserAvatarUrl(user)}
-                    alt={user?.username || 'User'}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div>
-                  <p className="font-medium">{user?.username}</p>
-                  <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
-                </div>
+          // Auth state: User card
+          <div className="mb-6 py-4 px-4 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-12 w-12 flex-shrink-0 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center relative">
+                <Image
+                  src={getUserAvatarUrl(user)}
+                  alt={user?.username || 'User'}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="min-w-0">
+                <p className="font-bold text-sm truncate">{user?.username}</p>
+                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
               </div>
             </div>
             
-            <div className="flex items-center mt-3 space-x-2">
-              <Link href="/account" className="flex-1">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start" 
-                  size="sm"
-                  onClick={closeSidebar}
-                >
-                  <User className="mr-2 h-4 w-4" /> Account
+            <div className="flex flex-col gap-2">
+              <Link href="/account" className="w-full" onClick={closeSidebar}>
+                <Button variant="outline" className="w-full justify-center" size="sm">
+                  <User className="mr-0 h-4 w-4" /> Profile
                 </Button>
               </Link>
               
               <Button 
                 variant="ghost" 
-                className="flex-1 justify-start" 
+                className="w-full justify-center text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" 
                 size="sm"
-                onClick={() => {
-                  logout();
-                  closeSidebar();
-                }}
+                onClick={() => { logout(); closeSidebar(); }}
               >
-                <LogOut className="mr-2 h-4 w-4" /> Logout
+                <LogOut className="mr-0 h-4 w-4" /> Log Out
               </Button>
             </div>
           </div>
         ) : (
-          <div className="mb-6 flex items-center space-x-2">
-            <Link href="/auth/signin" onClick={closeSidebar} className="flex-1">
-              <Button variant="outline" className="w-full">
-                <LogIn className="mr-2 h-4 w-4" /> Sign In
-              </Button>
-            </Link>
-            
-            <Link href="/auth/signup" onClick={closeSidebar} className="flex-1">
-              <Button variant="default" className="w-full">
-                <UserPlus className="mr-2 h-4 w-4" /> Sign Up
-              </Button>
-            </Link>
+          // Non-auth state: CTA card
+          <div className="mb-6 rounded-lg border border-border p-4">
+            <p className="text-sm font-semibold text-foreground mb-1">New here?</p>
+            <p className="text-xs text-muted-foreground mb-3">Join the DUFS community</p>
+            <div className="flex flex-col gap-2">
+              <Link href="/auth/signin" onClick={closeSidebar} className="w-full">
+                <Button variant="outline" className="w-full justify-center">
+                  <LogIn className="mr-0 h-4 w-4" /> Sign In
+                </Button>
+              </Link>
+              <Link href="/auth/signup" onClick={closeSidebar} className="w-full">
+                <Button variant="default" className="w-full justify-center">
+                  <UserPlus className="mr-0 h-4 w-4" /> Create Account
+                </Button>
+              </Link>
+            </div>
           </div>
         )}
 
-        {/* Navigation Section (will now scroll) */}
-        {/* Removed flex-grow and overflow-y-auto from nav */}
-        <nav className="flex-shrink-0">
+        {/* Navigation Section */}
+        <div className="flex items-center gap-3 mb-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+            {isAuthenticated ? 'Navigate' : 'Explore'}
+          </span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+        <nav className="flex-shrink-0 mb-2">
           <ul className="space-y-5">
             {navItems.map((item) => (
               <li key={item.href}>
@@ -161,34 +212,36 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
           </ul>
         </nav>
 
-        {/* Bottom Section (Separator, Social, etc. - will now scroll) */}
-        {/* Use mt-6 or similar for spacing instead of relying on flex-grow */}
-        <div className="mt-6 flex-shrink-0">
-          <Separator className="" /> {/* Removed my-6, rely on parent div margin */}
+        {/* Bottom Section */}
+        <div className="mt-6 flex-shrink-0 space-y-6">
+          <Separator />
+
+          {/* Theme Pill Switcher */}
+          <ThemePill />
+
+          <Separator />
 
           {/* Social Links Section */}
-          <div className="mt-6"> {/* Added margin-top */}
-            <div className="flex space-x-4">
-              {socialLinks.map((link) => (
-                <Link
-                  key={link.platform}
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={`Visit our ${link.platform} page`}
-                >
-                  {typeof link.icon === 'string' && link.icon ? (
-                      <Image
-                        src={link.icon} alt={`${link.platform} icon`}
-                        width={24} height={24} className="h-6 w-6"
-                      />
-                  ) : (
-                    <span className='uppercase text-xs'>{link.platform}</span>
-                  )}
-                </Link>
-              ))}
-            </div>
+          <div className="flex space-x-4">
+            {socialLinks.map((link) => (
+              <Link
+                key={link.platform}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={`Visit our ${link.platform} page`}
+              >
+                {typeof link.icon === 'string' && link.icon ? (
+                    <Image
+                      src={link.icon} alt={`${link.platform} icon`}
+                      width={24} height={24} className="h-6 w-6"
+                    />
+                ) : (
+                  <span className='uppercase text-xs'>{link.platform}</span>
+                )}
+              </Link>
+            ))}
           </div>
         </div>
       </aside>

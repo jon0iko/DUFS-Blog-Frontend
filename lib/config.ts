@@ -1,7 +1,7 @@
 export const config = {
   // Strapi Configuration
   strapi: {
-    url: process.env.NEXT_PUBLIC_STRAPI_URL || 'http://192.168.68.109:1337',
+    url: process.env.NEXT_PUBLIC_STRAPI_URL || 'http://192.168.68.106:1337',
     apiToken: process.env.NEXT_PUBLIC_STRAPI_API_TOKEN || '',
     endpoints: {
       articles: '/api/articles',
@@ -13,6 +13,8 @@ export const config = {
       submissions: '/api/submissions',
       navigation: '/api/navigation-items',
       socialLinks: '/api/social-links',
+      textReel: '/api/text-reel-homepage',
+      textReel: '/api/text-reel-homepage',
       auth: {
         login: '/api/auth/local',
         register: '/api/auth/local/register',

@@ -19,7 +19,7 @@ const DropdownMenu = ({ children, trigger, align = "right" }: DropdownMenuProps)
   const [isOpen, setIsOpen] = useState(false);
   const [isPositioned, setIsPositioned] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [position, setPosition] = useState({ top: 0, left: 0, right: 0 });
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -48,7 +48,8 @@ const DropdownMenu = ({ children, trigger, align = "right" }: DropdownMenuProps)
           // Use viewport-relative position since dropdown is fixed positioned
           setPosition({
             top: rect.bottom + 8,
-            left: align === "left" ? rect.left : rect.right,
+            left: rect.left,
+            right: window.innerWidth - rect.right,
           });
           setIsPositioned(true);
         }
@@ -83,10 +84,11 @@ const DropdownMenu = ({ children, trigger, align = "right" }: DropdownMenuProps)
           )}
           style={{
             top: `${position.top}px`,
-            left: align === "left" ? `${position.left}px` : `${position.left}px`,
+            ...(align === "right"
+              ? { right: `${position.right}px` }
+              : { left: `${position.left}px` }),
             zIndex: 9999,
             transformOrigin: align === "right" ? "top right" : "top left",
-            transform: align === "right" ? "translateX(-100%)" : "translateX(0)",
           }}
         >
           <div className="py-1">

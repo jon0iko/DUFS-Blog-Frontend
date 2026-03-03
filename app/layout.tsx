@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/components/ui/toast";
-import LayoutContent from '@/components/layout/LayoutContent';
+import LayoutContent from "@/components/layout/LayoutContent";
+import { LazyMotion, domAnimation } from "framer-motion";
 
 const roboto = localFont({
   src: [
@@ -20,7 +21,7 @@ const roboto = localFont({
       style: "normal",
     },
     {
-      path: "../public/fonts/Roboto-Medium.ttf", 
+      path: "../public/fonts/Roboto-Medium.ttf",
       weight: "500",
       style: "normal",
     },
@@ -30,7 +31,7 @@ const roboto = localFont({
       style: "normal",
     },
     {
-      path: "../public/fonts/Roboto-Bold.ttf", 
+      path: "../public/fonts/Roboto-Bold.ttf",
       weight: "700",
       style: "normal",
     },
@@ -78,7 +79,7 @@ const montserrat = localFont({
 
 // --- Load Kalpurush Font (using TTF) ---
 const kalpurush = localFont({
-  src: "../public/fonts/kalpurush.ttf", 
+  src: "../public/fonts/kalpurush.ttf",
   weight: "400", // Adjust if your Kalpurush.ttf has a different default weight
   style: "normal",
   variable: "--font-kalpurush", // Assign CSS variable for Kalpurush
@@ -88,6 +89,13 @@ const kalpurush = localFont({
 export const metadata: Metadata = {
   title: "DUFS Blog - Film Publication",
   description: "A film blog created by Dhaka University Film Society.",
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#231f20" },
+    { media: "(prefers-color-scheme: dark)", color: "#231f20" },
+  ],
 };
 
 export default function RootLayout({
@@ -102,7 +110,7 @@ export default function RootLayout({
           "min-h-screen bg-background font-sans antialiased",
           roboto.variable,
           montserrat.variable,
-          kalpurush.variable
+          kalpurush.variable,
         )}
       >
         <ThemeProvider
@@ -113,7 +121,9 @@ export default function RootLayout({
         >
           <AuthProvider>
             <ToastProvider>
-              <LayoutContent>{children}</LayoutContent>
+              <LayoutContent>
+                <LazyMotion features={domAnimation}>{children}</LazyMotion>
+              </LayoutContent>
             </ToastProvider>
           </AuthProvider>
         </ThemeProvider>

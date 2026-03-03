@@ -78,6 +78,36 @@
   }
 }
 
+/* ── Infinite Marquee ─────────────────────────────────────────────────────── */
+.marquee {
+  display: flex;
+  overflow: hidden;
+  gap: 1rem;
+  position: relative;
+  user-select: none;
+}
+
+.marquee-content {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-around;
+  min-width: 100%;
+  gap: 1rem;
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100% - 1rem));
+  }
+}
+
+.marquee-scroll {
+  animation: marquee-scroll 180s linear infinite;
+}
+
 /* Custom utility class to hide scrollbars while keeping scrolling functionality */
 @layer utilities {
   .scrollbar-hide {
@@ -150,12 +180,68 @@
   }
 
   @keyframes progress {
-    from { width: 0%; }
-    to { width: 100%; }
+    /* scaleX instead of width — compositor-only, zero reflow */
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
   }
 
   .animate-progress {
     animation: progress linear forwards;
+    transform-origin: left;
+  }
+
+  /* Ken Burns zoom — pure CSS, runs on compositor thread */
+  @keyframes kenburns {
+    from { transform: scale(1); }
+    to   { transform: scale(1.08); }
+  }
+
+  .animate-kenburns {
+    animation: kenburns linear forwards;
+    will-change: transform;
+  }
+
+  /* Disable Ken Burns on mobile to eliminate the biggest source of GPU pressure.
+     Also release will-change so the browser doesn't maintain a promoted compositor
+     layer while the user scrolls — this prevents the dvh/svh resize glitch. */
+  @media (max-width: 768px) {
+    .animate-kenburns {
+      animation: none;
+      will-change: auto;
+    }
+  }
+
+  /* ── Scroll Reveal — pure CSS, triggered by IntersectionObserver class swap ── */
+  /* Initial hidden state — applied before the element enters the viewport */
+  .scroll-reveal {
+    opacity: 0;
+  }
+
+  @keyframes reveal-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Added by IntersectionObserver when element enters viewport */
+  .scroll-revealed {
+    animation: reveal-fade-up 0.8s ease-out forwards;
+    animation-delay: var(--reveal-delay, 0s);
+  }
+
+  /* Honour user preference: show content immediately, skip animation */
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-reveal {
+      opacity: 1;
+    }
+    .scroll-revealed {
+      animation: none;
+    }
   }
 
   /* Spin reveal animation - spins 3 times */
@@ -167,4 +253,46 @@
   .animate-spin-reveal {
     animation: spin-reveal 4s ease-in-out;
   }
+}
+
+
+@layer components {
+  /*
+   * Per-line animated underline — matches Figma blog behaviour.
+   *
+   * MUST be applied to an inline element (e.g. a <span> inside a block heading).
+   * `box-decoration-break: clone` splits the inline element into one background
+   * box per wrapped line, so each line gets its own underline that spans exactly
+   * the text width — not the full container width.
+   *
+   * Hover is triggered by a `.group` ancestor via `.group:hover .underline-effect`.
+   */
+  .underline-effect {
+    display: inline;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0% 100%;
+    background-size: 0% 1.5px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    transition: background-size 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .group:hover .underline-effect {
+    background-size: 100% 1.5px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .underline-effect {
+      transition: none;
+    }
+    .group:hover .underline-effect {
+      background-size: 100% 1.5px;
+    }
+  }
+}
+
+::selection {
+  background-color: #E0D5D0; /* The color of the highlight background */
+  color: black; /* The color of the text itself when highlighted */
 }
