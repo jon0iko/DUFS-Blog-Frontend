@@ -5,6 +5,7 @@ import { Clapperboard, Film, Theater, Video, Camera, PlayCircle, ArrowUpRight } 
 import { cn } from '@/lib/utils';
 import { getStrapiMediaUrl } from '@/lib/strapi-helpers';
 import { getFontClass } from '@/lib/fonts';
+import ScrollReveal, { StaggerReveal } from '@/components/ui/ScrollReveal';
 
 // Map common category slugs to icons
 const getCategoryIcon = (slug: string) => {
@@ -31,7 +32,7 @@ export default async function CategoriesSection() {
     return (
       <section className="py-12 md:py-14 bg-background">
         <div className="container">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+          <ScrollReveal className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4" duration={0.7}>
             <div>
               <h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4 text-foreground">
                 BROWSE CONTENT
@@ -47,9 +48,9 @@ export default async function CategoriesSection() {
               View all
               <ArrowUpRight className="w-4 h-4" />
             </Link>
-          </div>
+          </ScrollReveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StaggerReveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" staggerDelay={0.09} start="top 88%">
             {categories.map((category) => {
               const hasIllustration = !!category.Illustration?.url;
               
@@ -116,7 +117,7 @@ export default async function CategoriesSection() {
                 </Link>
               );
             })}
-          </div>
+          </StaggerReveal>
         </div>
       </section>
     );

@@ -1,6 +1,7 @@
 import { serverStrapiAPI } from '@/lib/server-api';
 import ArticleCard from './ArticleCard';
 import { getArticleData } from '@/lib/strapi-helpers';
+import { StaggerReveal } from '@/components/ui/ScrollReveal';
 
 export default async function FeaturedArticles() {
   try {
@@ -42,7 +43,7 @@ export default async function FeaturedArticles() {
     return (
       <section className="py-12">
         <div className="container">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          <StaggerReveal className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8" staggerDelay={0.1}>
             {validArticles.map(({ raw, data }) => (
               <ArticleCard 
                 key={raw.documentId} 
@@ -50,7 +51,7 @@ export default async function FeaturedArticles() {
                 imageHeight="h-56 md:h-64"
               />
             ))}
-          </div>
+          </StaggerReveal>
         </div>
       </section>
     );

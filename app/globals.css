@@ -78,35 +78,8 @@
   }
 }
 
-/* ── Infinite Marquee ─────────────────────────────────────────────────────── */
-.marquee {
-  display: flex;
-  overflow: hidden;
-  gap: 1rem;
-  position: relative;
-  user-select: none;
-}
-
-.marquee-content {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-around;
-  min-width: 100%;
-  gap: 1rem;
-}
-
-@keyframes marquee-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(calc(-100% - 1rem));
-  }
-}
-
-.marquee-scroll {
-  animation: marquee-scroll 180s linear infinite;
-}
+/* ── Infinite Marquee (CSS fallback — primary driven by GSAP TextReelClient) */
+/* Kept as no-op classes so any legacy references don't break */
 
 /* Custom utility class to hide scrollbars while keeping scrolling functionality */
 @layer utilities {
@@ -190,59 +163,22 @@
     transform-origin: left;
   }
 
-  /* Ken Burns zoom — pure CSS, runs on compositor thread */
+  /* Ken Burns zoom ─ now driven by GSAP in HeroCarousel (see kenBurnsRef).
+     These CSS rules are kept as a no-op fallback for pre-hydration SSR HTML. */
   @keyframes kenburns {
     from { transform: scale(1); }
     to   { transform: scale(1.08); }
   }
 
-  .animate-kenburns {
-    animation: kenburns linear forwards;
-    will-change: transform;
-  }
+  /* animate-kenburns class is no longer applied in JSX.
+     Defined here only so Tailwind purge doesn't remove it if referenced elsewhere. */
 
-  /* Disable Ken Burns on mobile to eliminate the biggest source of GPU pressure.
-     Also release will-change so the browser doesn't maintain a promoted compositor
-     layer while the user scrolls — this prevents the dvh/svh resize glitch. */
-  @media (max-width: 768px) {
-    .animate-kenburns {
-      animation: none;
-      will-change: auto;
-    }
-  }
-
-  /* ── Scroll Reveal — pure CSS, triggered by IntersectionObserver class swap ── */
-  /* Initial hidden state — applied before the element enters the viewport */
-  .scroll-reveal {
-    opacity: 0;
-  }
-
-  @keyframes reveal-fade-up {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* Added by IntersectionObserver when element enters viewport */
-  .scroll-revealed {
-    animation: reveal-fade-up 0.8s ease-out forwards;
-    animation-delay: var(--reveal-delay, 0s);
-  }
-
-  /* Honour user preference: show content immediately, skip animation */
-  @media (prefers-reduced-motion: reduce) {
-    .scroll-reveal {
-      opacity: 1;
-    }
-    .scroll-revealed {
-      animation: none;
-    }
-  }
+  /* ── Scroll Reveal ─ now driven by GSAP ScrollTrigger in ScrollReveal.tsx.
+     The scroll-reveal / scroll-revealed CSS classes are no longer applied;
+     GSAP uses inline transforms instead. Kept as empty rules so any stale
+     class references in the DOM don't cause unexpected style bleed. */
+  .scroll-reveal {}
+  .scroll-revealed {}
 
   /* Spin reveal animation - spins 3 times */
   @keyframes spin-reveal {

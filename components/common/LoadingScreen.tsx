@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import Image from 'next/image'
+import { gsap } from '@/lib/gsap'
 
 interface LoadingScreenProps {
   /**
@@ -22,90 +23,132 @@ interface LoadingScreenProps {
 }
 
 /**
- * Full-screen loading overlay with spinning organization logo
- * 
- * Features:
- * - Prevents layout shift and FOUC (Flash of Unstyled Content)
- * - Smooth fade-in/fade-out animations
- * - Configurable minimum display duration to prevent flickering
- * - Dark mode support
+ * Full-screen loading overlay — all animations driven by a GSAP timeline.
+ *
+ * GSAP handles every motion (logo float, rings, orbit, dots) in a single
+ * synchronized RAF loop, avoiding multiple CSS animation timelines.
  */
 export default function LoadingScreen({
   isLoading,
   minDuration = 300,
   fadeDuration = 300,
 }: LoadingScreenProps) {
-  const [shouldRender, setShouldRender] = useState(isLoading)
-  const [isVisible, setIsVisible] = useState(isLoading)
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const mountedRef = useRef(false)
 
-  // Handle mounting/unmounting with animation
+  // Build the looping animation timeline on first mount
   useEffect(() => {
+    const overlay = overlayRef.current
+    if (!overlay || mountedRef.current) return
+    mountedRef.current = true
+
+    const logo = overlay.querySelector<HTMLElement>('[data-loading="logo"]')
+    const rings = overlay.querySelectorAll<HTMLElement>('[data-loading="ring"]')
+    const orbit = overlay.querySelector<HTMLElement>('[data-loading="orbit"]')
+    const dots = overlay.querySelectorAll<HTMLElement>('[data-loading="dot"]')
+
+    // Logo gentle float
+    if (logo) {
+      gsap.to(logo, {
+        y: -8,
+        scale: 1.04,
+        duration: 1.6,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+      })
+    }
+
+    // Pulsing rings
+    if (rings.length) {
+      gsap.to(rings, {
+        scale: 1.12,
+        opacity: 0.9,
+        duration: 1,
+        repeat: -1,
+        yoyo: true,
+        stagger: 0.35,
+        ease: 'sine.inOut',
+        transformOrigin: '50% 50%',
+      })
+    }
+
+    // Rotation orbit
+    if (orbit) {
+      gsap.to(orbit, {
+        rotation: 360,
+        duration: 4,
+        repeat: -1,
+        ease: 'none',
+        transformOrigin: '50% 50%',
+      })
+    }
+
+    // Loading dots bounce
+    if (dots.length) {
+      gsap.to(dots, {
+        y: -6,
+        opacity: 1,
+        duration: 0.35,
+        repeat: -1,
+        yoyo: true,
+        stagger: 0.18,
+        ease: 'power1.out',
+      })
+    }
+  }, [])
+
+  // Fade in / fade out based on isLoading
+  useEffect(() => {
+    const overlay = overlayRef.current
+    if (!overlay) return
+
     if (isLoading) {
-      setShouldRender(true)
-      // Force a reflow to ensure the transition is triggered
-      requestAnimationFrame(() => {
-        setIsVisible(true)
+      overlay.style.visibility = 'visible'
+      gsap.to(overlay, {
+        opacity: 1,
+        pointerEvents: 'auto',
+        duration: 0.25,
+        ease: 'power2.out',
+        overwrite: true,
       })
     } else {
-      // Start fade out
-      setIsVisible(false)
-      // Remove from DOM after fade completes + minimum duration
-      const hideTimer = setTimeout(() => {
-        setShouldRender(false)
-      }, fadeDuration + minDuration)
-
-      return () => clearTimeout(hideTimer)
+      gsap.to(overlay, {
+        opacity: 0,
+        pointerEvents: 'none',
+        duration: fadeDuration / 1000,
+        delay: minDuration / 1000,
+        ease: 'power2.in',
+        overwrite: true,
+        onComplete: () => {
+          if (overlay) overlay.style.visibility = 'hidden'
+        },
+      })
     }
-  }, [isLoading, fadeDuration, minDuration])
-
-  if (!shouldRender) {
-    return null
-  }
+  }, [isLoading, minDuration, fadeDuration])
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-white dark:bg-background transition-opacity duration-${fadeDuration}`}
-      style={{
-        opacity: isVisible ? 1 : 0,
-        pointerEvents: isVisible ? 'auto' : 'none',
-        transitionDuration: `${fadeDuration}ms`,
-      }}
+      ref={overlayRef}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-white dark:bg-background"
+      style={{ opacity: 1 }}
       aria-label="Loading content"
       role="status"
     >
       <div className="flex flex-col items-center gap-6">
         {/* Animated Logo Container with Orbital Rings */}
         <div className="relative w-32 h-32 md:w-40 md:h-40 flex items-center justify-center">
-          {/* Outer Ring */}
-          {/* <div
-            className="absolute inset-0 rounded-full border-2 border-border/30"
-            style={{
-              animation: 'pulse-ring 2s ease-in-out infinite',
-            }}
-          /> */}
-          
-          {/* Middle Ring */}
+          {/* Pulsing ring */}
           <div
+            data-loading="ring"
             className="absolute inset-3 rounded-full border-2 border-foreground/25 dark:border-white/55"
-            style={{
-              animation: 'pulse-ring 2s ease-in-out infinite 0.4s',
-            }}
-          />
-          
-          {/* Inner Ring */}
-          <div
-            className="absolute inset-6 rounded-full border-2 border-primary/60 dark:border-primary"
-            style={{
-              animation: 'pulse-ring 2s ease-in-out infinite 0.8s',
-            }}
+            style={{ opacity: 0.45 }}
           />
 
-          {/* Logo with Gentle Float */}
+          {/* Logo float — GSAP-driven */}
           <div
-            className="relative z-10 w-24 h-24 md:w-28 md:h-28 flex items-center justify-center rounded-full bg-white dark:bg-white shadow-lg dark:shadow-[0_0_24px_4px_rgba(139,92,246,0.25)] p-3"
-            style={{
-              animation: 'float 3s ease-in-out infinite',
-            }}
+            data-loading="logo"
+            className="relative z-10 w-24 h-24 md:w-28 md:h-28 flex items-center justify-center rounded-full bg-white dark:bg-white shadow-lg p-3"
           >
             <Image
               src="/images/loading.svg"
@@ -118,81 +161,22 @@ export default function LoadingScreen({
             />
           </div>
 
-          {/* Orbiting Dot */}
-          <div
-            className="absolute inset-0"
-            style={{
-              animation: 'rotate 4s linear infinite',
-            }}
-          >
+          {/* Orbiting dot — GSAP rotation */}
+          <div data-loading="orbit" className="absolute inset-0">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-primary rounded-full" />
           </div>
         </div>
 
-        {/* Loading Text with Dots Animation */}
+        {/* Loading dots — GSAP bounce */}
         <div className="flex items-center gap-1">
-          <p className="text-sm md:text-base text-muted-foreground">
-            Loading
-          </p>
-          <span className="flex gap-1">
-            <span
-              className="w-1 h-1 bg-muted-foreground rounded-full"
-              style={{ animation: 'bounce-dot 1.4s infinite 0s' }}
-            />
-            <span
-              className="w-1 h-1 bg-muted-foreground rounded-full"
-              style={{ animation: 'bounce-dot 1.4s infinite 0.2s' }}
-            />
-            <span
-              className="w-1 h-1 bg-muted-foreground rounded-full"
-              style={{ animation: 'bounce-dot 1.4s infinite 0.4s' }}
-            />
+          <p className="text-sm md:text-base text-muted-foreground">Loading</p>
+          <span className="flex gap-1 ml-1">
+            <span data-loading="dot" className="w-1 h-1 bg-muted-foreground rounded-full opacity-50" />
+            <span data-loading="dot" className="w-1 h-1 bg-muted-foreground rounded-full opacity-50" />
+            <span data-loading="dot" className="w-1 h-1 bg-muted-foreground rounded-full opacity-50" />
           </span>
         </div>
       </div>
-
-      {/* CSS for all animations */}
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0px) scale(1);
-          }
-          50% {
-            transform: translateY(-8px) scale(1.05);
-          }
-        }
-
-        @keyframes pulse-ring {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 0.45;
-          }
-          50% {
-            transform: scale(1.1);
-            opacity: 0.9;
-          }
-        }
-
-        @keyframes rotate {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        @keyframes bounce-dot {
-          0%, 80%, 100% {
-            transform: translateY(0);
-            opacity: 0.5;
-          }
-          40% {
-            transform: translateY(-6px);
-            opacity: 1;
-          }
-        }
-      `}</style>
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { Article } from "@/types";
 import { getArticleData, getArticleImage, getAuthorAvatar, formatPublishDate } from "@/lib/strapi-helpers";
 import { getFontClass } from "@/lib/fonts";
+import { gsap } from "@/lib/gsap";
 
 interface HeroCarouselProps {
   articles: Article[];
@@ -30,6 +31,10 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
   const slideStartTime = useRef(Date.now());
   const remainingTime = useRef(SLIDE_DURATION);
   const slideReady = useRef(false);
+
+  // GSAP animation refs
+  const kenBurnsRef = useRef<HTMLDivElement>(null);
+  const contentTextRef = useRef<HTMLDivElement>(null);
 
   // Memoize article data for performance
   const processedArticles = useMemo(() => {
@@ -87,6 +92,62 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
   // Stable ref for onSlideReady
   const onSlideReadyRef = useRef(onSlideReady);
   useEffect(() => { onSlideReadyRef.current = onSlideReady; }, [onSlideReady]);
+
+  // GSAP Ken Burns – starts fresh on every slide change
+  useEffect(() => {
+    const kenBurnsEl = kenBurnsRef.current;
+    if (!kenBurnsEl) return;
+
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    if (prefersReducedMotion) return;
+
+    // Kill any stale tween on this element before starting a fresh one
+    gsap.killTweensOf(kenBurnsEl);
+    gsap.fromTo(
+      kenBurnsEl,
+      { scale: 1 },
+      {
+        scale: 1.08,
+        duration: SLIDE_DURATION / 1000 + 0.5,
+        ease: "power1.out",
+        overwrite: true,
+      }
+    );
+  }, [currentIndex]);
+
+  // GSAP text entrance — staggered children fade-up on every slide change
+  useEffect(() => {
+    const textEl = contentTextRef.current;
+    if (!textEl) return;
+
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    if (prefersReducedMotion) {
+      gsap.set(textEl.children, { opacity: 1, y: 0 });
+      return;
+    }
+
+    const tl = gsap.timeline({ delay: 0.45 });
+    tl.fromTo(
+      textEl.children,
+      { opacity: 0, y: 24 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.65,
+        stagger: 0.1,
+        ease: "power3.out",
+        overwrite: true,
+      }
+    );
+
+    return () => { tl.kill(); };
+  }, [currentIndex]);
 
   // When slide index changes — reset state and arm safety fallback
   useEffect(() => {
@@ -220,10 +281,11 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
             {/* Background Image with Ken Burns Effect */}
             {currentArticle?.imageSrc && (
                <div className="relative w-full h-full overflow-hidden">
-                  {/* CSS-driven Ken Burns — runs on the compositor thread, not the JS main thread */}
+                  {/* GSAP-driven Ken Burns — ref-based, kills & restarts cleanly on every slide */}
                   <div
-                    className="relative w-full h-full animate-kenburns"
-                    style={{ animationDuration: `${SLIDE_DURATION / 1000 + 0.5}s` }}
+                    ref={kenBurnsRef}
+                    className="relative w-full h-full"
+                    style={{ transformOrigin: "center center", willChange: "transform" }}
                   >
                   
                     <Image
@@ -247,12 +309,8 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
             <div className="absolute inset-0 flex flex-col justify-end pb-12 md:pb-20 pointer-events-none z-20">
                <div className="container px-6 md:px-6">
                   <div className="max-w-5xl">
-                    {/* Text Animation */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3, duration: 0.6 }}
-                    >
+                    {/* GSAP stagger-reveal text — children animated by useEffect above */}
+                    <div ref={contentTextRef}>
                        {/* Author & Date Info */}
                        <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
                          {currentArticle?.author && (
@@ -288,7 +346,7 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
                       <p className={`${excerptFontClass} text-xs font-light md:text-lg text-white/90 line-clamp-2 md:line-clamp-3 max-w-2xl drop-shadow-md`}>
                          {currentArticle?.excerpt}
                       </p>
-                    </motion.div>
+                    </div>
                   </div>
                </div>
             </div>

@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Avatar from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { getUserAvatarUrl } from '@/lib/auth'; 
-import { useScroll, useMotionValueEvent } from "framer-motion";
+import { gsap } from "@/lib/gsap";
 
 
 export default function Header() {
@@ -23,15 +23,16 @@ export default function Header() {
   const isHomePage = pathname === '/' || pathname === '';
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
-  const { scrollY } = useScroll();
-  const lastScrollY = useRef(0);
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // Initialize hero state when page changes or on mount
+  // Ref for GSAP-driven header show/hide
+  const headerRef = useRef<HTMLElement>(null);
+  const lastScrollY = useRef(0);
+  const isVisible = useRef(true);
+
+  // Initialize hero-background state
   useEffect(() => {
     if (isHomePage && typeof window !== 'undefined') {
       const currentScrollY = window.scrollY;
@@ -42,32 +43,51 @@ export default function Header() {
     }
   }, [isHomePage]);
 
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    const currentScrollY = latest;
-    const previousScrollY = lastScrollY.current;
-    
-    // Only apply hero threshold logic on homepage
-    if (isHomePage && typeof window !== 'undefined') {
-      // Carousel is 80vh on both mobile and desktop
-      // Add progress bar height (4px) for accurate calculation
-      const carouselHeight = window.innerHeight * 0.80 + 4;
-      setIsScrolledPastHero(currentScrollY > carouselHeight);
-    } else {
-      // On other pages, always show solid background
-      setIsScrolledPastHero(true);
-    }
-    
-    // Hide header if scrolling down and past 100px
-    if (currentScrollY > previousScrollY && currentScrollY > 100) {
-      setIsHeaderVisible(false);
-    } 
-    // Show header if scrolling up
-    else if (currentScrollY < previousScrollY) {
-      setIsHeaderVisible(true);
-    }
+  // GSAP hide/show animation + background tracking — single passive scroll listener
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
 
-    lastScrollY.current = currentScrollY;
-  });
+    const onScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      // Hero threshold
+      if (isHomePage) {
+        const carouselHeight = window.innerHeight * 0.80 + 4;
+        setIsScrolledPastHero(currentScrollY > carouselHeight);
+      } else {
+        setIsScrolledPastHero(true);
+      }
+
+      // GSAP-driven hide / reveal — direction-aware with refined easing
+      if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+        if (isVisible.current) {
+          isVisible.current = false;
+          gsap.to(header, {
+            yPercent: -100,
+            duration: 0.4,
+            ease: "power2.in",
+            overwrite: true,
+          });
+        }
+      } else if (currentScrollY < lastScrollY.current) {
+        if (!isVisible.current) {
+          isVisible.current = true;
+          gsap.to(header, {
+            yPercent: 0,
+            duration: 0.55,
+            ease: "power3.out",
+            overwrite: true,
+          });
+        }
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isHomePage]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -85,10 +105,10 @@ export default function Header() {
   return (
     <>
       <header 
+        ref={headerRef}
         className={cn(
-          "top-0 z-50 w-full border-b transition-all duration-300 ease-in-out ",
+          "top-0 z-50 w-full border-b transition-colors duration-300",
           isHomePage ? "fixed" : "sticky",
-          !isHeaderVisible && "-translate-y-full",
           isScrolledPastHero 
             ? "bg-background backdrop-blur-md border-border shadow-lg" 
             : "border-transparent"

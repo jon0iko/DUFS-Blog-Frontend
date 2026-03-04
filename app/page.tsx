@@ -13,16 +13,18 @@ export default function Home() {
       <HeroSection />
       <CurveDivider />
 
+      {/* BrowseContentSection fetches its own data client-side */}
       <BrowseContentSectionWrapper />
 
-      {/* <MorePostsButton /> */}
-
+      {/* Editor's Choice — stagger reveals added inside EditorChoice */}
       <EditorChoice />
 
-      <ScrollReveal>
+      {/* Publications — full section reveal */}
+      <ScrollReveal yOffset={50} duration={0.9}>
         <PublicationsSection />
       </ScrollReveal>
 
+      {/* Text reel — GSAP marquee with scroll‑velocity */}
       <TextReel />
 
       <BackToTopButton />

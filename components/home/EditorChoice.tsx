@@ -1,6 +1,7 @@
 import { serverStrapiAPI } from '@/lib/server-api';
 import ArticleCard from './ArticleCard';
 import { getArticleData } from '@/lib/strapi-helpers';
+import ScrollReveal, { StaggerReveal } from '@/components/ui/ScrollReveal';
 
 export default async function EditorChoice() {
   try {
@@ -127,14 +128,13 @@ export default async function EditorChoice() {
         }}
       /> */}
         <div className="container z-10 relative">
-          <div className="flex justify-center mb-8">
+          <ScrollReveal className="flex justify-center mb-8" duration={0.6}>
             <h2 className="text-3xl font-black relative text-brand-black-90">
               <span className="relative z-10">DUFS Featured</span>
-              {/* <span className="absolute left-0 right-0 bottom-0 h-[3px] rounded-lg bg-brand-black-90"></span> */}
             </h2>
-          </div>
+          </ScrollReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          <StaggerReveal className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8" staggerDelay={0.1}>
             {validArticles.map(({ raw, data }) => (
               <ArticleCard 
                 key={raw.documentId} 
@@ -143,7 +143,7 @@ export default async function EditorChoice() {
                 forceBlackText={true}
               />
             ))}
-          </div>
+          </StaggerReveal>
         </div>
       </section>
     );

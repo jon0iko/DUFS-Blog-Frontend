@@ -1,20 +1,49 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { ArrowUp } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { gsap } from "@/lib/gsap";
+import { useLenis } from "@/components/providers/SmoothScrollProvider";
 
 export default function BackToTopButton() {
-  const [isVisible, setIsVisible] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const lenis = useLenis();
 
   useEffect(() => {
+    const btn = btnRef.current;
+    if (!btn) return;
+
+    // Set initial hidden state imperatively
+    gsap.set(btn, { opacity: 0, scale: 0.8, y: 16, pointerEvents: "none" });
+
     const footer = document.querySelector("footer");
     if (!footer) return;
 
-    // IntersectionObserver is far more performant than a scroll listener
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsVisible(entry.isIntersecting);
+        if (entry.isIntersecting) {
+          // Slide in
+          gsap.to(btn, {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            duration: 0.45,
+            ease: "back.out(1.7)",
+            pointerEvents: "auto",
+            overwrite: true,
+          });
+        } else {
+          // Slide out
+          gsap.to(btn, {
+            opacity: 0,
+            scale: 0.85,
+            y: 12,
+            duration: 0.3,
+            ease: "power2.in",
+            pointerEvents: "none",
+            overwrite: true,
+          });
+        }
       },
       { threshold: 0 }
     );
@@ -24,19 +53,19 @@ export default function BackToTopButton() {
   }, []);
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (lenis) {
+      lenis.scrollTo(0, { duration: 1.4, easing: (t: number) => 1 - Math.pow(1 - t, 4) });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   return (
     <button
+      ref={btnRef}
       onClick={scrollToTop}
       aria-label="Back to top"
-      className={cn(
-        "fixed bottom-6 right-6 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-white text-black shadow-lg ring-2 ring-primary/20 transition-all duration-300",
-        isVisible
-          ? "opacity-100 translate-y-0 scale-100"
-          : "opacity-0 translate-y-4 scale-90 pointer-events-none"
-      )}
+      className="fixed bottom-6 right-6 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-white text-black shadow-lg ring-2 ring-primary/20 hover:scale-110 active:scale-95 transition-transform duration-150"
     >
       <ArrowUp className="h-5 w-5 stroke-[2.5]" />
     </button>

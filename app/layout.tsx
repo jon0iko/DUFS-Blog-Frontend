@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/components/ui/toast";
 import LayoutContent from "@/components/layout/LayoutContent";
 import { LazyMotion, domAnimation } from "framer-motion";
+import SmoothScrollProvider from "@/components/providers/SmoothScrollProvider";
 
 const roboto = localFont({
   src: [
@@ -121,9 +122,11 @@ export default function RootLayout({
         >
           <AuthProvider>
             <ToastProvider>
-              <LayoutContent>
-                <LazyMotion features={domAnimation}>{children}</LazyMotion>
-              </LayoutContent>
+              <SmoothScrollProvider>
+                <LayoutContent>
+                  <LazyMotion features={domAnimation}>{children}</LazyMotion>
+                </LayoutContent>
+              </SmoothScrollProvider>
             </ToastProvider>
           </AuthProvider>
         </ThemeProvider>
