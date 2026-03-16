@@ -94,7 +94,7 @@ export default function SaveDraftModal({
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-xl bg-primary/10">
+          <div className="p-2 rounded-md bg-primary/10">
             <FileText className="w-6 h-6 text-primary" />
           </div>
           <div>
@@ -124,7 +124,7 @@ export default function SaveDraftModal({
             placeholder="Enter a name for your draft..."
             autoFocus
             className={cn(
-              "w-full px-4 py-3 rounded-xl",
+              "w-full px-4 py-3 rounded-md",
               "bg-gray-50 dark:bg-brand-black-90",
               "border border-gray-200 dark:border-gray-700",
               "text-gray-900 dark:text-gray-100",
@@ -143,7 +143,7 @@ export default function SaveDraftModal({
           <Button
             variant="outline"
             onClick={onClose}
-            className="flex-1 rounded-xl"
+            className="flex-1 rounded-md"
             disabled={isSaving}
           >
             Cancel
@@ -151,7 +151,7 @@ export default function SaveDraftModal({
           <Button
             onClick={handleSave}
             disabled={isSaving || !draftName.trim()}
-            className="flex-1 rounded-xl gap-2"
+            className="flex-1 rounded-md gap-2"
           >
             {isSaving ? (
               <>

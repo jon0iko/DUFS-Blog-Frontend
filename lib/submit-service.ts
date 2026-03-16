@@ -1,3 +1,5 @@
+import { normalizeMarkdownForStorage } from './markdown';
+
 interface ArticleSubmissionData {
   title: string;
   slug: string;
@@ -6,7 +8,7 @@ interface ArticleSubmissionData {
   language: 'en' | 'bn';
   categoryId: number;  // Strapi v5 uses numeric ID for relations
   selectedTags: number[];  // Strapi v5 uses numeric IDs for relations
-  uploadedImageId: number | null;
+  uploadedImageId: number | string | null;
   authorId: number | null;  // Author ID to connect the article to the author
   token: string;
 }
@@ -44,7 +46,7 @@ export async function submitNewArticleService(data: ArticleSubmissionData) {
       title,
       slug,
       excerpt,
-      content,
+      content: normalizeMarkdownForStorage(content),
       language,
       isFeatured: false,
       isEditorsPick: false,

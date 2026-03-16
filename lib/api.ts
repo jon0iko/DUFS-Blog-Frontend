@@ -103,6 +103,11 @@ class StrapiAPI {
         throw new Error(`API Error: ${response.status} ${response.statusText}`);
       }
 
+      // 204 No Content (e.g. DELETE) — return undefined rather than trying to parse an empty body
+      if (response.status === 204 || response.headers.get('content-length') === '0') {
+        return undefined as T;
+      }
+
       const data = await response.json();
       return data;
     } catch (error) {
@@ -226,17 +231,13 @@ class StrapiAPI {
     searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     
     // Populate all necessary fields for article detail page
-    const populate = [
-      'featuredImage',
-      'gallery',
-      'author',
-      'category',
-      'tags',
-      'socialImage'
-    ];
-    populate.forEach((field, index) => {
-      searchParams.append(`populate[${index}]`, field);
-    });
+    searchParams.append('populate[featuredImage]', 'true');
+    searchParams.append('populate[gallery]', 'true');
+    searchParams.append('populate[category]', 'true');
+    searchParams.append('populate[tags]', 'true');
+    searchParams.append('populate[socialImage]', 'true');
+    // Deep-populate author.users_permissions_user so Avatar is included
+    searchParams.append('populate[author][populate][users_permissions_user][populate]', '*');
 
     const response = await this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
@@ -254,17 +255,13 @@ class StrapiAPI {
     const searchParams = new URLSearchParams();
     searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     
-    const populate = [
-      'featuredImage',
-      'gallery',
-      'author',
-      'category',
-      'tags',
-      'socialImage'
-    ];
-    populate.forEach((field, index) => {
-      searchParams.append(`populate[${index}]`, field);
-    });
+    searchParams.append('populate[featuredImage]', 'true');
+    searchParams.append('populate[gallery]', 'true');
+    searchParams.append('populate[category]', 'true');
+    searchParams.append('populate[tags]', 'true');
+    searchParams.append('populate[socialImage]', 'true');
+    // Deep-populate author.users_permissions_user so Avatar is included
+    searchParams.append('populate[author][populate][users_permissions_user][populate]', '*');
 
     const response = await this.request<{ data: Article; meta: object }>(
       `${config.strapi.endpoints.articles}/${documentId}?${searchParams.toString()}`
@@ -805,6 +802,8 @@ class StrapiAPI {
       // Filter by article documentId and only top-level comments (no parent)
       searchParams.append('filters[article][documentId][$eq]', articleDocumentId);
       searchParams.append('filters[parentComment][$null]', 'true');
+      searchParams.append('filters[$or][0][HideComment][$eq]', 'false');
+      searchParams.append('filters[$or][1][HideComment][$null]', 'true');
       
       // Sort by date (newest first)
       searchParams.append('sort', 'CommentDateTime:desc');
@@ -815,6 +814,7 @@ class StrapiAPI {
       searchParams.append('populate[replies][populate][users_permissions_user][populate]', '*');
 
       const response = await this.request<{ data: Comment[]; meta: object }>(
+
         `/api/comments?${searchParams.toString()}`
       );
 
@@ -829,14 +829,14 @@ class StrapiAPI {
    * Create a new comment on an article
    */
   async createComment(
-    articleId: number,
+    articleDocumentId: string,
     content: string,
     userId?: number
   ): Promise<Comment> {
     const commentData: Record<string, unknown> = {
       Content: content,
       CommentDateTime: new Date().toISOString(),
-      article: { connect: [articleId] }, // Strapi v5 relation connect syntax
+      article: { connect: [{ documentId: articleDocumentId }] }, // Strapi v5 relation connect by documentId
       isReplyable: true,
       likeCount: 0,
     };
@@ -861,16 +861,16 @@ class StrapiAPI {
    * Create a reply to an existing comment
    */
   async createCommentReply(
-    parentCommentId: number,
-    articleId: number,
+    parentCommentDocumentId: string,
+    articleDocumentId: string,
     content: string,
     userId?: number
   ): Promise<Comment> {
     const replyData: Record<string, unknown> = {
       Content: content,
       CommentDateTime: new Date().toISOString(),
-      parentComment: { connect: [parentCommentId] }, // Strapi v5 relation connect syntax
-      article: { connect: [articleId] }, // Strapi v5 relation connect syntax
+      parentComment: { connect: [{ documentId: parentCommentDocumentId }] }, // Strapi v5 relation connect by documentId
+      article: { connect: [{ documentId: articleDocumentId }] }, // Strapi v5 relation connect by documentId
       isReplyable: false, // Replies are not replyable by default
       likeCount: 0,
     };
@@ -915,6 +915,63 @@ class StrapiAPI {
     await this.request(`/api/comments/${documentId}`, {
       method: 'DELETE',
     });
+  }
+
+  // ============================================
+  // USER COMMENT LIKE API METHODS
+  // ============================================
+
+  async hasUserLikedComment(userId: number, commentId: number): Promise<{ liked: boolean; likeId?: string }> {
+    try {
+      const searchParams = new URLSearchParams();
+      searchParams.append('filters[user][id][$eq]', userId.toString());
+      searchParams.append('filters[comment][id][$eq]', commentId.toString());
+
+      const response = await this.request<{ data: Array<{ id: number; documentId: string }> }>(
+        `/api/user-comment-likes?${searchParams.toString()}`
+      );
+
+      if (response.data && response.data.length > 0) {
+        return { liked: true, likeId: response.data[0].documentId };
+      }
+      return { liked: false };
+    } catch {
+      return { liked: false };
+    }
+  }
+
+  async likeComment(userId: number, commentId: number): Promise<{ success: boolean; likeId?: string }> {
+    try {
+      const now = new Date().toISOString();
+      const response = await this.userRequest<{ data: { id: number; documentId: string } }>(
+        '/api/user-comment-likes',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            data: {
+              user: { connect: [userId] },
+              comment: { connect: [commentId] },
+              likedAt: now,
+              publishedAt: now,
+            },
+          }),
+        }
+      );
+      return { success: true, likeId: response.data.documentId };
+    } catch {
+      return { success: false };
+    }
+  }
+
+  async unlikeComment(likeDocumentId: string): Promise<boolean> {
+    try {
+      await this.userRequest(`/api/user-comment-likes/${likeDocumentId}`, {
+        method: 'DELETE',
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // ============================================
@@ -1165,6 +1222,8 @@ class StrapiAPI {
       // Filter by article documentId and only top-level comments
       searchParams.append('filters[article][documentId][$eq]', articleDocumentId);
       searchParams.append('filters[parentComment][$null]', 'true');
+      searchParams.append('filters[$or][0][HideComment][$eq]', 'false');
+      searchParams.append('filters[$or][1][HideComment][$null]', 'true');
       
       // Pagination
       searchParams.append('pagination[page]', page.toString());
@@ -1277,6 +1336,32 @@ class StrapiAPI {
       method: 'DELETE',
     });
   }
+
+  // ============================================
+  // USER REQUEST REPORT API METHODS
+  // ============================================
+
+  /**
+   * Create a new user request/report (e.g., article deletion request)
+   */
+  async createUserRequestReport(data: {
+    section: string;
+    description: string;
+  }): Promise<{ data: { id: number; documentId: string } }> {
+    return this.userRequest<{ data: { id: number; documentId: string } }>(
+      '/api/user-request-reports',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          data: {
+            Section: data.section,
+            Description: data.description,
+            Resolved: false,
+          },
+        }),
+      }
+    );
+  }
 }
 
 // Create and export a singleton instance
@@ -1343,7 +1428,9 @@ export const transformStrapiArticleToLegacy = (strapiArticle: Article) => {
 export async function getUserArticles(
   userId: number,
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
+  searchQuery?: string,
+  sort: string = 'publishedAt:desc'
 ): Promise<{ articles: Article[]; total: number; pageCount: number }> {
   try {
     // First, find the author associated with this user
@@ -1364,7 +1451,14 @@ export async function getUserArticles(
     // Now get articles by this author with pagination
     const articlesSearchParams = new URLSearchParams();
     articlesSearchParams.append('filters[author][documentId][$eq]', author.documentId);
-    articlesSearchParams.append('sort', 'publishedAt:desc');
+    
+    // Add search filter if provided
+    if (searchQuery) {
+      articlesSearchParams.append('filters[$or][0][title][$containsi]', searchQuery);
+      articlesSearchParams.append('filters[$or][1][excerpt][$containsi]', searchQuery);
+    }
+    
+    articlesSearchParams.append('sort', sort);
     articlesSearchParams.append('pagination[page]', page.toString());
     articlesSearchParams.append('pagination[pageSize]', pageSize.toString());
     

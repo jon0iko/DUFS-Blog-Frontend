@@ -17,9 +17,14 @@ export default function RelatedArticles({ articles }: RelatedArticlesProps) {
   if (!articles || articles.length === 0) return null;
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-serif font-bold text-foreground">Related Stories</h2>
-        <div className="h-px flex-1 ml-6 bg-gradient-to-r from-border to-transparent" />
+      <div className="mb-8">
+        {/* Mobile heading */}
+        <p className="md:hidden text-xs font-semibold uppercase tracking-widest text-muted-foreground text-center mb-0">Related Posts</p>
+        {/* Desktop heading */}
+        <div className="hidden md:flex items-center justify-between">
+          <h2 className="text-3xl font-bold text-foreground">Related Posts</h2>
+          <div className="h-px flex-1 ml-6 bg-gradient-to-r from-border to-transparent" />
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

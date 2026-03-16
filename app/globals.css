@@ -78,6 +78,126 @@
   }
 }
 
+/* ── Sepia reading mode (article page only) */
+.sepia-article {
+  --background: 35 45% 91%;
+  --foreground: 25 30% 18%;
+  --card: 35 40% 87%;
+  --card-foreground: 25 30% 18%;
+  --popover: 35 42% 89%;
+  --popover-foreground: 25 30% 18%;
+  --primary: 25 30% 18%;
+  --primary-foreground: 35 45% 91%;
+  --secondary: 35 38% 86%;
+  --secondary-foreground: 25 30% 18%;
+  --muted: 33 35% 83%;
+  --muted-foreground: 25 20% 42%;
+  --accent: 33 32% 81%;
+  --accent-foreground: 25 30% 18%;
+  --border: 33 25% 76%;
+  --input: 33 25% 76%;
+  --ring: 25 30% 18%;
+  background-color: hsl(35 45% 91%);
+  color: hsl(25 30% 18%);
+}
+
+/* When global dark mode is active AND sepia is active, re-assert sepia
+   CSS variables at higher specificity (.dark .sepia-article > .sepia-article). */
+.dark .sepia-article {
+  --background: 35 45% 91%;
+  --foreground: 25 30% 18%;
+  --card: 35 40% 87%;
+  --card-foreground: 25 30% 18%;
+  --popover: 35 42% 89%;
+  --popover-foreground: 25 30% 18%;
+  --primary: 25 30% 18%;
+  --primary-foreground: 35 45% 91%;
+  --secondary: 35 38% 86%;
+  --secondary-foreground: 25 30% 18%;
+  --muted: 33 35% 83%;
+  --muted-foreground: 25 20% 42%;
+  --accent: 33 32% 81%;
+  --accent-foreground: 25 30% 18%;
+  --border: 33 25% 76%;
+  --input: 33 25% 76%;
+  --ring: 25 30% 18%;
+  background-color: hsl(35 45% 91%) !important;
+  color: hsl(25 30% 18%) !important;
+}
+
+/* Override hardcoded dark: color classes inside sepia wrapper.
+   Specificity (3 classes) beats Tailwind's dark: variants (2 classes). */
+
+/* Category badges: dark mode flips them to white bg — keep them dark on sepia */
+.dark .sepia-article .dark\:bg-white {
+  background-color: #231F20 !important;
+}
+.dark .sepia-article .dark\:text-brand-black {
+  color: #FFFFFF !important;
+}
+
+/* Text colours that were overridden by dark: variants */
+.dark .sepia-article .dark\:text-gray-100,
+.dark .sepia-article .dark\:text-gray-300 {
+  color: inherit !important;
+}
+.dark .sepia-article .dark\:text-foreground {
+  color: hsl(25 30% 18%) !important;
+}
+.dark .sepia-article .dark\:text-muted-foreground {
+  color: hsl(25 20% 42%) !important;
+}
+
+/* Force article content text to black in sepia mode,
+   overriding hardcoded Tailwind gray classes */
+.sepia-article .article-content p,
+.sepia-article .article-content li,
+.sepia-article .article-content blockquote,
+.sepia-article .article-content figcaption,
+.dark .sepia-article .article-content p,
+.dark .sepia-article .article-content li,
+.dark .sepia-article .article-content blockquote,
+.dark .sepia-article .article-content figcaption {
+  color: #1a1008 !important;
+}
+
+.sepia-article .article-content .caption-text,
+.dark .sepia-article .article-content .caption-text {
+  color: #6f5b44 !important;
+}
+
+/* Keep quotation icon tone consistent in sepia regardless of global dark mode. */
+.sepia-article .article-content .quote-icon-light,
+.dark .sepia-article .article-content .quote-icon-light {
+  display: block !important;
+  filter: sepia(0.6) saturate(0.55) hue-rotate(340deg) brightness(0.96);
+  opacity: 0.92;
+}
+
+.sepia-article .article-content .quote-icon-dark,
+.dark .sepia-article .article-content .quote-icon-dark {
+  display: none !important;
+}
+
+.sepia-article .article-content h1,
+.sepia-article .article-content h2,
+.sepia-article .article-content h3,
+.sepia-article .article-content h4,
+.sepia-article .article-content h5,
+.sepia-article .article-content h6,
+.sepia-article .article-content strong,
+.sepia-article .article-content b,
+.dark .sepia-article .article-content h1,
+.dark .sepia-article .article-content h2,
+.dark .sepia-article .article-content h3,
+.dark .sepia-article .article-content h4,
+.dark .sepia-article .article-content h5,
+.dark .sepia-article .article-content h6,
+.dark .sepia-article .article-content strong,
+.dark .sepia-article .article-content b {
+  color: #0d0804 !important;
+}
+
 /* ── Infinite Marquee (CSS fallback — primary driven by GSAP TextReelClient) */
 /* Kept as no-op classes so any legacy references don't break */
 
@@ -192,6 +312,41 @@
 }
 
 
+/* ── Article body readability ─────────────────────────────────────────────── */
+@layer components {
+  /*
+   * Light mode: a barely-there text-shadow adds micro-definition to letterforms,
+   * especially noticeable for Bengali (Kalpurush) at small/medium sizes where
+   * the complex strokes can look thin on bright white.
+   * Dark mode: no shadow needed — light text on dark bg is inherently crisp.
+   */
+  .article-content {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :root .article-content p,
+  :root .article-content li,
+  :root .article-content blockquote {
+    text-shadow: 0 0.3px 0.8px rgba(0, 0, 0, 0.18);
+  }
+
+  :root .article-content h1,
+  :root .article-content h2,
+  :root .article-content h3 {
+    text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.15);
+  }
+
+  .dark .article-content p,
+  .dark .article-content li,
+  .dark .article-content blockquote,
+  .dark .article-content h1,
+  .dark .article-content h2,
+  .dark .article-content h3 {
+    text-shadow: none;
+  }
+}
+
 @layer components {
   /*
    * Per-line animated underline — matches Figma blog behaviour.
@@ -231,4 +386,15 @@
 ::selection {
   background-color: #E0D5D0; /* The color of the highlight background */
   color: black; /* The color of the text itself when highlighted */
+}
+
+/* Responsive background size for dark pattern */
+.bg-pattern-dark {
+  background-size: 200px 200px !important;
+}
+
+@media (min-width: 768px) {
+  .bg-pattern-dark {
+    background-size: 1667px 1200px !important;
+  }
 }

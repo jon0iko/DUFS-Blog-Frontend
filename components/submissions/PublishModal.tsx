@@ -32,11 +32,13 @@ import { getToken, getAuthorForCurrentUser } from "@/lib/auth";
 import { submitNewArticleService } from "@/lib/submit-service";
 import { Category, Tag } from "@/types";
 import { slugify } from "@/lib/utils";
+import HeroCropModal from "./HeroCropModal";
+import { useToast } from "@/components/ui/toast";
 
 interface PublishModalProps {
   isOpen: boolean;
   onClose: () => void;
-  content: string;
+  contentMarkdown: string;
   onPublishSuccess: () => void;
 }
 
@@ -55,16 +57,18 @@ interface FormErrors {
   language?: string;
   category?: string;
   image?: string;
+  terms?: string;
   general?: string;
 }
 
 export default function PublishModal({
   isOpen,
   onClose,
-  content,
+  contentMarkdown,
   onPublishSuccess,
 }: PublishModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const toast = useToast();
 
   // Form state
   const [formData, setFormData] = useState<FormData>({
@@ -89,6 +93,10 @@ export default function PublishModal({
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [customTagInput, setCustomTagInput] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
+  const [rawFileName, setRawFileName] = useState<string>("hero-image.jpg");
+  const [showCropModal, setShowCropModal] = useState(false);
 
   // Load categories and tags
   useEffect(() => {
@@ -131,15 +139,35 @@ export default function PublishModal({
         return;
       }
 
-      setImageFile(file);
       setErrors((prev) => ({ ...prev, image: undefined }));
 
-      // Generate preview
-      const preview = await fileToBase64(file);
-      setImagePreview(preview);
+      // Open crop modal with selected image
+      const source = await fileToBase64(file);
+      setRawFileName(file.name);
+      setRawImageSrc(source);
+      setShowCropModal(true);
+
+      // Reset input so same file can be selected again
+      e.target.value = "";
     },
     []
   );
+
+  const handleCropComplete = useCallback((croppedFile: File) => {
+    if (imagePreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImageFile(croppedFile);
+    setImagePreview(URL.createObjectURL(croppedFile));
+    setShowCropModal(false);
+    setRawImageSrc(null);
+    setErrors((prev) => ({ ...prev, image: undefined }));
+  }, [imagePreview]);
+
+  const handleCropCancel = useCallback(() => {
+    setShowCropModal(false);
+    setRawImageSrc(null);
+  }, []);
 
   // Handle tag selection - use numeric ID
   const toggleTag = useCallback((tagId: number) => {
@@ -249,6 +277,10 @@ export default function PublishModal({
       newErrors.image = "Featured image is required";
     }
 
+    if (!agreedToTerms) {
+      newErrors.terms = "You must agree to the Terms of Publication";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -260,6 +292,13 @@ export default function PublishModal({
 
     if (!validateForm()) return;
 
+    if (!contentMarkdown.trim()) {
+      setErrors({
+        general: "Editor content could not be converted to markdown. Please close this dialog and try again.",
+      });
+      return;
+    }
+
     console.log("Form validated successfully");
 
     setIsSubmitting(true);
@@ -269,10 +308,26 @@ export default function PublishModal({
       const token = getToken();
 
       // First, upload the image if present
-      let uploadedImageId: number | null = null;
-      if (imageFile && token) {
-        const uploadResult = await uploadImageToStrapi(imageFile, token);
-        uploadedImageId = uploadResult.id;
+      let uploadedImageId: number | string | null = null;
+      if (imageFile) {
+        if (!token) {
+          throw new Error("Your session expired. Please sign in again before submitting.");
+        }
+
+        try {
+          const uploadResult = await uploadImageToStrapi(imageFile, token);
+          uploadedImageId = uploadResult.id ?? uploadResult.documentId ?? null;
+          if (!uploadedImageId) {
+            throw new Error("Image uploaded but no media id was returned by Strapi.");
+          }
+        } catch (uploadError) {
+          const uploadErrorMessage =
+            uploadError instanceof Error
+              ? uploadError.message
+              : "Failed to upload featured image to Strapi.";
+          toast.error(uploadErrorMessage, "Image Upload Failed");
+          throw uploadError;
+        }
       }
 
       // Get the author ID for the current user
@@ -296,13 +351,12 @@ export default function PublishModal({
         title: formData.title,
         slug: uniqueSlug,
         excerpt: formData.excerpt,
-        content: content,
+        contentMarkdown,
         language: formData.language,
         categoryId: formData.categoryId,
         selectedTags: allTagIds,
         uploadedImageId,
         authorId,
-        token: token || "",
       });
 
       // Call the server-side submission function
@@ -311,7 +365,7 @@ export default function PublishModal({
         title: formData.title,
         slug: uniqueSlug,
         excerpt: formData.excerpt,
-        content: content,
+        content: contentMarkdown,
         language: formData.language,
         categoryId: formData.categoryId!,  // Already validated as not null
         selectedTags: allTagIds,
@@ -331,11 +385,13 @@ export default function PublishModal({
       }, 2000);
     } catch (error) {
       console.error("Submit error:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to submit article. Please try again.";
+      toast.error(errorMessage, "Submission Failed");
       setErrors({
-        general:
-          error instanceof Error
-            ? error.message
-            : "Failed to submit article. Please try again.",
+        general: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -354,16 +410,49 @@ export default function PublishModal({
         customTags: [],
       });
       setImageFile(null);
-      setImagePreview(null);
+      
+      // Use a functional update or a ref to avoid capturing the stale imagePreview
+      // but here we can just check the current state since it's an effect
+      setImagePreview(prev => {
+        if (prev?.startsWith("blob:")) {
+          URL.revokeObjectURL(prev);
+        }
+        return null;
+      });
+
       setErrors({});
       setShowSuccess(false);
+      setAgreedToTerms(false);
+      setRawImageSrc(null);
+      setRawFileName("hero-image.jpg");
+      setShowCropModal(false);
     }
+    // We only want this to run when isOpen changes to true
   }, [isOpen]);
+
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (imagePreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <>
+      {showCropModal && rawImageSrc && (
+        <HeroCropModal
+          imageSrc={rawImageSrc}
+          fileName={rawFileName}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
+
+      <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -371,10 +460,10 @@ export default function PublishModal({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl max-h-[90vh] mx-4 bg-background rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative flex h-[100dvh] w-full max-w-none flex-col overflow-y-auto bg-background shadow-2xl rounded-none sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:mx-4 sm:rounded-md animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b bg-background/95 backdrop-blur-sm">
-          <h2 className="text-xl font-semibold">Submit Your Article</h2>
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 px-4 py-3 backdrop-blur-sm sm:px-6 sm:py-4">
+          <h2 className="text-lg font-semibold sm:text-xl">Submit Your Article</h2>
           <Button
             variant="ghost"
             size="icon"
@@ -386,7 +475,7 @@ export default function PublishModal({
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-140px)] px-6 py-6">
+        <div className="px-4 py-4 sm:px-6 sm:py-6">
           {isLoadingData ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -716,26 +805,61 @@ export default function PublishModal({
                   )}
                 </div>
               </div>
+
+              {/* Terms of Publication */}
+              <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3 sm:p-4">
+                <label className="flex items-start gap-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => {
+                      setAgreedToTerms(e.target.checked);
+                      if (e.target.checked) {
+                        setErrors((prev) => ({ ...prev, terms: undefined }));
+                      }
+                    }}
+                    className="mt-0.5 h-4 w-4 rounded border-border text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                  <span>
+                    I agree to the{' '}
+                    <a
+                      href="/terms-of-publication"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline font-medium hover:opacity-80"
+                    >
+                      Terms of Publication
+                    </a>{' '}
+                    of DUFS Blog.
+                  </span>
+                </label>
+                {errors.terms && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.terms}
+                  </p>
+                )}
+              </div>
             </form>
           )}
         </div>
 
         {/* Footer */}
         {!isLoadingData && !showSuccess && (
-          <div className="sticky bottom-0 flex items-center justify-end gap-3 px-6 py-4 border-t bg-muted/30 backdrop-blur-sm">
+          <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t bg-muted/30 px-4 py-3 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-end sm:gap-3 sm:px-6 sm:py-4">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
-              className="rounded-2xl"
+              className="w-full rounded-md sm:w-auto"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="rounded-2xl bg-brand-accent hover:bg-brand-accent/90 text-white px-6"
+              className="w-full rounded-md bg-green-600 px-6 text-white hover:bg-green-500 sm:w-auto"
             >
               {isSubmitting ? (
                 <>
@@ -749,6 +873,7 @@ export default function PublishModal({
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

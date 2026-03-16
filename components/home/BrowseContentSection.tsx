@@ -2,21 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { Category, Article } from "@/types";
 import { strapiAPI } from "@/lib/api";
 import { getArticleData } from "@/lib/strapi-helpers";
 import { getFontClass } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import ArticleCard from "./ArticleCard";
-import FilmEmojiBackground from "./FilmEmojiBackground";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const ARTICLES_PER_PAGE = 8;
 
@@ -237,17 +229,17 @@ export default function BrowseContentSection({
   return (
     <section className="relative -mt-12 md:-mt-16  py-12 md:py-16 bg-background overflow-hidden">
       {/* Film Emoji Background Elements */}
-      <FilmEmojiBackground />
+      {/* <FilmEmojiBackground /> */}
 
       {/* Grainy Texture Overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.2] mix-blend-overlay z-20"
+      {/* <div
+        className="absolute inset-0 pointer-events-none opacity-[0.2] mix-blend-overlay z-10"
         style={{
-          backgroundImage: "url(/images/Group.jpg)",
+          backgroundImage: "url(/images/GrainTexture.webp)",
           backgroundRepeat: "repeat",
           backgroundSize: "1024px 1024px",
         }}
-      />
+      /> */}
 
       <div className="container relative z-10">
         {/* Header Section */}
@@ -452,22 +444,21 @@ export default function BrowseContentSection({
 
               {/* Sort Filter */}
               <div className="flex items-center gap-3">
-                <span className="text-sm md:text-base font-normal text-muted-foreground uppercase tracking-wider hidden sm:inline">
-                  Sort by:
+                <span className="text-base md:text-xs font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                  Sort:
                 </span>
-                <Select
-                  value={sortBy}
-                  onValueChange={(value) => setSortBy(value as SortOption)}
-                >
-                  <SelectTrigger className="w-[130px] md:w-[140px] text-sm md:text-base font-semibold">
-                    <SelectValue placeholder="Select sort" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">Newest</SelectItem>
-                    <SelectItem value="oldest">Oldest</SelectItem>
-                    <SelectItem value="most-read">Most Read</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="relative min-w-[130px] md:min-w-[150px]">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                    className="w-full appearance-none bg-background border-2 border-foreground/10 focus:border-foreground/30 rounded-sm py-2 pl-3 pr-10 outline-none transition-all text-sm font-bold uppercase tracking-tight cursor-pointer"
+                  >
+                    <option value="newest">Newest</option>
+                    <option value="oldest">Oldest</option>
+                    <option value="most-read">Most Read</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                </div>
               </div>
             </div>
           </div>

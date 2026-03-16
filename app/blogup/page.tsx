@@ -118,40 +118,47 @@ export default function BlogUpPage() {
   return (
     <>
       {isAuthenticated && (
-        <div className="min-h-screen bg-gray-50 dark:bg-background">
-          <div className="container max-w-4xl mx-auto pt-6 pb-8 px-4 sm:px-6 lg:px-8">
+        <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden font-montserrat">
+          {/* Background Images */}
+          <div className="absolute inset-0 dark:hidden select-none pointer-events-none" style={{ backgroundImage: 'url(/images/bgpaper.webp)', backgroundRepeat: 'repeat' }} />
+          <div className="bg-pattern-dark absolute inset-0 hidden dark:block select-none pointer-events-none" style={{ backgroundImage: 'url(/images/bgpaper_dark.jpg)', backgroundRepeat: 'repeat', backgroundSize: '1667px 1200px' }} />
+
+          <div className="container relative z-20 max-w-4xl mx-auto px-7 pt-8 md:pt-10 pb-20">
+            
+
             {/* Back Button */}
             <button
               onClick={() => router.push('/submit')}
               className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors mb-8"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span>Back to Dashboard</span>
+              <span className="font-bold uppercase tracking-widest text-xs">Back to Dashboard</span>
             </button>
 
             {/* Header */}
             <div className="text-center mb-12">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 dark:bg-brand-black-90 mb-6">
-                <Upload className="w-10 h-10 text-black dark:text-white" />
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-sm bg-foreground text-background mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.8)]">
+                <Upload className="w-10 h-10" />
               </div>
-              <h1 className="text-4xl font-bold text-black dark:text-white mb-4">
+              <h1 className="text-4xl md:text-5xl font-altehaasgrotesk font-light tracking-tight text-foreground mb-4">
                 Upload Writing
               </h1>
-              <p className="text-gray-700 dark:text-gray-400 text-lg mb-2">
+              <p className="text-muted-foreground text-lg mb-2">
                 Import your existing writing from various formats
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-500">
-                Accepted formats: <span className="font-medium">PDF, DOCX, TXT, MD</span> (Max 10MB)
+              <div className="mt-4 h-[1px] w-full bg-[url('/images/dashes.svg')] bg-repeat-x bg-left-top dark:[filter:brightness(0)_invert(1)] opacity-30" style={{ backgroundSize: 'auto 1px' }} />
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mt-4">
+                Accepted formats: PDF, DOCX, TXT (Max 10MB)
               </p>
             </div>
 
             {/* Upload Card */}
-            <div className="bg-white dark:bg-brand-black-90 border-2 border-gray-300 dark:border-gray-700 rounded-2xl p-8">
+            <div className="bg-[#FAFAF8] dark:bg-[#181817] border-2 border-foreground/10 rounded-sm p-8 shadow-sm relative">
               {/* Hidden file input */}
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf,.docx,.txt,.md"
+                accept=".pdf,.docx,.txt,"
                 onChange={handleFileSelect}
                 className="hidden"
               />
@@ -162,26 +169,26 @@ export default function BlogUpPage() {
                   <button
                     onClick={handleBrowseClick}
                     disabled={isUploading}
-                    className="w-full border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-12 hover:border-black dark:hover:border-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="group w-full border-2 border-dashed border-foreground/20 rounded-sm p-12 hover:border-foreground/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-[#F9F7F1]/30 dark:bg-[#1C1B1A]/30"
                   >
-                    <Upload className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-                    <p className="text-lg font-medium text-black dark:text-white mb-2">
+                    <Upload className="w-16 h-16 text-muted-foreground mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                    <p className="text-lg font-bold uppercase tracking-widest text-foreground mb-2">
                       Click to browse files
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-xs text-muted-foreground font-medium">
                       Select one document to upload
                     </p>
                   </button>
                   
-                  <div className="mt-6">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      Supported formats:
+                  <div className="mt-8">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">
+                      Supported formats
                     </p>
-                    <div className="flex flex-wrap items-center justify-center gap-2">
-                      {['PDF', 'DOCX', 'TXT', 'MD'].map((format) => (
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                      {['PDF', 'DOCX', 'TXT'].map((format) => (
                         <span
                           key={format}
-                          className="px-3 py-1 bg-gray-100 dark:bg-brand-black-100 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium"
+                          className="px-4 py-1.5 bg-foreground/5 text-foreground rounded-sm text-[10px] font-bold tracking-widest border border-foreground/5"
                         >
                           .{format.toLowerCase()}
                         </span>
@@ -192,15 +199,15 @@ export default function BlogUpPage() {
               ) : (
                 /* Selected file display */
                 <div className="space-y-6">
-                  <div className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-brand-black-90 rounded-xl">
-                    <div className="flex-shrink-0 w-12 h-12 bg-white dark:bg-brand-black-100 rounded-lg flex items-center justify-center">
-                      <FileText className="w-6 h-6 text-black dark:text-white" />
+                  <div className="flex items-start gap-4 p-5 bg-[#F9F7F1] dark:bg-[#1C1B1A] border border-foreground/10 rounded-sm">
+                    <div className="flex-shrink-0 w-12 h-12 bg-foreground text-background rounded-sm flex items-center justify-center">
+                      <FileText className="w-6 h-6" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-black dark:text-white truncate">
+                      <p className="font-bold text-foreground truncate uppercase tracking-tight">
                         {selectedFile.name}
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground font-medium">
                         {formatFileSize(selectedFile.size)}
                       </p>
                     </div>
@@ -208,41 +215,41 @@ export default function BlogUpPage() {
                       <button
                         onClick={handleRemoveFile}
                         disabled={isUploading}
-                        className="flex-shrink-0 p-2 hover:bg-gray-200 dark:hover:bg-brand-black-80 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-shrink-0 p-2 hover:bg-foreground/5 rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        <X className="w-5 h-5 text-muted-foreground hover:text-foreground" />
                       </button>
                     )}
                     {uploadSuccess && (
                       <div className="flex-shrink-0 p-2">
-                        <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                        <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-500" />
                       </div>
                     )}
                   </div>
 
                   {uploadSuccess ? (
-                    <div className="text-center py-4">
-                      <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-3" />
-                      <p className="text-lg font-medium text-black dark:text-white mb-1">
+                    <div className="text-center py-6 bg-green-500/5 border border-green-500/20 rounded-sm">
+                      <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-500 mx-auto mb-3" />
+                      <p className="text-lg font-bold uppercase tracking-widest text-foreground mb-1">
                         Upload Successful!
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground font-medium">
                         Your document has been uploaded successfully
                       </p>
                     </div>
                   ) : (
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-4">
                       <button
                         onClick={handleRemoveFile}
                         disabled={isUploading}
-                        className="flex-1 px-6 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-brand-black-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-6 py-3 border-2 border-foreground/20 text-foreground rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-foreground/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleUpload}
                         disabled={isUploading}
-                        className="flex-1 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-6 py-3 bg-foreground text-background rounded-sm font-bold uppercase tracking-widest text-xs shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.8)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.8)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isUploading ? 'Uploading...' : 'Upload File'}
                       </button>
@@ -253,12 +260,12 @@ export default function BlogUpPage() {
             </div>
 
             {/* Alternative Action */}
-            <div className="mt-8 text-center">
+            <div className="mt-12 text-center">
               <button
                 onClick={() => router.push('/editor')}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium hover:opacity-90 transition-opacity"
+                className="group relative px-8 py-4 bg-[#F9F7F1] dark:bg-[#1C1B1A] border-2 border-foreground/90 rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.8)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.8)] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]"
               >
-                Start Writing Instead
+                <span className="font-bold text-sm uppercase tracking-[0.2em] text-foreground">Start Writing Instead</span>
               </button>
             </div>
           </div>

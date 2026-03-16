@@ -20,7 +20,6 @@ import {
   ImageIcon,
   Link,
   Unlink,
-  Table,
   ChevronDown
 } from 'lucide-react'
 import { useCallback, useState } from 'react'
@@ -51,10 +50,6 @@ export default function MenuBar({ editor, onImageUpload }: MenuBarProps) {
 
   if (!editor) {
     return null
-  }
-
-  const insertTable = () => {
-    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
   }
 
   return (
@@ -241,14 +236,6 @@ export default function MenuBar({ editor, onImageUpload }: MenuBarProps) {
             size="icon" className="h-8 w-8" title="Horizontal Rule"
           >
             <Minus className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            type="button"
-            onClick={insertTable}
-            variant={editor.isActive('table') ? 'default' : 'ghost'}
-            size="icon" className="h-8 w-8" title="Insert Table"
-          >
-            <Table className="h-3.5 w-3.5" />
           </Button>
 
           {/* Link Controls */}

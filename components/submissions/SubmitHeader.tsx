@@ -1,10 +1,11 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Save, MoreVertical, FileText, Edit3, FilePlus } from 'lucide-react'
+import { ArrowLeft, Save, MoreVertical, FileText, Edit3, FilePlus, Sun, Moon, Check } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import Image from 'next/image'
+import { useTheme } from 'next-themes'
 
 interface SubmitHeaderProps {
   wordCount: number
@@ -30,6 +31,7 @@ export default function SubmitHeader({
   currentDraftName
 }: SubmitHeaderProps) {
   const router = useRouter()
+  const { theme, setTheme } = useTheme()
 
   const handleBack = () => {
     if (onBack) {
@@ -38,6 +40,8 @@ export default function SubmitHeader({
       router.back()
     }
   }
+
+  const isThemeSelected = (value: 'light' | 'dark' | 'system') => theme === value
 
   return (
     <header className="flex-shrink-0 z-100 border-b bg-background shadow-lg">
@@ -89,7 +93,7 @@ export default function SubmitHeader({
                 variant="outline"
                 size="sm"
                 onClick={onNewArticle}
-                className="flex items-center gap-2 rounded-2xl"
+                className="flex items-center gap-2 rounded-md"
               >
                 <FilePlus className="h-4 w-4" />
                 <span className="hidden lg:inline">New</span>
@@ -98,7 +102,7 @@ export default function SubmitHeader({
                 variant="outline"
                 size="sm"
                 onClick={onViewDrafts}
-                className="flex items-center gap-2 rounded-2xl"
+                className="flex items-center gap-2 rounded-md"
               >
                 <FileText className="h-4 w-4" />
                 <span className="hidden lg:inline">Drafts</span>
@@ -108,7 +112,7 @@ export default function SubmitHeader({
                 size="sm"
                 onClick={onSaveDraft}
                 disabled={isUploading}
-                className="flex items-center gap-2  rounded-2xl"
+                className="flex items-center gap-2  rounded-md"
               >
                 <Save className="h-4 w-4" />
                 Save Draft
@@ -117,10 +121,41 @@ export default function SubmitHeader({
                 size="sm"
                 onClick={onPublish}
                 disabled={isUploading}
-                className="flex items-center gap-2 bg-brand-accent/90 hover:bg-brand-accent text-white rounded-2xl shadow-lg px-4 py-2 uppercase text-sm font-normal"
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded-md shadow-lg px-4 py-2 uppercase text-sm"
               >
                 {isUploading ? 'Publishing...' : 'Publish'}
               </Button>
+            </div>
+
+            {/* Desktop: Theme Menu */}
+            <div className="hidden sm:block">
+              <DropdownMenu
+                align="right"
+                trigger={
+                  <Button variant="ghost" size="sm">
+                    <MoreVertical className="h-5 w-5" />
+                  </Button>
+                }
+              >
+                <DropdownMenuItem onClick={() => setTheme('light')}>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="flex items-center">
+                      <Sun className="h-4 w-4 mr-2" />
+                      Light
+                    </span>
+                    {isThemeSelected('light') && <Check className="h-4 w-4" />}
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme('dark')}>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="flex items-center">
+                      <Moon className="h-4 w-4 mr-2" />
+                      Dark
+                    </span>
+                    {isThemeSelected('dark') && <Check className="h-4 w-4" />}
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenu>
             </div>
 
             {/* Mobile: Publish Button + Menu */}
@@ -129,7 +164,7 @@ export default function SubmitHeader({
                 size="sm"
                 onClick={onPublish}
                 disabled={isUploading}
-                className="flex items-center gap-1 bg-brand-accent/90 hover:bg-brand-accent text-white rounded-2xl shadow-lg px-3 py-2 text-xs font-normal"
+                className="flex items-center gap-1 bg-green-600 hover:bg-green-500 text-white rounded-md shadow-lg px-3 py-2 text-xs font-bold"
               >
                 {isUploading ? '...' : 'Publish'}
               </Button>
@@ -156,6 +191,24 @@ export default function SubmitHeader({
                   <div className='flex'>
                   <Save className="h-4 w-4 mr-2" />
                   Save Draft
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme('light')}>
+                  <div className='flex items-center justify-between w-full'>
+                    <span className='flex items-center'>
+                      <Sun className="h-4 w-4 mr-2" />
+                      Light Theme
+                    </span>
+                    {isThemeSelected('light') && <Check className="h-4 w-4" />}
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme('dark')}>
+                  <div className='flex items-center justify-between w-full'>
+                    <span className='flex items-center'>
+                      <Moon className="h-4 w-4 mr-2" />
+                      Dark Theme
+                    </span>
+                    {isThemeSelected('dark') && <Check className="h-4 w-4" />}
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onClear}>

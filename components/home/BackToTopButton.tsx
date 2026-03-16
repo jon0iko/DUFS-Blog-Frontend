@@ -3,11 +3,9 @@
 import { useEffect, useRef } from "react";
 import { ArrowUp } from "lucide-react";
 import { gsap } from "@/lib/gsap";
-import { useLenis } from "@/components/providers/SmoothScrollProvider";
 
 export default function BackToTopButton() {
   const btnRef = useRef<HTMLButtonElement>(null);
-  const lenis = useLenis();
 
   useEffect(() => {
     const btn = btnRef.current;
@@ -53,11 +51,7 @@ export default function BackToTopButton() {
   }, []);
 
   const scrollToTop = () => {
-    if (lenis) {
-      lenis.scrollTo(0, { duration: 1.4, easing: (t: number) => 1 - Math.pow(1 - t, 4) });
-    } else {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (

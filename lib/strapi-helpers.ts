@@ -56,7 +56,12 @@ export function getAuthorName(author?: Author): string {
  */
 export function getAuthorAvatar(author?: Author): string | undefined {
   if (!author) return '/images/avatarPlaceholder.png';
-  // In Strapi v5, Avatar is directly accessible (flattened)
+  // Avatar is stored on the linked users_permissions_user
+  const userAvatar = author.users_permissions_user?.Avatar?.url;
+  if (userAvatar) {
+    return userAvatar.startsWith('http') ? userAvatar : `${config.strapi.url}${userAvatar}`;
+  }
+  // Fallback: direct Avatar field on the Author content type
   if (author.Avatar) {
     return getStrapiMediaUrl(author.Avatar);
   }

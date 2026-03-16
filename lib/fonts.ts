@@ -15,12 +15,41 @@ export const isBengaliText = (text: string): boolean => {
 }
 
 /**
+ * Detect if text contains both Bengali and English letters
+ */
+export const isMixedBengaliEnglishText = (text: string): boolean => {
+  if (!text) return false
+  const hasBengali = /[\u0980-\u09FF]/.test(text)
+  const hasEnglish = /[A-Za-z]/.test(text)
+  return hasBengali && hasEnglish
+}
+
+/**
+ * Detect if text is Bengali-only (no English letters)
+ */
+export const isPureBengaliText = (text: string): boolean => {
+  if (!text) return false
+  return isBengaliText(text) && !/[A-Za-z]/.test(text)
+}
+
+/**
  * Get appropriate font class for text
  */
 export const getFontClass = (text: string): string => {
-  return isBengaliText(text) ? 'font-kalpurush' : 'font-montserrat'
+  return isPureBengaliText(text) ? 'font-kalpurush' : 'font-montserrat'
 }
 
+export const getFontClassRoboto = (text: string): string => { 
+  return isPureBengaliText(text) ? 'font-kalpurush' : 'font-roboto'
+}
+
+export const getFontClassZillaSlab = (text: string): string => {
+  return isPureBengaliText(text) ? 'font-kalpurush' : 'font-zillaslab'
+}
+
+export const getFontClassAlteHaasGrotesk = (text: string): string => {
+  return isPureBengaliText(text) ? 'font-kalpurush' : 'font-altehaasgrotesk'
+}
 /**
  * Split text into Bengali and English segments for mixed content
  */

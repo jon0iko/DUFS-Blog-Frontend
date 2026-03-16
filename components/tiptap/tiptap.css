@@ -88,7 +88,7 @@
 }
 
 .ProseMirror {
-  font-family: var(--font-roboto), 'Kalpurush Fallback', var(--font-kalpurush), 'Noto Sans Bengali', sans-serif;
+  font-family: var(--font-zilla-slab), var(--font-roboto), sans-serif,  'Kalpurush Fallback', var(--font-kalpurush);
 }
 
 /* Better line-height for Bengali script readability */
@@ -216,7 +216,7 @@
 }
 
 .ProseMirror img.ProseMirror-selectednode {
-  outline: 3px solid hsl(var(--primary));
+  outline: none;
 }
 
 /* Horizontal Rule */
@@ -356,6 +356,10 @@
 .ProseMirror-selectednode {
   outline: 3px solid hsl(var(--primary));
   border-radius: 0.25rem;
+}
+
+.ProseMirror figure[data-image-caption].ProseMirror-selectednode {
+  outline: none;
 }
 
 /* Responsive adjustments */

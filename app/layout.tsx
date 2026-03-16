@@ -7,7 +7,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/components/ui/toast";
 import LayoutContent from "@/components/layout/LayoutContent";
 import { LazyMotion, domAnimation } from "framer-motion";
-import SmoothScrollProvider from "@/components/providers/SmoothScrollProvider";
 
 const roboto = localFont({
   src: [
@@ -78,7 +77,75 @@ const montserrat = localFont({
   display: "swap",
 });
 
-// --- Load Kalpurush Font (using TTF) ---
+const Playfair_Display = localFont({
+  src: [
+    {
+      path: "../public/fonts/PlayfairDisplay-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/PlayfairDisplay-Italic.ttf",
+      weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../public/fonts/PlayfairDisplay-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-playfair-display",
+  display: "swap",
+});
+
+const LeagueSpartan_Variable = localFont({
+  src: "../public/fonts/LeagueSpartan_Variable.ttf",
+  weight: "100 900",
+  variable: "--font-league-spartan",
+  display: "swap",
+});
+
+const ZillaSlab = localFont({
+  src: [
+    {
+      path: "../public/fonts/ZillaSlab-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/ZillaSlab-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/ZillaSlab-Italic.ttf",
+      weight: "400",
+      style: "italic",
+    }
+  ],
+  variable: "--font-zilla-slab",
+  display: "swap",
+});
+
+const AlteHaasGrotesk = localFont({
+  src: [
+    {
+      path: "../public/fonts/AlteHaasGroteskRegular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/AlteHaasGroteskBold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-alte-haas-grotesk",
+  display: "swap",
+});
+
+
 const kalpurush = localFont({
   src: "../public/fonts/kalpurush.ttf",
   weight: "400", // Adjust if your Kalpurush.ttf has a different default weight
@@ -111,6 +178,8 @@ export default function RootLayout({
           "min-h-screen bg-background font-sans antialiased",
           roboto.variable,
           montserrat.variable,
+          ZillaSlab.variable,
+          AlteHaasGrotesk.variable,
           kalpurush.variable,
         )}
       >
@@ -122,11 +191,9 @@ export default function RootLayout({
         >
           <AuthProvider>
             <ToastProvider>
-              <SmoothScrollProvider>
-                <LayoutContent>
-                  <LazyMotion features={domAnimation}>{children}</LazyMotion>
-                </LayoutContent>
-              </SmoothScrollProvider>
+              <LayoutContent>
+                <LazyMotion features={domAnimation}>{children}</LazyMotion>
+              </LayoutContent>
             </ToastProvider>
           </AuthProvider>
         </ThemeProvider>

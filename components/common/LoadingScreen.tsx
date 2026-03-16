@@ -48,16 +48,16 @@ export default function LoadingScreen({
     const dots = overlay.querySelectorAll<HTMLElement>('[data-loading="dot"]')
 
     // Logo gentle float
-    if (logo) {
-      gsap.to(logo, {
-        y: -8,
-        scale: 1.04,
-        duration: 1.6,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      })
-    }
+    // if (logo) {
+    //   gsap.to(logo, {
+    //     y: -8,
+    //     scale: 1.04,
+    //     duration: 1.6,
+    //     repeat: -1,
+    //     yoyo: true,
+    //     ease: 'sine.inOut',
+    //   })
+    // }
 
     // Pulsing rings
     if (rings.length) {

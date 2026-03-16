@@ -28,6 +28,14 @@ const STORAGE_KEYS = {
   DRAFT_NAME: 'current_draft_name',
 } as const;
 
+const normalizeLoadedContent = (value: string): string => {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === '<p></p>' || trimmed === '<p><br></p>') {
+    return '';
+  }
+  return value;
+};
+
 export default function EditorPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -37,6 +45,7 @@ export default function EditorPage() {
   // Editor state
   const [wordCount, setWordCount] = useState(0);
   const [content, setContent] = useState('');
+  const [contentMarkdown, setContentMarkdown] = useState('');
   const [initialContent, setInitialContent] = useState('');
   const [editorKey, setEditorKey] = useState(0);
   const [isPageReady, setIsPageReady] = useState(false);
@@ -78,7 +87,8 @@ export default function EditorPage() {
   // Load content from local storage on mount (user-specific)
   useEffect(() => {
     if (typeof window !== 'undefined' && !authLoading) {
-      const savedContent = localStorage.getItem(getStorageKey(user?.id, STORAGE_KEYS.CONTENT)) || '';
+      const rawSavedContent = localStorage.getItem(getStorageKey(user?.id, STORAGE_KEYS.CONTENT)) || '';
+      const savedContent = normalizeLoadedContent(rawSavedContent);
       const savedWordCount = parseInt(localStorage.getItem(getStorageKey(user?.id, STORAGE_KEYS.WORD_COUNT)) || '0', 10);
       const savedDraftId = localStorage.getItem(getStorageKey(user?.id, STORAGE_KEYS.DRAFT_ID)) || null;
       const savedDraftName = localStorage.getItem(getStorageKey(user?.id, STORAGE_KEYS.DRAFT_NAME)) || '';
@@ -109,6 +119,10 @@ export default function EditorPage() {
 
   const handleWordCountChange = useCallback((count: number) => {
     setWordCount(count);
+  }, []);
+
+  const handleMarkdownChange = useCallback((markdown: string) => {
+    setContentMarkdown(markdown);
   }, []);
 
   // Save word count to localStorage periodically (debounced via content change)
@@ -212,8 +226,16 @@ export default function EditorPage() {
       toast.warning('Please write some content before publishing.', 'No Content');
       return;
     }
+
+    const latestMarkdown = tiptapRef.current?.getMarkdown() || contentMarkdown;
+    if (!latestMarkdown.trim()) {
+      toast.warning('Could not prepare markdown content. Please try again.', 'Content Error');
+      return;
+    }
+
+    setContentMarkdown(latestMarkdown);
     setShowPublishModal(true);
-  }, [content, toast]);
+  }, [content, contentMarkdown, toast]);
 
   const handlePublishSuccess = useCallback(async () => {
     // If we were editing a draft, delete it after successful publish
@@ -233,7 +255,7 @@ export default function EditorPage() {
       localStorage.removeItem(getStorageKey(user?.id, STORAGE_KEYS.DRAFT_NAME));
     }
     
-    toast.success('Article published successfully! Redirecting...', 'Success');
+    toast.success('Article posted for review successfully! Redirecting...', 'Success');
     setTimeout(() => router.push('/submit'), 1000);
   }, [router, currentDraftId, user?.id, toast]);
 
@@ -312,27 +334,39 @@ export default function EditorPage() {
   return (
     <>
       {isAuthenticated && (
-        <div className="fixed inset-0 flex flex-col bg-[#ececec] dark:bg-brand-black-90 dark:border-black">
-          <SubmitHeader
-            wordCount={wordCount}
-            onSaveDraft={handleSaveDraft}
-            onViewDrafts={handleViewDrafts}
-            onPublish={handlePublish}
-            onClear={handleClear}
-            onNewArticle={handleNewArticle}
-            isUploading={isLoadingDraft}
-            onBack={handleBack}
-            currentDraftName={currentDraftName}
+        <div className="fixed inset-0 overflow-hidden bg-[#ececec] dark:bg-brand-black-90 dark:border-black">
+          <div
+            className="absolute inset-0 dark:hidden select-none pointer-events-none"
+            style={{ backgroundImage: 'url(/images/bgpaper.webp)', backgroundRepeat: 'repeat' }}
           />
-          <div className="container max-w-5xl py-4 px-4 flex-1 flex flex-col min-h-0 rounded-lg dark:border-brand-black-80">
-            <Tiptap 
-              ref={tiptapRef}
-              key={editorKey}
-              initialContent={initialContent}
-              onContentChange={handleContentChange}
-              onWordCountChange={handleWordCountChange}
-              placeholder="Start writing your post content..."
+          <div
+            className="bg-pattern-dark absolute inset-0 hidden dark:block select-none pointer-events-none"
+            style={{ backgroundImage: 'url(/images/bgpaper_dark.jpg)', backgroundRepeat: 'repeat', backgroundSize: '1667px 1200px' }}
+          />
+
+          <div className="relative z-10 flex h-full flex-col">
+            <SubmitHeader
+              wordCount={wordCount}
+              onSaveDraft={handleSaveDraft}
+              onViewDrafts={handleViewDrafts}
+              onPublish={handlePublish}
+              onClear={handleClear}
+              onNewArticle={handleNewArticle}
+              isUploading={isLoadingDraft}
+              onBack={handleBack}
+              currentDraftName={currentDraftName}
             />
+            <div className="container max-w-5xl py-4 px-4 flex-1 flex flex-col min-h-0 rounded-lg dark:border-brand-black-80">
+              <Tiptap 
+                ref={tiptapRef}
+                key={editorKey}
+                initialContent={initialContent}
+                onContentChange={handleContentChange}
+                onMarkdownChange={handleMarkdownChange}
+                onWordCountChange={handleWordCountChange}
+                placeholder="Start writing your post content..."
+              />
+            </div>
           </div>
         </div>
       )}
@@ -341,7 +375,7 @@ export default function EditorPage() {
       <PublishModal
         isOpen={showPublishModal}
         onClose={() => setShowPublishModal(false)}
-        content={content}
+        contentMarkdown={contentMarkdown}
         onPublishSuccess={handlePublishSuccess}
       />
       

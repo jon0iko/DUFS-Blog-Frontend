@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 
 // React component for rendering the image with caption
 const ImageComponent = (props) => {
-  const { node, updateAttributes, selected } = props;
+  const { node, updateAttributes } = props;
   const { src, alt, caption } = node.attrs;
   const [isEditingCaption, setIsEditingCaption] = useState(false);
   const [captionValue, setCaptionValue] = useState(caption || '');
@@ -40,7 +40,7 @@ const ImageComponent = (props) => {
   return (
     <NodeViewWrapper className="my-6 flex justify-center">
       <figure 
-        className={`relative ${selected ? 'ring-2 ring-primary ring-offset-2 rounded-lg' : ''}`}
+        className={`relative`}
         style={{ maxWidth: '500px' }}
       >
         {/* Image */}
@@ -163,6 +163,37 @@ export const ImageWithCaption = Node.create({
 
   addNodeView() {
     return ReactNodeViewRenderer(ImageComponent);
+  },
+
+  addStorage() {
+    return {
+      markdown: {
+        serialize(state, node) {
+          const src = typeof node.attrs.src === 'string' ? node.attrs.src.trim() : '';
+          if (!src) {
+            state.closeBlock(node);
+            return;
+          }
+
+          const altRaw = typeof node.attrs.alt === 'string' ? node.attrs.alt : '';
+          const captionRaw = typeof node.attrs.caption === 'string' ? node.attrs.caption : '';
+          const alt = altRaw.trim() || captionRaw.trim() || 'Image';
+
+          state.write(`![${alt.replace(/\]/g, '\\\\]').replace(/\[/g, '\\[')}](${src})`);
+
+          const caption = captionRaw.trim();
+          if (caption) {
+            state.ensureNewLine();
+            state.write(`*${caption.replace(/\*/g, '\\*')}*`);
+          }
+
+          state.closeBlock(node);
+        },
+        parse: {
+          // handled by markdown-it default image parsing
+        },
+      },
+    };
   },
 
   addCommands() {

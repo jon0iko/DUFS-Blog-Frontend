@@ -45,7 +45,7 @@ export default function ArticleCard({
             className="block mt-3"
           >
             <div
-              className={`relative aspect-[4/3] rounded-xl overflow-hidden mb-4 shadow-md shadow`}
+              className={`relative aspect-video rounded-xl overflow-hidden mb-4 shadow-md`}
             >
               <Image
                 src={article.image}

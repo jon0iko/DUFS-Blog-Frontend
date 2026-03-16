@@ -56,6 +56,11 @@ export interface Author {
   slug: string;
   Bio?: string; // Backend uses capital B
   Avatar?: StrapiMedia;
+  users_permissions_user?: {
+    id?: number;
+    username?: string;
+    Avatar?: { url?: string } | null;
+  };
   email?: string;
   socialLinks?: {
     twitter?: string;
@@ -241,6 +246,7 @@ export interface Comment {
   CommentDateTime: string; // Backend uses this field name
   users_permissions_user?: unknown; // Relation to user (if logged in)
   article?: Article; // Relation to article
+  HideComment?: boolean; // Admin can hide inappropriate comments
   isReplyable?: boolean; // Whether this comment can have replies
   likeCount?: number; // Number of likes on this comment
   parentComment?: Comment; // Parent comment if this is a reply

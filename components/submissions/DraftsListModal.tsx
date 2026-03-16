@@ -133,7 +133,7 @@ export default function DraftsListModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary/10">
+            <div className="p-2 rounded-md bg-primary/10">
               <FolderOpen className="w-6 h-6 text-primary" />
             </div>
             <div>
@@ -191,7 +191,7 @@ export default function DraftsListModal({
                   key={draft.documentId}
                   onClick={() => handleLoadDraft(draft)}
                   className={cn(
-                    "group p-4 rounded-xl cursor-pointer",
+                    "group p-4 rounded-md cursor-pointer",
                     "bg-gray-50 dark:bg-brand-black-90/50",
                     "border border-gray-100 dark:border-gray-700/50",
                     "hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10",
@@ -243,7 +243,7 @@ export default function DraftsListModal({
           <Button
             variant="outline"
             onClick={onClose}
-            className="w-full rounded-xl"
+            className="w-full rounded-md"
           >
             Close
           </Button>

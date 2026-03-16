@@ -1,27 +1,25 @@
 'use client'
 
 import { useEditor, EditorContent } from '@tiptap/react'
+import type { Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Underline } from '@tiptap/extension-underline'
 import { Link } from '@tiptap/extension-link'
 import { TextAlign } from '@tiptap/extension-text-align'
-import { Table } from '@tiptap/extension-table'
-import { TableRow } from '@tiptap/extension-table-row'
-import { TableCell } from '@tiptap/extension-table-cell'
-import { TableHeader } from '@tiptap/extension-table-header'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Color } from '@tiptap/extension-color'
 import { Typography } from '@tiptap/extension-typography'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Mark } from '@tiptap/core'
+import { Markdown } from 'tiptap-markdown'
 import { useCallback, useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react'
 import MenuBar from './MenuBar'
 import './tiptap.css'
-import { uploadImageToStrapi, validateImageFile, fileToBase64, getStrapiMediaUrl } from '@/lib/strapi-media'
-import Cookies from 'js-cookie'
+import { uploadImageToStrapi, validateImageFile, getStrapiMediaUrl } from '@/lib/strapi-media'
 import ImageWithCaption from './ImageWithCaption'
 import type { TiptapRef, TiptapProps } from './types'
 import { useToast } from '@/components/ui/toast'
+import { getToken } from '@/lib/auth'
 
 // Re-export types for consumers
 export type { TiptapRef, TiptapProps } from './types'
@@ -29,14 +27,117 @@ export type { TiptapRef, TiptapProps } from './types'
 const Tiptap = forwardRef<TiptapRef, TiptapProps>(({ 
   initialContent = '', 
   onContentChange, 
+  onMarkdownChange,
   onWordCountChange,
   placeholder = 'Start writing your story...',
 }, ref) => {
-  const toast = useToast();
+  const toast = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
   const lastContentRef = useRef<string>(initialContent)
   const isInitializedRef = useRef(false)
+
+  const getEditorMarkdown = useCallback((editorInstance: Editor): string => {
+    const markdownStorage = (editorInstance.storage as { markdown?: { getMarkdown?: () => string } }).markdown
+    return markdownStorage?.getMarkdown?.() || ''
+  }, [])
+
+  const removeImageNodeBySrc = useCallback((editorInstance: Editor, src: string) => {
+    const { doc } = editorInstance.state
+    let targetPos: number | null = null
+    let nodeSize = 0
+
+    doc.descendants((node, pos) => {
+      if (node.type.name === 'imageWithCaption' && node.attrs.src === src) {
+        targetPos = pos
+        nodeSize = node.nodeSize
+        return false
+      }
+      return true
+    })
+
+    if (targetPos !== null && nodeSize > 0) {
+      const tr = editorInstance.state.tr.delete(targetPos, targetPos + nodeSize)
+      editorInstance.view.dispatch(tr)
+    }
+  }, [])
+
+  const uploadAndInsertImage = useCallback(async (file: File, editorInstance: Editor) => {
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      throw new Error(validation.error || 'Invalid image file')
+    }
+
+    const token = getToken()
+    if (!token) {
+      throw new Error('You must be signed in to upload images.')
+    }
+
+    const localPreviewUrl = URL.createObjectURL(file)
+
+    try {
+      editorInstance.chain().focus().insertContent({
+        type: 'imageWithCaption',
+        attrs: {
+          src: localPreviewUrl,
+          alt: file.name,
+          caption: '',
+        },
+      }).run()
+
+      const uploadedImage = await uploadImageToStrapi(file, token)
+      const imageUrl = getStrapiMediaUrl(uploadedImage.url)
+
+      const { doc } = editorInstance.state
+      let imagePos: number | null = null
+
+      doc.descendants((node, pos) => {
+        if (node.type.name === 'imageWithCaption' && node.attrs.src === localPreviewUrl) {
+          imagePos = pos
+          return false
+        }
+        return true
+      })
+
+      if (imagePos !== null) {
+        editorInstance.chain()
+          .setNodeSelection(imagePos)
+          .updateAttributes('imageWithCaption', { src: imageUrl })
+          .run()
+      }
+    } catch (error) {
+      removeImageNodeBySrc(editorInstance, localPreviewUrl)
+      throw error
+    }
+
+    URL.revokeObjectURL(localPreviewUrl)
+  }, [removeImageNodeBySrc])
+
+  const uploadImages = useCallback(async (files: File[], editorInstance: Editor) => {
+    if (!files.length) return
+
+    setIsUploading(true)
+    const failures: string[] = []
+
+    for (const file of files) {
+      try {
+        await uploadAndInsertImage(file, editorInstance)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to upload image'
+        failures.push(`${file.name}: ${message}`)
+      }
+    }
+
+    if (failures.length > 0) {
+      const shownFailures = failures.slice(0, 2).join(' | ')
+      const suffix = failures.length > 2 ? ` (+${failures.length - 2} more)` : ''
+      toast.error(`${shownFailures}${suffix}`, 'Image Upload Failed')
+    } else if (files.length > 1) {
+      toast.success(`${files.length} images uploaded successfully`)
+    }
+
+    setIsUploading(false)
+  }, [toast, uploadAndInsertImage])
 
   const editor = useEditor({
     extensions: [
@@ -57,22 +158,14 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
-      Table.configure({
-        resizable: true,
-        HTMLAttributes: {
-          class: 'border-collapse table-auto w-full my-4',
-        },
-      }),
-      TableRow,
-      TableHeader.configure({
-        HTMLAttributes: {
-          class: 'border border-gray-300 px-4 py-2 bg-gray-100 dark:bg-brand-black-90 font-bold',
-        },
-      }),
-      TableCell.configure({
-        HTMLAttributes: {
-          class: 'border border-gray-300 px-4 py-2',
-        },
+      Markdown.configure({
+        html: true,
+        tightLists: true,
+        bulletListMarker: '-',
+        transformPastedText: false,
+        transformCopiedText: false,
+        breaks: false,
+        linkify: true,
       }),
       TextStyle,
       Color,
@@ -95,19 +188,53 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
     content: '',
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none focus:outline-none min-h-[500px] p-6 overflow-y-auto',
+        class: 'font-zillaslab prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none focus:outline-none min-h-[500px] p-6',
+      },
+      handlePaste: (_view, event) => {
+        const clipboardItems = event.clipboardData?.items
+        if (!clipboardItems?.length || !editor || editor.isDestroyed) return false
+
+        const imageItems = Array.from(clipboardItems).filter(
+          (item) => item.kind === 'file' && item.type.startsWith('image/')
+        )
+
+        if (!imageItems.length) return false
+
+        const imageFiles = imageItems
+          .map((item) => item.getAsFile())
+          .filter((file): file is File => Boolean(file))
+
+        if (!imageFiles.length) return true
+
+        event.preventDefault()
+        void uploadImages(imageFiles, editor)
+        return true
+      },
+      handleDrop: (_view, event) => {
+        if (!editor || editor.isDestroyed) return false
+
+        const droppedFiles = Array.from(event.dataTransfer?.files || [])
+          .filter((file) => file.type.startsWith('image/'))
+
+        if (!droppedFiles.length) return false
+
+        event.preventDefault()
+        void uploadImages(droppedFiles, editor)
+        return true
       },
     },
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML()
       const text = editor.getText()
+      const markdown = getEditorMarkdown(editor)
       const words = text.trim().split(/\s+/).filter(word => word.length > 0).length
       
       // Only trigger callbacks if content actually changed
       if (html !== lastContentRef.current) {
         lastContentRef.current = html
         if (onContentChange) onContentChange(html)
+        if (onMarkdownChange) onMarkdownChange(markdown)
         if (onWordCountChange) onWordCountChange(words)
       }
     },
@@ -124,6 +251,10 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
     getContent: () => {
       return editor?.getHTML() || ''
     },
+    getMarkdown: () => {
+      if (!editor || editor.isDestroyed) return ''
+      return getEditorMarkdown(editor)
+    },
     clearContent: () => {
       if (editor && !editor.isDestroyed) {
         lastContentRef.current = ''
@@ -133,7 +264,7 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
     focus: () => {
       editor?.commands.focus()
     },
-  }), [editor])
+  }), [editor, getEditorMarkdown])
 
   const handleImageUpload = useCallback(() => {
     fileInputRef.current?.click()
@@ -143,65 +274,13 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
     const file = event.target.files?.[0]
     if (!file || !editor) return
 
-    // Validate file
-    const validation = validateImageFile(file)
-    if (!validation.valid) {
-      toast.error(validation.error || 'Invalid image file', 'Upload Failed')
-      return
+    await uploadImages([file], editor)
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
-
-    setIsUploading(true)
-
-    try {
-      // Show preview immediately using base64
-      const base64Preview = await fileToBase64(file)
-      
-      // Insert image with our custom extension
-      editor.chain().focus().insertContent({
-        type: 'imageWithCaption',
-        attrs: {
-          src: base64Preview,
-          alt: file.name,
-          caption: '',
-        },
-      }).run()
-
-      // Upload to Strapi in background
-      const token = Cookies.get('jwt')
-      const uploadedImage = await uploadImageToStrapi(file, token)
-      const imageUrl = getStrapiMediaUrl(uploadedImage.url)
-
-      // Find and replace the base64 image with the uploaded URL
-      const { state } = editor
-      const { doc } = state
-      let imagePos: number | null = null
-
-      doc.descendants((node, pos) => {
-        if (node.type.name === 'imageWithCaption' && node.attrs.src === base64Preview) {
-          imagePos = pos
-          return false
-        }
-      })
-
-      if (imagePos !== null) {
-        editor.chain()
-          .setNodeSelection(imagePos)
-          .updateAttributes('imageWithCaption', { src: imageUrl })
-          .run()
-      }
-
-      console.log('Image uploaded successfully:', uploadedImage)
-    } catch (error) {
-      console.error('Image upload failed:', error)
-      toast.warning('Failed to upload image. Using local preview instead.', 'Upload Warning')
-    } finally {
-      setIsUploading(false)
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    }
-  }, [editor])
+  }, [editor, uploadImages])
 
   // Set initial content when editor is ready - only once
   useEffect(() => {
@@ -215,9 +294,11 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
       // Calculate initial word count
       const text = editor.getText()
       const words = text.trim().split(/\s+/).filter(word => word.length > 0).length
+      const markdown = getEditorMarkdown(editor)
+      if (onMarkdownChange) onMarkdownChange(markdown)
       if (onWordCountChange) onWordCountChange(words)
     }
-  }, [editor, initialContent, onWordCountChange])
+  }, [editor, getEditorMarkdown, initialContent, onMarkdownChange, onWordCountChange])
 
   return (
     <div className="w-full mx-auto h-full flex flex-col shadow-xl">

@@ -85,6 +85,29 @@ class ServerStrapiAPI {
     return fields.map((field, index) => `populate[${index}]=${field}`).join('&');
   }
 
+  /**
+   * Append article list populate params (featured image, category, tags, author with avatar)
+   * Uses named-key syntax to allow deep populate of author.users_permissions_user.Avatar
+   */
+  private appendArticleListPopulate(params: URLSearchParams): void {
+    params.append('populate[featuredImage]', 'true');
+    params.append('populate[category]', 'true');
+    params.append('populate[tags]', 'true');
+    params.append('populate[author][populate][users_permissions_user][populate]', '*');
+  }
+
+  /**
+   * Append article detail populate params (same as list + gallery, socialImage)
+   */
+  private appendArticleDetailPopulate(params: URLSearchParams): void {
+    params.append('populate[featuredImage]', 'true');
+    params.append('populate[gallery]', 'true');
+    params.append('populate[category]', 'true');
+    params.append('populate[tags]', 'true');
+    params.append('populate[socialImage]', 'true');
+    params.append('populate[author][populate][users_permissions_user][populate]', '*');
+  }
+
   //Get 'Content' text field of single-type: 'text-reel-homepage'
   async getTextReelContent(): Promise<string> {
     const response = await this.request<{ data: { Content: string } }>(
@@ -104,12 +127,10 @@ class ServerStrapiAPI {
     searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     searchParams.append('sort', 'publishedAt:desc');
     
-    // Strapi v5: populate relations directly, all fields are auto-included
-    const populate = this.buildPopulateString(['featuredImage', 'author', 'category', 'tags']);
-    const queryString = `${searchParams.toString()}&${populate}`;
+    this.appendArticleListPopulate(searchParams);
 
     const response = await this.request<ArticleResponse>(
-      `${config.strapi.endpoints.articles}?${queryString}`
+      `${config.strapi.endpoints.articles}?${searchParams.toString()}`
     );
 
     return response.data.length > 0 ? response.data[0] : null;
@@ -124,12 +145,10 @@ class ServerStrapiAPI {
     searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     searchParams.append('sort', 'publishedAt:desc');
     
-    // Strapi v5: populate relations directly, all fields are auto-included
-    const populate = this.buildPopulateString(['featuredImage', 'author', 'category', 'tags']);
-    const queryString = `${searchParams.toString()}&${populate}`;
+    this.appendArticleListPopulate(searchParams);
     
     return this.request<ArticleResponse>(
-      `${config.strapi.endpoints.articles}?${queryString}`
+      `${config.strapi.endpoints.articles}?${searchParams.toString()}`
     );
   }
 
@@ -143,11 +162,10 @@ class ServerStrapiAPI {
     searchParams.append('sort', 'publishedAt:desc');
     searchParams.append('pagination[pageSize]', limit.toString());
     
-    const populate = this.buildPopulateString(['featuredImage', 'author', 'category', 'tags']);
-    const queryString = `${searchParams.toString()}&${populate}`;
+    this.appendArticleListPopulate(searchParams);
     
     return this.request<ArticleResponse>(
-      `${config.strapi.endpoints.articles}?${queryString}`
+      `${config.strapi.endpoints.articles}?${searchParams.toString()}`
     );
   }
 
@@ -161,11 +179,10 @@ class ServerStrapiAPI {
     searchParams.append('sort', 'publishedAt:desc');
     searchParams.append('pagination[pageSize]', limit.toString());
     
-    const populate = this.buildPopulateString(['featuredImage', 'author', 'category', 'tags']);
-    const queryString = `${searchParams.toString()}&${populate}`;
+    this.appendArticleListPopulate(searchParams);
     
     return this.request<ArticleResponse>(
-      `${config.strapi.endpoints.articles}?${queryString}`
+      `${config.strapi.endpoints.articles}?${searchParams.toString()}`
     );
   }
 
@@ -179,11 +196,10 @@ class ServerStrapiAPI {
     searchParams.append('pagination[page]', page.toString());
     searchParams.append('pagination[pageSize]', pageSize.toString());
     
-    const populate = this.buildPopulateString(['featuredImage', 'author', 'category', 'tags']);
-    const queryString = `${searchParams.toString()}&${populate}`;
+    this.appendArticleListPopulate(searchParams);
     
     return this.request<ArticleResponse>(
-      `${config.strapi.endpoints.articles}?${queryString}`
+      `${config.strapi.endpoints.articles}?${searchParams.toString()}`
     );
   }
 
@@ -194,18 +210,10 @@ class ServerStrapiAPI {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[slug][$eq]', slug);
     
-    const populate = this.buildPopulateString([
-      'featuredImage', 
-      'gallery', 
-      'author', 
-      'category', 
-      'tags', 
-      'socialImage'
-    ]);
-    const queryString = `${searchParams.toString()}&${populate}`;
+    this.appendArticleDetailPopulate(searchParams);
     
     const response = await this.request<ArticleResponse>(
-      `${config.strapi.endpoints.articles}?${queryString}`
+      `${config.strapi.endpoints.articles}?${searchParams.toString()}`
     );
 
     return response.data.length > 0 ? response.data[0] : null;
@@ -222,11 +230,10 @@ class ServerStrapiAPI {
     searchParams.append('pagination[page]', page.toString());
     searchParams.append('pagination[pageSize]', pageSize.toString());
     
-    const populate = this.buildPopulateString(['featuredImage', 'author', 'category', 'tags']);
-    const queryString = `${searchParams.toString()}&${populate}`;
+    this.appendArticleListPopulate(searchParams);
     
     return this.request<ArticleResponse>(
-      `${config.strapi.endpoints.articles}?${queryString}`
+      `${config.strapi.endpoints.articles}?${searchParams.toString()}`
     );
   }
 
@@ -333,11 +340,10 @@ class ServerStrapiAPI {
     searchParams.append('pagination[page]', page.toString());
     searchParams.append('pagination[pageSize]', pageSize.toString());
     
-    const populate = this.buildPopulateString(['featuredImage', 'author', 'category', 'tags']);
-    const queryString = `${searchParams.toString()}&${populate}`;
+    this.appendArticleListPopulate(searchParams);
     
     return this.request<ArticleResponse>(
-      `${config.strapi.endpoints.articles}?${queryString}`
+      `${config.strapi.endpoints.articles}?${searchParams.toString()}`
     );
   }
 }
