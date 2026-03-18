@@ -7,6 +7,7 @@ import {
   TagResponse,
   BannerResponse,
   NavigationResponse,
+  IssueResponse,
   Article,
   Category,
   Author,
@@ -15,7 +16,8 @@ import {
   Submission,
   Comment,
   Draft,
-  DraftResponse
+  DraftResponse,
+  Publication_Issue
 } from '@/types';
 import { getAuthorAvatar } from './strapi-helpers';
 
@@ -372,6 +374,40 @@ class StrapiAPI {
     
     // Populate
     const populate = ['featuredImage', 'author', 'category'];
+    populate.forEach((field, index) => {
+      searchParams.append(`populate[${index}]`, field);
+    });
+
+    return this.request<ArticleResponse>(
+      `${config.strapi.endpoints.articles}?${searchParams.toString()}`
+    );
+  }
+
+  /**
+   * Get articles by publication issue
+   */
+  async getArticlesByIssue(
+    issueDocumentId: string,
+    page: number = 1,
+    pageSize: number = 100
+  ): Promise<ArticleResponse> {
+    const searchParams = new URLSearchParams();
+    
+    // Strapi v5 draft/publish system
+    searchParams.append('status', 'published');
+    
+    // Filter by issue relation (assuming the relation on Article is named publication_issue)
+    searchParams.append('filters[publication_issue][documentId][$eq]', issueDocumentId);
+    
+    // Pagination
+    searchParams.append('pagination[page]', page.toString());
+    searchParams.append('pagination[pageSize]', pageSize.toString());
+    
+    // Sort by most recent
+    searchParams.append('sort', 'publishedAt:desc');
+    
+    // Populate necessary fields
+    const populate = ['featuredImage', 'author', 'category', 'tags'];
     populate.forEach((field, index) => {
       searchParams.append(`populate[${index}]`, field);
     });
@@ -1362,6 +1398,59 @@ class StrapiAPI {
       }
     );
   }
+  // ============================================
+  // ISSUE API METHODS
+  // ============================================
+
+  /**
+   * Get a publication by its documentId
+   */
+  async getPublicationByDocumentId(documentId: string): Promise<Publication | null> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('populate[Image]', 'true');
+    
+    const response = await this.request<{ data: Publication; meta: object }>(
+      `/api/publications/${documentId}?${searchParams.toString()}`
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Get all issues for a specific publication
+   */
+  async getIssuesByPublication(publicationDocumentId: string): Promise<IssueResponse> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[publication][documentId][$eq]', publicationDocumentId);
+    searchParams.append('sort', 'PublishedDate:desc');
+    searchParams.append('populate[0]', 'CoverImage');
+    searchParams.append('populate[1]', 'publication');
+
+    return this.request<IssueResponse>(
+      `/api/publication-issues?${searchParams.toString()}`
+    );
+  }
+
+  /**
+   * Get a specific issue with its pieces
+   */
+  async getIssueWithPieces(issueDocumentId: string): Promise<Publication_Issue | null> {
+    const searchParams = new URLSearchParams();
+    
+    // Populate CoverImage
+    // searchParams.append('populate[CoverImage]', '*');
+    
+    // Populate the relation pieces (which are Articles), and then their nested author and category
+    searchParams.append('populate[pieces][populate][0]', 'featuredImage');
+    searchParams.append('populate[pieces][populate][1]', 'author');
+    searchParams.append('populate[pieces][populate][2]', 'category');
+    
+    const response = await this.request<{ data: Publication_Issue; meta: object }>(
+      `/api/publication-issues/${issueDocumentId}?${searchParams.toString()}`
+    );
+
+    return response.data;
+  }
 }
 
 // Create and export a singleton instance
@@ -1399,7 +1488,7 @@ export const transformStrapiArticleToLegacy = (strapiArticle: Article) => {
     imageSrc: imageUrl,
     category: categoryName,
     author: {
-      name: author?.Name || 'DUFS Blog',
+      name: strapiArticle.publication_author_name || author?.Name || 'DUFS Blog',
       avatar: authorAvatar
     },
     publishedAt: strapiArticle.publishedAt 

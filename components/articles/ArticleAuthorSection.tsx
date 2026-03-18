@@ -11,12 +11,16 @@ import { cn } from "@/lib/utils";
 interface ArticleAuthorSectionProps {
   author: Author;
   authorAvatar?: string;
+  publicationAuthorName?: string;
 }
 
 export default function ArticleAuthorSection({
   author,
   authorAvatar,
+  publicationAuthorName,
 }: ArticleAuthorSectionProps) {
+  const displayName = publicationAuthorName || author.Name;
+
   return (
     <div className="mt-10">
       {/* Mobile author section */}
@@ -31,7 +35,7 @@ export default function ArticleAuthorSection({
           >
             <Image
               src={authorAvatar || "/images/avatarPlaceholder.png"}
-              alt={author.Name}
+              alt={displayName}
               fill
               className="object-cover"
             />
@@ -40,10 +44,10 @@ export default function ArticleAuthorSection({
             <h3
               className={cn(
                 "text-lg font-bold text-foreground",
-                getFontClass(author.Name),
+                getFontClass(displayName),
               )}
             >
-              {author.Name}
+              {displayName}
             </h3>
           </Link>
           <Button
@@ -66,7 +70,7 @@ export default function ArticleAuthorSection({
           >
             <Image
               src={authorAvatar || "/images/avatarPlaceholder.png"}
-              alt={author.Name}
+              alt={displayName}
               fill
               className="object-cover"
             />
@@ -79,10 +83,10 @@ export default function ArticleAuthorSection({
               <h3
                 className={cn(
                   "text-xl font-bold text-foreground hover:text-primary transition-colors",
-                  getFontClass(author.Name),
+                  getFontClass(displayName),
                 )}
               >
-                {author.Name}
+                {displayName}
               </h3>
             </Link>
             {author.Bio && (

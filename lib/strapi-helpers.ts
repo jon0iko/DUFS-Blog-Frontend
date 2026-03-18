@@ -174,7 +174,7 @@ export function getArticleData(article: Article | null | undefined) {
     image: getArticleImage(article),
     category: getCategoryName(article.category),
     author: {
-      name: getAuthorName(article.author),
+      name: article.publication_author_name || getAuthorName(article.author),
       avatar: getAuthorAvatar(article.author),
       slug: getAuthorSlug(article.author),
     },

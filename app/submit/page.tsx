@@ -209,7 +209,7 @@ const SubmitPage = () => {
   return (
     <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden font-montserrat">
       {/* Background Images */}
-      <div className="absolute inset-0 dark:hidden select-none pointer-events-none" style={{ backgroundImage: 'url(/images/bgpaper.webp)', backgroundRepeat: 'repeat' }} />
+      <div className="absolute inset-0 dark:hidden select-none pointer-events-none" style={{ backgroundImage: 'url(/images/bgpaper.jpg)', backgroundRepeat: 'repeat' }} />
       <div className="bg-pattern-dark absolute inset-0 hidden dark:block select-none pointer-events-none" style={{ backgroundImage: 'url(/images/bgpaper_dark.jpg)', backgroundRepeat: 'repeat', backgroundSize: '1667px 1200px' }} />
 
       <div className="container relative z-20 px-7 pt-8 md:pt-10">

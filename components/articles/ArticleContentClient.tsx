@@ -239,7 +239,11 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                 )}
 
                 {article.author && (
-                  <ArticleAuthorSection author={article.author} authorAvatar={authorAvatar} />
+                  <ArticleAuthorSection 
+                    author={article.author} 
+                    authorAvatar={authorAvatar} 
+                    publicationAuthorName={article.publication_author_name}
+                  />
                 )}
 
                 <div id="comment-section" className="mt-12">

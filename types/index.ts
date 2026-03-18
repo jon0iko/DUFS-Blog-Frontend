@@ -125,6 +125,7 @@ export interface Article {
   featuredImage?: StrapiMedia;
   gallery?: StrapiMedia[];
   author?: Author; // Populated relation
+  publication_author_name?: string; // Author name for publication pieces
   category?: Category; // Populated relation
   tags?: Tag[]; // Populated relation
   isFeatured: boolean;
@@ -235,6 +236,23 @@ export interface Publication {
   locale?: string;
 }
 
+// Issue interface - FLATTENED format matching backend schema
+export interface Publication_Issue
+ {
+  id: number;
+  documentId: string;
+  Title: string;
+  Details: string; // Rich text
+  CoverImage?: StrapiMedia;
+  PublishedDate: string;
+  publication?: Publication; 
+  Pieces?: Article[]; 
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  locale?: string;
+}
+
 // User Submission - FLATTENED format
 export interface Submission {
   id: number;
@@ -304,6 +322,7 @@ export type CategoryResponse = StrapiResponse<Category[]>;
 export type TagResponse = StrapiResponse<Tag[]>;
 export type BannerResponse = StrapiResponse<Banner[]>;
 export type PublicationResponse = StrapiResponse<Publication[]>;
+export type IssueResponse = StrapiResponse<Publication_Issue[]>;
 export type NavigationResponse = StrapiResponse<NavigationItem[]>;
 export type SiteConfigResponse = StrapiResponse<SiteConfig>;
 

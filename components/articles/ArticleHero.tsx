@@ -72,12 +72,11 @@ export default function ArticleHero({
             <span
               className={cn(
                 "text-sm font-semibold text-foreground truncate",
-                getFontClass(article.author.Name),
+                getFontClass(article.publication_author_name || article.author.Name),
               )}
             >
-              {article.author.Name}
-            </span>
-          </Link>
+              {article.publication_author_name || article.author.Name}
+            </span>          </Link>
         )}
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground pb-4 mb-3">
@@ -187,10 +186,10 @@ export default function ArticleHero({
                       <span
                         className={cn(
                           "font-medium text-white hover:underline",
-                          getFontClass(article.author.Name),
+                          getFontClass(article.publication_author_name || article.author.Name),
                         )}
                       >
-                        {article.author.Name}
+                        {article.publication_author_name || article.author.Name}
                       </span>
                     </div>
                   </Link>
