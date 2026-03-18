@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import ArticleCard from '@/components/home/ArticleCard'
 import { Article } from '@/types'
-import { Button } from '@/components/ui/button'
 import { strapiAPI } from '@/lib/api'
 import { getArticleData } from '@/lib/strapi-helpers'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface ArticlesListProps {
   category: string
@@ -28,6 +28,8 @@ export default function ArticlesList({
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalArticles, setTotalArticles] = useState(0)
+  const paginationRef = useRef<HTMLDivElement>(null)
+  const paginationTopBeforeChangeRef = useRef<number | null>(null)
   
   useEffect(() => {
     const fetchArticles = async () => {
@@ -97,20 +99,45 @@ export default function ArticlesList({
     setCurrentPage(1)
   }, [category, language, sortBy, searchQuery])
   
-  // Handle page changes
-  const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page)
-      // Scroll to top of articles list
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+  // Handle page changes - memoized for performance
+  const goToPage = useCallback(
+    (page: number) => {
+      if (page >= 1 && page <= totalPages) {
+        if (paginationRef.current) {
+          paginationTopBeforeChangeRef.current =
+            paginationRef.current.getBoundingClientRect().top
+        }
+        setCurrentPage(page)
+      }
+    },
+    [totalPages],
+  )
+
+  // Keep pagination controls in the same viewport position between page changes.
+  useEffect(() => {
+    if (isLoading) {
+      return
     }
-  }
+
+    if (paginationTopBeforeChangeRef.current === null || !paginationRef.current) {
+      return
+    }
+
+    const nextTop = paginationRef.current.getBoundingClientRect().top
+    const delta = nextTop - paginationTopBeforeChangeRef.current
+
+    if (Math.abs(delta) > 1) {
+      window.scrollBy({ top: delta, behavior: 'auto' })
+    }
+
+    paginationTopBeforeChangeRef.current = null
+  }, [isLoading, currentPage, articles.length])
   
-  // Generate page numbers to display
-  const getPageNumbers = (): (number | string)[] => {
+  // Generate page numbers to display - memoized for performance
+  const getPageNumbers = useCallback((): (number | string)[] => {
     const pages: (number | string)[] = []
     const maxVisiblePages = 5
-    
+
     if (totalPages <= maxVisiblePages) {
       // Show all pages if total is small
       for (let i = 1; i <= totalPages; i++) {
@@ -119,38 +146,38 @@ export default function ArticlesList({
     } else {
       // Always show first page
       pages.push(1)
-      
+
       if (currentPage > 3) {
         pages.push('...')
       }
-      
+
       // Show pages around current page
       const start = Math.max(2, currentPage - 1)
       const end = Math.min(totalPages - 1, currentPage + 1)
-      
+
       for (let i = start; i <= end; i++) {
         pages.push(i)
       }
-      
+
       if (currentPage < totalPages - 2) {
         pages.push('...')
       }
-      
+
       // Always show last page
       pages.push(totalPages)
     }
-    
+
     return pages
-  }
+  }, [currentPage, totalPages])
   
   // Filter out invalid articles
   const validArticles = articles
-    .map(article => ({ raw: article, data: getArticleData(article) }))
-    .filter(item => item.data !== null);
+    .map((article) => ({ raw: article, data: getArticleData(article) }))
+    .filter((item) => item.data !== null)
   
   return (
     <div>
-      {isLoading ? (
+      {isLoading && articles.length === 0 ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
           <p className="text-muted-foreground mt-4">Loading articles...</p>
@@ -172,10 +199,18 @@ export default function ArticlesList({
           </div>
         </div>
       ) : (
-        <>
+        <div className={cn("transition-opacity duration-200", isLoading ? "opacity-50 pointer-events-none" : "")}>
           {/* Articles count info */}
-          <div className="mb-6 text-sm text-muted-foreground">
-            Showing {(currentPage - 1) * ARTICLES_PER_PAGE + 1} - {Math.min(currentPage * ARTICLES_PER_PAGE, totalArticles)} of {totalArticles} articles
+          <div className="mb-6 flex items-center justify-between text-sm text-muted-foreground">
+            <span>
+              Showing {(currentPage - 1) * ARTICLES_PER_PAGE + 1} - {Math.min(currentPage * ARTICLES_PER_PAGE, totalArticles)} of {totalArticles} articles
+            </span>
+            {isLoading && (
+              <span className="flex items-center gap-2 animate-pulse text-primary">
+                <div className="inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
+                Updating...
+              </span>
+            )}
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
@@ -190,61 +225,74 @@ export default function ArticlesList({
           
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
-              {/* Previous Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="flex items-center gap-1"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              
-              {/* Page Numbers */}
-              <div className="flex items-center gap-1">
-                {getPageNumbers().map((page, index) => (
-                  page === '...' ? (
-                    <span key={`ellipsis-${index}`} className="px-3 py-2 text-muted-foreground">
-                      ...
-                    </span>
-                  ) : (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => goToPage(page as number)}
-                      className="min-w-[40px]"
-                    >
-                      {page}
-                    </Button>
-                  )
-                ))}
+            <div ref={paginationRef} className="mt-12 flex flex-col items-center gap-6">
+              {/* Pagination Controls */}
+              <div className="flex items-center gap-1 md:gap-2">
+                {/* Previous Button */}
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={cn(
+                    'p-1.5 md:p-2 rounded-md border transition-all duration-200',
+                    currentPage === 1
+                      ? 'opacity-50 cursor-not-allowed border-border'
+                      : 'hover:bg-accent border-border hover:border-foreground/50',
+                  )}
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
+                </button>
+
+                {/* Page Numbers */}
+                <div className="flex items-center gap-0.5 md:gap-1">
+                  {getPageNumbers().map((page, index) =>
+                    page === '...' ? (
+                      <span
+                        key={`ellipsis-${index}`}
+                        className="px-1.5 md:px-3 py-1 md:py-2 text-sm md:text-base text-muted-foreground"
+                      >
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={page}
+                        onClick={() => goToPage(page as number)}
+                        className={cn(
+                          'min-w-[32px] h-[32px] md:min-w-[40px] md:h-[40px] rounded-md text-sm md:text-base font-semibold transition-all duration-200',
+                          currentPage === page
+                            ? 'bg-foreground text-background'
+                            : 'hover:bg-accent border border-border hover:border-foreground/50',
+                        )}
+                      >
+                        {page}
+                      </button>
+                    ),
+                  )}
+                </div>
+
+                {/* Next Button */}
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={cn(
+                    'p-1.5 md:p-2 rounded-md border transition-all duration-200',
+                    currentPage === totalPages
+                      ? 'opacity-50 cursor-not-allowed border-border'
+                      : 'hover:bg-accent border-border hover:border-foreground/50',
+                  )}
+                  aria-label="Next page"
+                >
+                  <ChevronRight className="h-4 w-4 md:h-5 md:w-5" />
+                </button>
               </div>
-              
-              {/* Next Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="flex items-center gap-1"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+
+              {/* Page info */}
+              <div className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </div>
             </div>
           )}
-          
-          {/* Page info for mobile */}
-          {totalPages > 1 && (
-            <div className="mt-4 text-center text-sm text-muted-foreground">
-              Page {currentPage} of {totalPages}
-            </div>
-          )}
-        </>
+        </div>
       )}
     </div>
   )

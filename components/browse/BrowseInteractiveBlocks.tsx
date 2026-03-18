@@ -1,14 +1,13 @@
 "use client";
 
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+import { Search, ChevronDown, X, SlidersHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Category } from "@/types";
 import { cn } from "@/lib/utils";
-import { X, ArrowRight } from "lucide-react";
+import { getFontClass } from "@/lib/fonts";
 import ArticlesList from "./ArticlesList";
-import FilterOptions from "./FilterOptions";
-import { getStrapiMediaUrl } from "@/lib/strapi-helpers";
-import Image from "next/image";
-import { useEffect } from "react";
 
 interface BrowseInteractiveBlocksProps {
   categories: Category[];
@@ -19,6 +18,7 @@ interface BrowseInteractiveBlocksProps {
   onFilterChange: (type: string, value: string) => void;
   searchQuery?: string;
   onClearSearch: () => void;
+  onSearchSubmit: (query: string) => void;
 }
 
 export default function BrowseInteractiveBlocks({
@@ -29,190 +29,275 @@ export default function BrowseInteractiveBlocks({
   sortBy,
   onFilterChange,
   searchQuery,
-  onClearSearch
+  onClearSearch,
+  onSearchSubmit,
 }: BrowseInteractiveBlocksProps) {
+  const [isSearchMode, setIsSearchMode] = useState(!!searchQuery);
+  const [searchDraft, setSearchDraft] = useState(searchQuery || "");
 
-  // Handle back button on mobile closing the expanded view
+  const categoryOptions = useMemo(
+    () => [
+      { value: "all", label: "All Categories" },
+      ...categories.map((category) => ({
+        value: category.Slug || "",
+        label: category.Name || "Untitled",
+      })),
+    ],
+    [categories]
+  );
+
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setActiveCategory('all');
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setActiveCategory]);
+    setSearchDraft(searchQuery || "");
+    if (searchQuery) {
+      setIsSearchMode(true);
+    }
+  }, [searchQuery]);
 
-  // SEARCH RESULTS VIEW
-  if (searchQuery) {
-     return (
-       <div className="container py-8 px-4 md:px-6 min-h-screen">
-         <div className="flex items-center justify-between mb-8 border-b pb-4">
-            <div>
-               <h2 className="text-3xl font-bold mb-2">SEARCH RESULTS</h2>
-               <p className="text-muted-foreground">Results for "{searchQuery}"</p>
-            </div>
-            <button onClick={onClearSearch} className="flex items-center gap-2 text-sm font-medium hover:underline p-2 rounded-md hover:bg-accent transition-colors">
-               <X className="w-4 h-4"/> Clear
-            </button>
-         </div>
-         <ArticlesList 
-            category="all" 
-            language={language} 
-            sortBy={sortBy} 
-            searchQuery={searchQuery} 
-         />
-       </div>
-     )
-  }
+  const handleSearchSubmit = () => {
+    onSearchSubmit(searchDraft.trim());
+  };
 
-  const activeCategoryData = categories.find(c => c.Slug === activeCategory);
-  const isExpanded = !!activeCategoryData && activeCategory !== 'all';
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearchSubmit();
+    }
+  };
+
+  const searchLabel = searchQuery?.trim();
+  
 
   return (
-    <div className="min-h-screen w-full relative">
-      <AnimatePresence mode="popLayout" initial={false}>
-        
-        {/* LIST VIEW */}
-        {!isExpanded && (
-           <motion.div 
-             className="container py-8 px-4 md:px-12 flex flex-col gap-4"
-             initial={{ opacity: 0, y: 20 }}
-             animate={{ opacity: 1, y: 0 }}
-             exit={{ opacity: 0, y: -20 }}
-             transition={{ duration: 0.4, ease: "easeInOut" }}
-           >
-              <motion.h1 
-                className="text-4xl md:text-6xl font-bold mb-8 tracking-tighter"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                BROWSE
-              </motion.h1>
-              
-              {categories.map((category) => (
-                <motion.div
-                   key={category.documentId}
-                   layoutId={`category-block-${category.Slug}`}
-                   onClick={() => setActiveCategory(category.Slug || '')}
-                   className="group relative h-24 md:h-32 w-full bg-primary text-primary-foreground overflow-hidden cursor-pointer flex items-center px-6 md:px-12 border border-border/20 rounded-md hover:border-border/50 shadow-sm"
-                   whileHover={{ scale: 1.01 }}
-                   transition={{ duration: 0.3 }}
-                >
-                   {/* Background Image (Subtle Texture) */}
-                   {category.Illustration?.url && (
-                      <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-500">
-                         <Image 
-                           src={getStrapiMediaUrl(category.Illustration)} 
-                           alt="" 
-                           fill 
-                           className="object-cover grayscale"
-                         />
-                         <div className="absolute inset-0 bg-black/60" /> 
-                      </div>
-                   )}
-                   
-                   <motion.h2 
-                     className="text-2xl md:text-4xl font-bold relative z-10 tracking-wide uppercase group-hover:tracking-widest transition-all duration-300"
-                     layoutId={`category-title-${category.Slug}`}
-                   >
-                      {category.Name}
-                   </motion.h2>
+    <div className="relative min-h-screen font-montserrat overflow-hidden">
+      {/* Background patterns */}
+      <div
+        className="pointer-events-none absolute -inset-52 select-none dark:hidden"
+        style={{ backgroundImage: "url(/images/bgpaper.jpg)", backgroundRepeat: "repeat" }}
+      />
+      <div
+        className="bg-pattern-dark pointer-events-none absolute -inset-52 hidden select-none dark:block"
+        style={{
+          backgroundImage: "url(/images/bgpaper_dark.jpg)",
+          backgroundRepeat: "repeat",
+          backgroundSize: "1667px 1200px",
+        }}
+      />
 
-                   <div className="absolute right-8 md:right-12 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all duration-300">
-                      <ArrowRight className="w-6 h-6 md:w-8 md:h-8" />
-                   </div>
-                </motion.div>
-              ))}
-           </motion.div>
-        )}
+      {/* Action Bar with SVG Background */}
+      <div className="relative z-30 w-full overflow-hidden">
+        {/* The SVG Background - Fixed to stay centered and hold content in its body */}
+        <div className="absolute inset-0">
+          <Image
+            src="/images/BrowseCurve_Mobile.svg"
+            alt=""
+            fill
+            priority
+            unoptimized
+            sizes="100vw"
+            className="brightness-100 object-cover object-bottom lg:hidden"
+          />
+          <Image
+            src="/images/BrowseCurve.svg"
+            alt=""
+            fill
+            priority
+            unoptimized
+            sizes="100vw"
+            className="hidden brightness-100 object-cover object-bottom lg:block"
+          />
+        </div>
 
-        {/* EXPANDED VIEW */}
-        {isExpanded && activeCategoryData && (
-           <motion.div
-              key="expanded-view"
-              className="relative w-full min-h-screen bg-background"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-           >
-              {/* Header / Expanded Block */}
-              <motion.div 
-                 layoutId={`category-block-${activeCategoryData.Slug}`}
-                 className="relative h-[40vh] md:h-[50vh] w-full bg-primary text-primary-foreground flex flex-col justify-end p-6 md:p-16 overflow-hidden"
+        {/* Content Container - Adjusted padding for better vertical centering on the curve */}
+        <div className="container relative z-20 mx-auto px-4 pb-14 pt-10 lg:px-6 lg:pb-16 lg:pt-12">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-center lg:gap-8">
+            
+            {/* 1. Category Dropdown */}
+            <div className="relative w-full lg:w-auto lg:min-w-[240px]">
+              <select
+                value={activeCategory || "all"}
+                onChange={(e) => setActiveCategory(e.target.value)}
+                className={cn(
+                  "h-12 w-full appearance-none rounded-[4px] border border-[#BDB2AB] bg-[#C9C0BC] px-4 pr-10 text-[1.1rem] lg:text-[1.2rem] font-black text-[#29211D] outline-none transition-all hover:-translate-y-0.5 focus:border-[#84786F] dark:border-[#3A3431] dark:bg-[#302A27] dark:text-[#F3E7DD]",
+                  getFontClass(categoryOptions.find(o => o.value === (activeCategory || "all"))?.label || "")
+                )}
               >
-                  {/* Close Button */}
-                  <button 
-                    onClick={() => setActiveCategory('all')}
-                    className="absolute top-6 right-6 md:top-8 md:right-8 z-50 p-2 bg-black/20 hover:bg-black/40 text-white backdrop-blur-md rounded-full transition-colors"
+                {categoryOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#29211D] dark:text-[#AFA39B]" />
+            </div>
+
+            {/* 2. Dynamic Middle Section (Filters or Search) */}
+            <div className="flex w-full flex-grow items-center justify-center lg:w-auto">
+              <AnimatePresence mode="wait">
+                {!isSearchMode ? (
+                  <motion.div
+                    key="filters"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-center lg:gap-6"
                   >
-                     <X className="w-6 h-6 md:w-8 md:h-8" />
-                  </button>
+                    {/* Language Filter */}
+                    <div className="flex items-center gap-3">
+                      <span className="whitespace-nowrap text-[1rem] lg:text-[1.1rem] font-black text-[#211A17]">
+                        Language:
+                      </span>
+                      <div className="relative flex-grow sm:w-32 sm:flex-grow-0">
+                        <select
+                          value={language || "all"}
+                          onChange={(e) => onFilterChange("language", e.target.value)}
+                          className="h-10 w-full appearance-none rounded-[4px] border border-[#BDB2AB] bg-[#C9C0BC] px-3 pr-8 text-[0.95rem] font-black text-[#29211D] outline-none transition-all hover:-translate-y-0.5 dark:border-[#3A3431] dark:bg-[#302A27] dark:text-[#F3E7DD]"
+                        >
+                          <option value="all">All</option>
+                          <option value="en">English</option>
+                          <option value="bn">Bangla</option>
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-[#29211D] dark:text-[#AFA39B]" />
+                      </div>
+                    </div>
 
-                  {/* Background Image - Full Opacity in Header */}
-                  {activeCategoryData.Illustration?.url && (
-                    <motion.div 
-                      className="absolute inset-0 opacity-50"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 0.5 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                       <Image 
-                         src={getStrapiMediaUrl(activeCategoryData.Illustration)} 
-                         alt="" 
-                         fill 
-                         className="object-cover"
-                         priority
-                       />
-                       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-                    </motion.div>
-                  )}
-
-                  <div className="relative z-10">
-                    <motion.h2 
-                       layoutId={`category-title-${activeCategoryData.Slug}`}
-                       className="text-4xl md:text-7xl font-bold tracking-wide uppercase mb-4"
-                    >
-                        {activeCategoryData.Name}
-                    </motion.h2>
+                    {/* Sort Filter */}
+                    <div className="flex items-center gap-3">
+                      <span className="whitespace-nowrap text-[1rem] lg:text-[1.1rem] font-black text-[#211A17]">
+                        Sort By:
+                      </span>
+                      <div className="relative flex-grow sm:w-44 sm:flex-grow-0">
+                        <select
+                          value={sortBy || "recent"}
+                          onChange={(e) => onFilterChange("sort", e.target.value)}
+                          className="h-10 w-full appearance-none rounded-[4px] border border-[#BDB2AB] bg-[#C9C0BC] px-3 pr-8 text-[0.95rem] font-black text-[#29211D] outline-none transition-all hover:-translate-y-0.5 dark:border-[#3A3431] dark:bg-[#302A27] dark:text-[#F3E7DD]"
+                        >
+                          <option value="recent">Publish Date</option>
+                          <option value="oldest">Oldest First</option>
+                          <option value="popular">Most Read</option>
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-[#29211D] dark:text-[#AFA39B]" />
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="search"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.15 }}
+                    className="relative w-full max-w-xl"
+                  >
+                    <input
+                      type="text"
+                      value={searchDraft}
+                      onChange={(e) => setSearchDraft(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Search articles..."
+                      className="h-12 w-full rounded-[4px] border border-[#BDB2AB] bg-[#C9C0BC] pl-10 pr-28 text-[1.1rem] font-black text-[#29211D] outline-none transition-all placeholder:text-[#29211D]/50 focus:border-[#84786F] dark:border-[#3A3431] dark:bg-[#302A27] dark:text-[#F3E7DD] dark:placeholder:text-[#F3E7DD]/50"
+                    /> 
+                    <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#29211D] dark:text-[#AFA39B]" />
                     
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                      className="flex flex-col gap-2"
-                    >
-                       <p className="text-lg md:text-xl text-white/80 max-w-2xl font-light">
-                         Explore our curated collection of articles, reviews, and analysis.
-                       </p>
-                    </motion.div>
-                  </div>
-              </motion.div>
+                    <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
+                      {searchDraft && (
+                        <button
+                          onClick={() => {
+                            setSearchDraft("");
+                            onClearSearch();
+                          }}
+                          className="p-1.5 text-[#29211D] transition-all hover:scale-125 dark:text-[#AFA39B]"
+                          aria-label="Clear search"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={handleSearchSubmit}
+                        className="rounded-[3px] bg-[#29211D] px-3 py-1.5 text-xs font-black uppercase tracking-wider text-[#C9C0BC] transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 dark:bg-[#F3E7DD] dark:text-[#302A27]"
+                      >
+                        Search
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-              {/* Content Body */}
-              <motion.div 
-                 className="container py-8 md:py-16 px-4 md:px-8"
-                 initial={{ opacity: 0, y: 50 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 transition={{ delay: 0.4, duration: 0.5 }}
+            {/* 3. Toggle Buttons (Filter & Search) */}
+            <div className="flex w-full rounded-[8px] border border-[#A79A92] bg-[#CFC6C1] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_2px_4px_rgba(41,33,29,0.2)] dark:border-[#3A3431] dark:bg-[#2A2522] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_2px_6px_rgba(0,0,0,0.45)] lg:w-auto">
+              <button
+                onClick={() => setIsSearchMode(false)}
+                className={cn(
+                  "h-10 flex-1 rounded-[6px] border px-4 text-[0.9rem] lg:px-8 lg:text-[1.1rem] font-black uppercase tracking-wider transition-all duration-150",
+                  !isSearchMode 
+                    ? "border-[#5E5752] bg-[#6A635E] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_2px_3px_rgba(41,33,29,0.35)]"
+                    : "border-transparent bg-transparent text-[#29211D] hover:border-[#A79A92] hover:bg-[#C2B8B1]  dark:text-[#E8DDD4] dark:hover:border-[#4C433E] dark:hover:bg-[#3A3431]"
+                )}
               >
-                 <div className="flex flex-col md:flex-row justify-end items-start md:items-center mb-10 gap-6 border-b pb-6">
-                    <FilterOptions 
-                        language={language}
-                        sortBy={sortBy}
-                        onFilterChange={onFilterChange}
-                    />
-                 </div>
+                <span className="flex items-center justify-center gap-2">
+                   <SlidersHorizontal className="h-4 w-4 lg:hidden" />
+                   Filter
+                </span>
+              </button>
+              <button
+                onClick={() => setIsSearchMode(true)}
+                className={cn(
+                  "h-10 flex-1 rounded-[6px] border px-4 text-[0.9rem] lg:px-8 lg:text-[1.1rem] font-black uppercase tracking-wider transition-all duration-150",
+                  isSearchMode 
+                    ? "border-[#5E5752] bg-[#6A635E] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_2px_3px_rgba(41,33,29,0.35)]"
+                    : "border-transparent bg-transparent text-[#29211D] hover:border-[#A79A92] hover:bg-[#C2B8B1]  dark:text-[#E8DDD4] dark:hover:border-[#4C433E] dark:hover:bg-[#3A3431]"
+                )}
+              >
+                <span className="flex items-center justify-center gap-2">
+                   <Search className="h-4 w-4 lg:hidden" />
+                   Search
+                </span>
+              </button>
+            </div>
 
-                 <ArticlesList 
-                    category={activeCategoryData.Slug}
-                    language={language}
-                    sortBy={sortBy}
-                 />
-              </motion.div>
-           </motion.div>
+          </div>
+        </div>
+      </div>
+
+      {/* Articles List Content Section */}
+      <div className="container relative z-20 mx-auto px-4 pb-20 pt-16 md:px-8">
+        {(activeCategory !== "all" || searchLabel) && (
+          <div className="mb-8 flex flex-col gap-4 border-b border-black/10 pb-4 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-[0.75rem] md:text-sm font-bold uppercase tracking-widest text-[#6A635E]">Now Showing:</span>
+              <div className="flex flex-wrap gap-2">
+                {activeCategory !== "all" && (
+                  <span className="rounded-full bg-[#E0D5D0] px-3 md:px-4 py-1 text-[0.65rem] md:text-xs font-bold uppercase dark:bg-[#302A27]">
+                    {categoryOptions.find(o => o.value === activeCategory)?.label}
+                  </span>
+                )}
+                {searchLabel && (
+                  <span className="rounded-full bg-[#E0D5D0] px-3 md:px-4 py-1 text-[0.65rem] md:text-xs font-bold dark:bg-[#302A27]">
+                    &quot;{searchLabel}&quot;
+                  </span>
+                )}
+              </div>
+            </div>
+            <button 
+              onClick={() => {
+                setActiveCategory("all");
+                onClearSearch();
+                setSearchDraft("");
+              }}
+              className="text-[0.65rem] md:text-xs font-bold uppercase tracking-widest text-[#6A635E] hover:text-black dark:hover:text-white self-start sm:self-auto"
+            >
+              Reset All
+            </button>
+          </div>
         )}
 
-      </AnimatePresence>
+        <ArticlesList
+          category={activeCategory || "all"}
+          language={language}
+          sortBy={sortBy}
+          searchQuery={searchLabel || undefined}
+        />
+      </div>
     </div>
-  )
+  );
 }

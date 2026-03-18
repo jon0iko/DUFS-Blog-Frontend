@@ -79,6 +79,17 @@ function BrowsePageContent() {
     router.push(`${pathname}?${params.toString()}`)
   }
 
+  // Set search from top controls
+  const handleSearchSubmit = (query: string) => {
+    const params = new URLSearchParams(searchParams)
+    if (query) {
+      params.set('search', query)
+    } else {
+      params.delete('search')
+    }
+    router.push(`${pathname}?${params.toString()}`)
+  }
+
   return (
     <>
       <LoadingScreen isLoading={isLoading} />
@@ -92,6 +103,7 @@ function BrowsePageContent() {
         onFilterChange={handleFilterChange}
         searchQuery={searchQuery}
         onClearSearch={handleClearSearch}
+        onSearchSubmit={handleSearchSubmit}
       />
     </>
   )

@@ -171,18 +171,6 @@ export default function BrowseContentSection({
     (page: number) => {
       if (page >= 1 && page <= totalPages) {
         setCurrentPage(page);
-        // Scroll after state update with requestAnimationFrame for better performance
-        requestAnimationFrame(() => {
-          if (articlesGridRef.current) {
-            const yOffset = -120; // Offset for fixed headers and spacing
-            const element = articlesGridRef.current;
-            const y =
-              element.getBoundingClientRect().top +
-              window.pageYOffset +
-              yOffset;
-            window.scrollTo({ top: y, behavior: "smooth" });
-          }
-        });
       }
     },
     [totalPages],

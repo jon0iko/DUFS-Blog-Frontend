@@ -190,7 +190,7 @@ export default function Header() {
               className="hidden md:block w-full max-w-md transition-all duration-300"
               inputClassName={cn(
                 isScrolledPastHero 
-                  ? "bg-background border-input text-foreground placeholder:text-muted-foreground" 
+                  ? "bg-background border-black dark:border-input text-foreground placeholder:text-muted-foreground" 
                   : "bg-white/15 backdrop-blur-md border-white/30 text-white placeholder:text-white/80"
               )}
               isOverlay={!isScrolledPastHero}

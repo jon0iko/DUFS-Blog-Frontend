@@ -216,6 +216,25 @@ export interface Banner {
   locale?: string;
 }
 
+// Publication interface - FLATTENED format matching backend schema
+// Backend fields observed: TitleEnglish, TitleBangla, Description, Image, Color, ShowInHome, Hide, HasVolumes
+export interface Publication {
+  id: number;
+  documentId: string;
+  TitleEnglish: string;
+  TitleBangla: string;
+  Description?: string;
+  Image?: StrapiMedia;
+  Color?: string;
+  ShowInHome: boolean;
+  Hide: boolean;
+  HasVolumes?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  locale?: string;
+}
+
 // User Submission - FLATTENED format
 export interface Submission {
   id: number;
@@ -284,6 +303,7 @@ export type AuthorResponse = StrapiResponse<Author[]>;
 export type CategoryResponse = StrapiResponse<Category[]>;
 export type TagResponse = StrapiResponse<Tag[]>;
 export type BannerResponse = StrapiResponse<Banner[]>;
+export type PublicationResponse = StrapiResponse<Publication[]>;
 export type NavigationResponse = StrapiResponse<NavigationItem[]>;
 export type SiteConfigResponse = StrapiResponse<SiteConfig>;
 

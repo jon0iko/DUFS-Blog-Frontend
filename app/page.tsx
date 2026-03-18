@@ -1,7 +1,7 @@
 import HeroSection from '@/components/home/HeroSection';
 import EditorChoice from '@/components/home/EditorChoice';
 import BrowseContentSectionWrapper from '@/components/home/BrowseContentSectionWrapper';
-import PublicationsSection from '@/components/home/PublicationsSection';
+import PublicationsWrapper from '@/components/home/PublicationsWrapper';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import CurveDivider from '@/components/home/CurveDivider';
 import TextReel from '@/components/home/TextReel';
@@ -21,7 +21,7 @@ export default function Home() {
 
       {/* Publications — full section reveal */}
       <ScrollReveal yOffset={50} duration={0.9}>
-        <PublicationsSection />
+        <PublicationsWrapper />
       </ScrollReveal>
 
       {/* Text reel — GSAP marquee with scroll‑velocity */}

@@ -17,9 +17,11 @@ import type {
   CategoryResponse, 
   BannerResponse, 
   NavigationResponse,
+  PublicationResponse,
   Article,
   Author,
-  Category
+  Category,
+  Publication
 } from '@/types';
 
 class ServerStrapiAPI {
@@ -345,6 +347,43 @@ class ServerStrapiAPI {
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
     );
+  }
+
+  /**
+   * Get all publications (excluding hidden by default)
+   */
+  async getPublications(includeHidden: boolean = false): Promise<PublicationResponse> {
+    const searchParams = new URLSearchParams();
+    // searchParams.append('status', 'published');
+    // searchParams.append('sort', 'TitleEnglish:asc');
+    searchParams.append('populate[Image]', 'true');
+
+    if (!includeHidden) {
+      searchParams.append('filters[Hide][$eq]', 'false');
+    }
+
+    return this.request<PublicationResponse>(
+      `${config.strapi.endpoints.publications}?${searchParams.toString()}`
+    );
+  }
+
+  /**
+   * Get publications shown on home page (max 2)
+   */
+  async getHomePublications(limit: number = 2): Promise<Publication[]> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('status', 'published');
+    searchParams.append('filters[Hide][$eq]', 'false');
+    searchParams.append('filters[ShowInHome][$eq]', 'true');
+    searchParams.append('sort', 'updatedAt:desc');
+    searchParams.append('pagination[pageSize]', limit.toString());
+    searchParams.append('populate[Image]', 'true');
+
+    const response = await this.request<PublicationResponse>(
+      `${config.strapi.endpoints.publications}?${searchParams.toString()}`
+    );
+
+    return response.data;
   }
 }
 

@@ -14,6 +14,7 @@ export const config = {
       navigation: '/api/navigation-items',
       socialLinks: '/api/social-links',
       textReel: '/api/text-reel-homepage',
+      publications: '/api/publications',
       auth: {
         login: '/api/auth/local',
         register: '/api/auth/local/register',
