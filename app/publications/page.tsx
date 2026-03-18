@@ -12,5 +12,7 @@ export default async function PublicationsPage() {
     console.error('Failed to load publications page data:', error);
   }
 
-  return <PublicationsSection publications={publications} />;
+  return ( 
+  <PublicationsSection publications={publications} />
+  );
 }

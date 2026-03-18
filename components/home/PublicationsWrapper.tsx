@@ -17,7 +17,7 @@ export default function PublicationsWrapper() {
         setIsLoading(true);
         const allPublications = await serverStrapiAPI.getPublications();
         const visible = allPublications.data.filter((item) => !item.Hide);
-        const publications = visible.filter((item) => item.ShowInHome).slice(0, 2);
+        const publications = visible.filter((item) => item.ShowInHome);
         
         setHomePublications(publications);
         setHasMorePublications(visible.length > publications.length);
