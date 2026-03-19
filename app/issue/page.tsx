@@ -5,9 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { strapiAPI } from '@/lib/api';
-import { getStrapiMediaUrl, getArticleData } from '@/lib/strapi-helpers';
+import { getArticleData, getStrapiMediaUrl } from '@/lib/strapi-helpers';
+import { getFontClass } from '@/lib/fonts';
 import type { Publication_Issue, Article } from '@/types';
-import { ChevronLeft, BookOpen } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import ArticleCard from '@/components/home/ArticleCard';
 import ArticleHTMLContent from '@/components/articles/ArticleHTMLContent';
@@ -33,6 +34,7 @@ function IssueInner() {
         
         if (issueData) {
           setIssue(issueData);
+          console.log(issueData.CoverImage);
         }
         if (articlesRes && articlesRes.data) {
           setPieces(articlesRes.data);
@@ -87,14 +89,14 @@ function IssueInner() {
   }
 
   return (
-    <div className="min-h-screen pb-24 relative overflow-hidden bg-background">
-      {/* Background elements */}
+    <div className="min-h-screen relative bg-background">
+      {/* Consistent background pattern with main site */}
       <div
-        className="pointer-events-none absolute -inset-52 select-none z-0 dark:hidden opacity-50"
+        className="pointer-events-none absolute inset-0 select-none z-0 dark:hidden opacity-30"
         style={{ backgroundImage: "url(/images/bgpaper.jpg)", backgroundRepeat: "repeat" }}
       />
       <div
-        className="bg-pattern-dark pointer-events-none absolute -inset-52 hidden select-none z-0 dark:block opacity-50"
+        className="pointer-events-none absolute inset-0 hidden select-none z-0 dark:block opacity-30"
         style={{
           backgroundImage: "url(/images/bgpaper_dark.jpg)",
           backgroundRepeat: "repeat",
@@ -102,40 +104,43 @@ function IssueInner() {
         }}
       />
 
-      <div className="container relative z-10 pt-16">
+      <div className="container relative z-10 pt-16 pb-24">
         {/* Navigation */}
         <button 
           onClick={() => window.history.back()} 
-          className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-foreground/70 hover:text-foreground mb-12 transition-colors"
         >
-          <ChevronLeft className="w-4 h-4" /> Back to Issues
+          <ChevronLeft className="w-4 h-4" /> Back
         </button>
 
-        {/* Hero Section */}
-        <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center md:items-start mb-16 bg-card p-8 rounded-2xl border border-border shadow-md">
-          {issue.CoverImage && (
-            <div className="relative w-full max-w-[280px] aspect-[3/4] flex-shrink-0 drop-shadow-2xl rounded-sm overflow-hidden">
-              <Image
-                src={getStrapiMediaUrl(issue.CoverImage)}
-                alt={issue.Title}
-                fill
-                className="object-cover object-center"
-                sizes="(max-width: 768px) 100vw, 280px"
-              />
-            </div>
-          )}
-          <div className="flex-1 flex flex-col justify-center h-full">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-bold uppercase tracking-widest mb-6 w-max border border-border">
-              <BookOpen className="w-3.5 h-3.5" /> Published {new Date(issue.PublishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight text-foreground">
-              {issue.Title}
-            </h1>
+        {/* Header Section */}
+        <div className="mb-16">
+          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
+            {/* Cover Image - Desktop only */}
+            {issue.CoverImage && (
+              <div className="hidden md:block relative w-full max-w-[320px] h-auto flex-shrink-0 overflow-hidden rounded-lg border border-border">
+                <Image
+                  src={getStrapiMediaUrl(issue.CoverImage)}
+                  alt={issue.Title}
+                  width={320}
+                  height={400}
+                  className="w-full h-auto object-cover object-center"
+                  sizes="320px"
+                  priority
+                />
+              </div>
+            )}
             
-            {/* Action Banner */}
-            <div className="bg-primary/10 border border-primary/20 rounded-xl p-6 mb-8">
-              <p className="text-foreground font-semibold text-base md:text-lg flex items-start gap-3">
-                To read the complete publication and view all pieces, please collect your physical copy from the DUFS Room.
+            {/* Text Content */}
+            <div className="flex-1">
+              <time className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-3">
+                {new Date(issue.PublishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+              </time>
+              <h1 className={`text-5xl md:text-6xl font-black tracking-tight text-foreground mb-8 leading-tight ${getFontClass(issue.Title)}`}>
+                {issue.Title}
+              </h1>
+              <p className="text-foreground/70 text-sm md:text-base max-w-lg leading-relaxed">
+                This publication is available in print. To read the complete issue, collect it from the DUFS Room.
               </p>
             </div>
           </div>
@@ -143,25 +148,19 @@ function IssueInner() {
 
         {/* Details / Index */}
         {issue.Details && (
-          <div className="mb-20 max-w-4xl mx-auto bg-card rounded-2xl p-8 md:p-12 border border-border shadow-sm">
-            <h2 className="text-2xl md:text-3xl font-bold mb-8 border-b border-border pb-4">Inside this Issue</h2>
-            <div className="prose dark:prose-invert prose-lg max-w-none">
+          <div className="mb-0 py-12 border-t border-border">
+            <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-8">Contents</h2>
+            <div className={`prose dark:prose-invert prose-headings:text-foreground prose-p:text-foreground/75 `}>
               <ArticleHTMLContent content={issue.Details} fontSize="medium" />
             </div>
           </div>
         )}
 
-        {/* Selected Writings */}
+        {/* Digital Pieces */}
         {pieces && pieces.length > 0 && (
-          <div className="mt-16">
-            <div className="flex flex-col items-center text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-4">Selected Writings</h2>
-              <p className="text-muted-foreground max-w-2xl">
-                A glimpse into the contents.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+          <div className="py-12 border-t border-border">
+            <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-8">Digital Pieces</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {pieces.map((piece) => {
                 const articleData = getArticleData(piece);
                 if (!articleData) return null;

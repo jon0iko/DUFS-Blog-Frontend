@@ -10,6 +10,8 @@ import type { Publication, Publication_Issue } from '@/types';
 import { derivePublicationPalette } from '@/lib/publication-colors';
 import { ChevronLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getFontClass } from '@/lib/fonts';
+
 
 function IssuesInner() {
   const searchParams = useSearchParams();
@@ -83,14 +85,14 @@ function IssuesInner() {
   const palette = derivePublicationPalette(publication.Color);
 
   return (
-    <div className="min-h-screen pb-24 relative overflow-hidden bg-background">
-      {/* Background elements */}
+    <div className="min-h-screen relative bg-background">
+      {/* Consistent background pattern with main site */}
       <div
-        className="pointer-events-none absolute -inset-52 select-none z-0 dark:hidden opacity-50"
+        className="pointer-events-none absolute inset-0 select-none z-0 dark:hidden opacity-30"
         style={{ backgroundImage: "url(/images/bgpaper.jpg)", backgroundRepeat: "repeat" }}
       />
       <div
-        className="bg-pattern-dark pointer-events-none absolute -inset-52 hidden select-none z-0 dark:block opacity-50"
+        className="pointer-events-none absolute inset-0 hidden select-none z-0 dark:block opacity-30"
         style={{
           backgroundImage: "url(/images/bgpaper_dark.jpg)",
           backgroundRepeat: "repeat",
@@ -98,43 +100,71 @@ function IssuesInner() {
         }}
       />
 
-      <div className="container relative z-10 pt-16">
-        <Link href="/publications" className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-12 transition-colors">
+      <div className="container relative z-10 pt-16 pb-24">
+        {/* Navigation */}
+        <Link href="/publications" className="inline-flex items-center gap-2 text-sm font-semibold text-foreground/70 hover:text-foreground mb-16 transition-colors">
           <ChevronLeft className="w-4 h-4" /> Back to Publications
         </Link>
 
         {/* Publication Header */}
-        <div className="flex flex-col items-center text-center mb-16 max-w-3xl mx-auto">
-          <span className="block w-12 h-1 mb-6 rounded-full" style={{ backgroundColor: palette.spineColor }} />
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 font-kalpurush" style={{ color: palette.titleColor }}>
-            {publication.TitleBangla}
-          </h1>
-          <p className="text-sm font-bold uppercase tracking-[0.3em] text-muted-foreground mb-6">
-            {publication.TitleEnglish}
-          </p>
-          {publication.Description && (
-            <p className="text-base md:text-lg text-foreground/80 leading-relaxed font-medium">
-              {publication.Description}
-            </p>
-          )}
+        <div className="mb-16">
+          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
+            {/* Cover Image - Desktop only */}
+            {publication.Image && (
+              <div className="hidden md:block relative w-full max-w-[320px] h-auto flex-shrink-0 overflow-hidden rounded-lg border border-border">
+                <Image
+                  src={getStrapiMediaUrl(publication.Image)}
+                  alt={publication.TitleEnglish}
+                  width={320}
+                  height={400}
+                  className="w-full h-auto object-cover object-center"
+                  sizes="320px"
+                  priority
+                />
+              </div>
+            )}
+
+            {/* Text Content */}
+            <div className="flex-1">
+              <h1 
+                className={`text-5xl md:text-6xl font-black tracking-tight mb-4 ${getFontClass(publication.TitleBangla)}`}
+                style={{ color: palette.titleColor }}
+              >
+                {publication.TitleBangla}
+              </h1>
+              <p className="text-sm md:text-base font-semibold uppercase tracking-widest text-muted-foreground mb-6">
+                {publication.TitleEnglish}
+              </p>
+              {publication.Description && (
+                <p className={`text-foreground/70 text-lg md:text-xl ${getFontClass(publication.Description)}`}>
+                  {publication.Description}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* Issues Section */}
+        <div className="py-8 border-t border-border">
+          <h2 className={`text-2xl md:text-3xl font-black tracking-tight mb-8 ${getFontClass('Issues')}`}>Issues</h2>
 
         {/* Issues Grid */}
         {issues.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {issues.map((issue) => (
               <Link 
                 key={issue.documentId} 
                 href={`/issue?id=${issue.documentId}`}
-                className="group flex flex-col h-full bg-card rounded-xl overflow-hidden border border-border shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                className="group flex flex-col h-full overflow-hidden border border-border rounded-lg bg-card/50 hover:border-foreground/20 transition-all duration-300"
               >
-                <div className="relative aspect-[3/4] w-full bg-muted overflow-hidden flex items-center justify-center p-6">
+                {/* Cover Image */}
+                <div className="relative aspect-[3/4] w-full bg-muted overflow-hidden">
                   {issue.CoverImage ? (
                     <Image
                       src={getStrapiMediaUrl(issue.CoverImage)}
                       alt={issue.Title}
                       fill
-                      className="object-contain object-center drop-shadow-2xl transition-transform duration-500 group-hover:scale-105 p-4"
+                      className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                   ) : publication.Image ? (
@@ -142,31 +172,29 @@ function IssuesInner() {
                       src={getStrapiMediaUrl(publication.Image)}
                       alt={publication.TitleEnglish}
                       fill
-                      className="object-contain object-center drop-shadow-2xl opacity-80 p-4"
+                      className="object-cover object-center opacity-60"
                     />
                   ) : null}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
-                <div className="p-6 flex flex-col flex-1">
-                  <div className="text-xs font-bold tracking-widest text-muted-foreground mb-2">
-                    {new Date(issue.PublishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                  </div>
-                  <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
+                
+                {/* Metadata */}
+                <div className="p-5 flex flex-col flex-1">
+                  <time className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+                    {new Date(issue.PublishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}
+                  </time>
+                  <h3 className={`text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors ${getFontClass(issue.Title)}`}>
                     {issue.Title}
                   </h3>
-                  <div className="mt-auto pt-4 flex items-center text-sm font-semibold text-primary">
-                    View Issue Content <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
-                  </div>
                 </div>
               </Link>
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 bg-muted/30 rounded-xl border border-border">
-            <h3 className="text-xl font-semibold mb-2">No Issues Found</h3>
-            <p className="text-muted-foreground">This publication does not have any issues uploaded yet.</p>
+          <div className="text-center py-16 px-8 bg-card/30 rounded-lg border border-border">
+            <p className="text-muted-foreground text-sm">No issues found for this publication yet.</p>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { getFontClassZillaSlab, splitMixedText } from '@/lib/fonts';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { isLikelyMarkdown } from '@/lib/markdown';
+
 
 interface ArticleHTMLContentProps {
   content: string;
@@ -72,10 +72,7 @@ export default function ArticleHTMLContent({
       }
     );
 
-    const rawHtml = isLikelyMarkdown(content)
-      ? marked.parse(markdownWithImageCaptions, { gfm: true, breaks: false, async: false })
-      : content;
-
+    const rawHtml = marked.parse(markdownWithImageCaptions, { gfm: true, breaks: false, async: false });
     let html = DOMPurify.sanitize(rawHtml as string);
 
     // Helper function to extract text from HTML for font detection

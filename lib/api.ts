@@ -1438,7 +1438,7 @@ class StrapiAPI {
     const searchParams = new URLSearchParams();
     
     // Populate CoverImage
-    // searchParams.append('populate[CoverImage]', '*');
+    searchParams.append('populate[CoverImage]', 'true');
     
     // Populate the relation pieces (which are Articles), and then their nested author and category
     searchParams.append('populate[pieces][populate][0]', 'featuredImage');

@@ -1,6 +1,8 @@
 import PublicationsSection from '../../components/home/PublicationsSection';
 import { serverStrapiAPI } from '@/lib/server-api';
 import type { Publication } from '@/types';
+import Link from 'next/link';
+import { ChevronLeft } from 'lucide-react';
 
 export default async function PublicationsPage() {
   let publications: Publication[] = [];
@@ -29,6 +31,11 @@ export default async function PublicationsPage() {
       />
       
       <div className="relative z-10 pt-10">
+        <div className="container">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-foreground/70 hover:text-foreground transition-colors">
+            <ChevronLeft className="w-4 h-4" /> Back to Home
+          </Link>
+        </div>
         <PublicationsSection publications={publications} />
       </div>
     </div>

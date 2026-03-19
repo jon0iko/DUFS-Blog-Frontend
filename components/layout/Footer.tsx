@@ -195,7 +195,7 @@ export default function Footer() {
                 href="#"
                 className="hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
               >
-                Terms of Service
+                Terms of Publication
               </Link>
             </div>
           </div>
