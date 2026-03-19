@@ -17,6 +17,7 @@ import {
   Comment,
   Draft,
   DraftResponse,
+  Publication,
   Publication_Issue
 } from '@/types';
 import { getAuthorAvatar } from './strapi-helpers';
@@ -36,6 +37,46 @@ export interface BookmarkedArticle {
   category?: string;
   language?: string;
   createdAt: string;
+}
+
+export interface UISocialLink {
+  id: number;
+  platform: string;
+  href: string;
+  icon?: string;
+}
+
+interface RawSocialLink {
+  id?: number;
+  Platform?: string;
+  Link?: string;
+  Logo?:
+    | { url?: string }
+    | { data?: { url?: string } | Array<{ url?: string }> }
+    | Array<{ url?: string }>;
+}
+
+function resolveSocialLogoUrl(logo: RawSocialLink['Logo']): string | undefined {
+  if (!logo) return undefined;
+
+  if (Array.isArray(logo)) {
+    const firstUrl = logo[0]?.url;
+    if (!firstUrl) return undefined;
+    return firstUrl.startsWith('http') ? firstUrl : `${config.strapi.url}${firstUrl}`;
+  }
+
+  const directUrl = (logo as { url?: string }).url;
+  if (directUrl) {
+    return directUrl.startsWith('http') ? directUrl : `${config.strapi.url}${directUrl}`;
+  }
+
+  const dataField = (logo as { data?: { url?: string } | Array<{ url?: string }> }).data;
+  if (!dataField) return undefined;
+
+  const nestedUrl = Array.isArray(dataField) ? dataField[0]?.url : dataField.url;
+  if (!nestedUrl) return undefined;
+
+  return nestedUrl.startsWith('http') ? nestedUrl : `${config.strapi.url}${nestedUrl}`;
 }
 
 /**
@@ -654,6 +695,38 @@ class StrapiAPI {
     return this.request<NavigationResponse>(
       `${config.strapi.endpoints.navigation}?${searchParams.toString()}`
     );
+  }
+
+  /**
+   * Get active social links for shared layout usage (Sidebar/Footer)
+   */
+  async getSocialLinks(): Promise<UISocialLink[]> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('populate', 'Logo');
+
+    const response = await this.request<{ data: RawSocialLink[]; meta: object }>(
+      `${config.strapi.endpoints.socialLinks}?${searchParams.toString()}`
+    );
+
+    return response.data
+      .map((item): UISocialLink | null => {
+        const id = typeof item.id === 'number' ? item.id : 0;
+        const platform = String(item.Platform ?? '').trim();
+        const href = String(item.Link ?? '').trim();
+        const icon = resolveSocialLogoUrl(item.Logo);
+
+        if (!platform || !href) {
+          return null;
+        }
+
+        return {
+          id,
+          platform,
+          href,
+          icon,
+        };
+      })
+      .filter((item): item is UISocialLink => Boolean(item));
   }
 
   // ============================================

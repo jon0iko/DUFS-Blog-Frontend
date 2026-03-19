@@ -3,7 +3,6 @@
 
 import Link from 'next/link';
 import { X, LogIn, LogOut, User, UserPlus } from 'lucide-react';
-import { socialLinks } from '@/data/dummy-data'; // Keep dummy data for social links for now
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -13,6 +12,7 @@ import { getUserAvatarUrl } from '@/lib/auth'; // Import avatar helper
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Palette } from 'lucide-react';
 import { useRef } from 'react';
+import { useSocialLinks } from '@/contexts/SocialLinksContext';
 
 interface NavigationItem {
   title: string;
@@ -28,6 +28,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarProps) {
   const { isAuthenticated, user, logout } = useAuth(); // Use authentication context
+  const { socialLinks } = useSocialLinks();
   const { theme, setTheme } = useTheme();
   const closeSidebar = () => setIsOpen(false);
 
@@ -50,6 +51,7 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
     { title: 'Home', href: '/' },
     { title: 'Browse', href: '/browse' },
     { title: 'Write Content', href: '/submit' },
+    { title: 'Publications', href: '/publications' },
   ];
 
   // Theme pill switcher
@@ -97,7 +99,7 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
         className={cn(
           "fixed inset-y-0 left-0 z-[60] h-[100dvh]",
           "w-full min-[375px]:w-[85vw] sm:w-80",
-          "flex flex-col border-r-4 border-r-gray-800 dark:border-r-white bg-background p-6 shadow-lg ",
+          "flex flex-col border-r-4 border-r-gray-800 dark:border-r-brand-accent bg-background p-6 shadow-lg ",
           "overflow-y-auto scrollbar-hide",
           "transition-transform duration-300 ease-in-out",
           isOpen ? 'translate-x-0' : '-translate-x-full'
@@ -113,11 +115,13 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
       >
         {/* Header section (will now scroll with content if needed) */}
         {/* Use flex-shrink-0 to prevent shrinking if content is very long */}
-        <div className="mb-8 flex flex-shrink-0 items-center justify-between">
+        <div className="mb-4 flex flex-shrink-0 items-center justify-between">
           <Link href="/" onClick={closeSidebar} className="flex items-center space-x-2">
-              <span className="font-bold text-xl text-foreground">
-                DUFS Blog Logo
-              </span>
+              <img 
+                src="/images/logoo.png" 
+                alt="DUFS Blog Logo" 
+                className="h-16 w-16 p-2 rounded-3xl object-contain" 
+              />
           </Link>
           <Button
             variant="ghost"
@@ -133,9 +137,11 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
         {/* User Authentication Section */}
         {isAuthenticated ? (
           // Auth state: User card
-          <div className="mb-6 py-4 px-4 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-12 w-12 flex-shrink-0 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center relative">
+          <div className="mb-5 rounded-2xl border border-border/60 bg-gradient-to-br from-muted/70 via-muted/40 to-background/80 p-4 shadow-[0_8px_30px_-18px_rgba(0,0,0,0.75)] backdrop-blur-sm">
+            
+
+            <div className="mb-4 flex items-center gap-3">
+              <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-brand-accent/70 ring-2 ring-background/80">
                 <Image
                   src={getUserAvatarUrl(user)}
                   alt={user?.username || 'User'}
@@ -144,25 +150,33 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
                 />
               </div>
               <div className="min-w-0">
-                <p className="font-bold text-sm truncate">{user?.username}</p>
-                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                <p className="truncate text-base font-semibold leading-none text-foreground">
+                  {user?.username}
+                </p>
+                <p className="mt-1 truncate text-xs text-muted-foreground">{user?.email}</p>
               </div>
             </div>
             
-            <div className="flex flex-col gap-2">
-              <Link href="/account" className="w-full" onClick={closeSidebar}>
-                <Button variant="outline" className="w-full justify-center" size="sm">
-                  <User className="mr-0 h-4 w-4" /> Profile
+            <div className="flex items-center gap-2.5">
+              <Link href="/account" className="flex-1" onClick={closeSidebar}>
+                <Button
+                  variant="outline"
+                  className="h-9 w-full justify-center border-border/70 bg-background/80 font-medium hover:bg-background"
+                  size="sm"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
                 </Button>
               </Link>
               
               <Button 
                 variant="ghost" 
-                className="w-full justify-center text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" 
+                className="h-9 flex-1 justify-center border border-transparent font-medium text-red-600 hover:border-red-200 hover:bg-red-50/80 dark:text-red-400 dark:hover:border-red-900/40 dark:hover:bg-red-900/20" 
                 size="sm"
                 onClick={() => { logout(); closeSidebar(); }}
               >
-                <LogOut className="mr-0 h-4 w-4" /> Log Out
+                <LogOut className="mr-2 h-4 w-4" />
+                Log Out
               </Button>
             </div>
           </div>
@@ -185,6 +199,10 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
             </div>
           </div>
         )}
+
+        <div className='md:hidden mt-0 mb-8 flex-shrink-0'>
+          <ThemePill />
+        </div>
 
         {/* Navigation Section */}
         <div className="flex items-center gap-3 mb-3">
@@ -215,12 +233,6 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
         {/* Bottom Section */}
         <div className="mt-6 flex-shrink-0 space-y-6">
           <Separator />
-
-          {/* Theme Pill Switcher */}
-          <ThemePill />
-
-          <Separator />
-
           {/* Social Links Section */}
           <div className="flex space-x-4">
             {socialLinks.map((link) => (
@@ -229,13 +241,15 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white hover:bg-muted-foreground/50 text-background dark:text-foreground hover:text-foreground transition-all duration-200"
                 aria-label={`Visit our ${link.platform} page`}
               >
                 {typeof link.icon === 'string' && link.icon ? (
-                    <Image
+                    // External Strapi icon URLs are rendered with img for flexible host support.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
                       src={link.icon} alt={`${link.platform} icon`}
-                      width={24} height={24} className="h-6 w-6"
+                      className="h-6 w-6 object-contain"
                     />
                 ) : (
                   <span className='uppercase text-xs'>{link.platform}</span>

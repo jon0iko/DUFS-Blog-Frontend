@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/components/ui/toast";
 import LayoutContent from "@/components/layout/LayoutContent";
 import { LazyMotion, domAnimation } from "framer-motion";
+import { SocialLinksProvider } from "@/contexts/SocialLinksContext";
 
 const roboto = localFont({
   src: [
@@ -189,13 +190,15 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <ToastProvider>
-              <LayoutContent>
-                <LazyMotion features={domAnimation}>{children}</LazyMotion>
-              </LayoutContent>
-            </ToastProvider>
-          </AuthProvider>
+          <SocialLinksProvider>
+            <AuthProvider>
+              <ToastProvider>
+                <LayoutContent>
+                  <LazyMotion features={domAnimation}>{children}</LazyMotion>
+                </LayoutContent>
+              </ToastProvider>
+            </AuthProvider>
+          </SocialLinksProvider>
         </ThemeProvider>
       </body>
     </html>

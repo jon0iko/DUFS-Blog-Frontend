@@ -324,6 +324,7 @@ export type BannerResponse = StrapiResponse<Banner[]>;
 export type PublicationResponse = StrapiResponse<Publication[]>;
 export type IssueResponse = StrapiResponse<Publication_Issue[]>;
 export type NavigationResponse = StrapiResponse<NavigationItem[]>;
+export type SocialLinkResponse = StrapiResponse<SocialLink[]>;
 export type SiteConfigResponse = StrapiResponse<SiteConfig>;
 
 // Legacy types for backward compatibility (will be gradually replaced)

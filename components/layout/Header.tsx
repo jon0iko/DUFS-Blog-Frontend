@@ -168,7 +168,7 @@ export default function Header() {
               <img 
                 src="/images/logoo.png" 
                 alt="DUFS Blog Logo" 
-                className="h-10 w-12 object-contain" 
+                className="h-10 w-12  object-contain" 
               />
               <span 
                 className={cn(

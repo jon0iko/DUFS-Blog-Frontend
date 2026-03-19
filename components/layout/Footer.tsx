@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
-import { socialLinks } from "@/data/dummy-data";
-import Image from "next/image";
+import { useSocialLinks } from "@/contexts/SocialLinksContext";
 
 export default function Footer() {
+  const { socialLinks } = useSocialLinks();
+
   return (
     <footer className="border-t border-border overflow-x-hidden bg-brand-black-100">
       <div className="container py-12 md:py-16">
@@ -36,12 +37,10 @@ export default function Footer() {
                   aria-label={`Visit our ${link.platform} page`}
                 >
                   {link.icon ? (
-                    <Image
+                    <img
                       src={link.icon}
                       alt={`${link.platform} icon`}
-                      width={18}
-                      height={18}
-                      className="w-[18px] h-[18px]"
+                      className="w-[18px] h-[18px] object-contain"
                     />
                   ) : (
                     <span className="uppercase text-xs font-semibold">

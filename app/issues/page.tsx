@@ -150,39 +150,40 @@ function IssuesInner() {
 
         {/* Issues Grid */}
         {issues.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {issues.map((issue) => (
               <Link 
                 key={issue.documentId} 
                 href={`/issue?id=${issue.documentId}`}
-                className="group flex flex-col h-full overflow-hidden border border-border rounded-lg bg-card/50 hover:border-foreground/20 transition-all duration-300"
+                className="group flex h-full w-full max-w-[260px] flex-col overflow-hidden rounded-lg border border-border bg-card/50 transition-all duration-300 hover:border-foreground/20"
               >
                 {/* Cover Image */}
-                <div className="relative aspect-[3/4] w-full bg-muted overflow-hidden">
+                <div className="relative h-[320px] w-full overflow-hidden bg-muted/70 p-2">
                   {issue.CoverImage ? (
                     <Image
                       src={getStrapiMediaUrl(issue.CoverImage)}
                       alt={issue.Title}
                       fill
-                      className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-contain object-center transition-transform duration-500 group-hover:scale-[1.03]"
+                      sizes="(max-width: 768px) 260px, (max-width: 1200px) 240px, 260px"
                     />
                   ) : publication.Image ? (
                     <Image
                       src={getStrapiMediaUrl(publication.Image)}
                       alt={publication.TitleEnglish}
                       fill
-                      className="object-cover object-center opacity-60"
+                      className="object-contain object-center opacity-80"
+                      sizes="(max-width: 768px) 260px, (max-width: 1200px) 240px, 260px"
                     />
                   ) : null}
                 </div>
                 
                 {/* Metadata */}
-                <div className="p-5 flex flex-col flex-1">
-                  <time className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+                <div className="flex flex-1 flex-col p-4">
+                  <time className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     {new Date(issue.PublishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}
                   </time>
-                  <h3 className={`text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors ${getFontClass(issue.Title)}`}>
+                  <h3 className={`line-clamp-2 text-base font-semibold text-foreground transition-colors group-hover:text-primary ${getFontClass(issue.Title)}`}>
                     {issue.Title}
                   </h3>
                 </div>
