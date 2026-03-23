@@ -7,11 +7,13 @@ import Link from 'next/link';
 import { strapiAPI } from '@/lib/api';
 import { getArticleData, getStrapiMediaUrl } from '@/lib/strapi-helpers';
 import { getFontClass } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import type { Publication_Issue, Article } from '@/types';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, FolderOpen } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import ArticleCard from '@/components/home/ArticleCard';
-import ArticleHTMLContent from '@/components/articles/ArticleHTMLContent';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 function IssueInner() {
   const searchParams = useSearchParams();
@@ -34,10 +36,10 @@ function IssueInner() {
         
         if (issueData) {
           setIssue(issueData);
-          console.log(issueData.CoverImage);
         }
         if (articlesRes && articlesRes.data) {
           setPieces(articlesRes.data);
+          console.log('Fetched pieces for issue:', articlesRes.data);
         }
       } catch (err) {
         console.error('Failed to load issue or pieces:', err);
@@ -115,32 +117,42 @@ function IssueInner() {
 
         {/* Header Section */}
         <div className="mb-16">
-          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
-            {/* Cover Image - Desktop only */}
+          <div className="flex flex-col gap-6 md:gap-8 items-center justify-center text-center max-w-2xl mx-auto">
+            {/* Publication Header */}
+            {issue.publication && (
+              <Link
+                href={`/issues?pub=${issue.publication.documentId}`}
+                className="inline-flex items-center gap-1.5 mb-3"
+              >
+                <FolderOpen className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className={cn("text-sm text-muted-foreground hover:text-foreground transition-colors", getFontClass(issue.publication.TitleEnglish || ""))}>
+                  {issue.publication.TitleEnglish}
+                </span>
+              </Link>
+            )}
+
+            {/* Cover Image */}
             {issue.CoverImage && (
-              <div className="hidden md:block relative w-full max-w-[320px] h-auto flex-shrink-0 overflow-hidden rounded-lg border border-border">
+              <div className="md:w-[220px] md:flex-shrink-0 h-64 md:h-80 rounded-lg border border-border overflow-hidden">
                 <Image
                   src={getStrapiMediaUrl(issue.CoverImage)}
                   alt={issue.Title}
-                  width={320}
-                  height={400}
-                  className="w-full h-auto object-cover object-center"
-                  sizes="320px"
+                  width={220}
+                  height={320}
+                  className="w-full h-full object-cover object-center"
+                  sizes="(max-width: 768px) 100vw, 220px"
                   priority
                 />
               </div>
             )}
             
             {/* Text Content */}
-            <div className="flex-1">
-              <time className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-3">
-                {new Date(issue.PublishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+            <div className="flex flex-col justify-center items-center">
+              <time className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">
+                Published: {new Date(issue.PublishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
               </time>
-              <h1 className={`text-5xl md:text-6xl font-black tracking-tight text-foreground mb-8 leading-tight ${getFontClass(issue.Title)}`}>
-                {issue.Title}
-              </h1>
-              <p className="text-foreground/70 text-sm md:text-base max-w-lg leading-relaxed">
-                This publication is available in print. To read the complete issue, collect it from the DUFS Room.
+              <p className="text-foreground/90 text-base md:text-lg font-black leading-relaxed">
+                This publication is available in print.<br></br> To read the complete issue, collect it from the DUFS Room.
               </p>
             </div>
           </div>
@@ -150,9 +162,12 @@ function IssueInner() {
         {issue.Details && (
           <div className="mb-0 py-12 border-t border-border">
             <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-8">Contents</h2>
-            <div className={`prose dark:prose-invert prose-headings:text-foreground prose-p:text-foreground/75 `}>
-              <ArticleHTMLContent content={issue.Details} fontSize="medium" />
-            </div>
+            <div 
+              className={`prose dark:prose-invert prose-headings:text-foreground prose-p:text-foreground max-w-none text-xl md:text-xl ${getFontClass(issue.Details)}`}
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(marked.parse(issue.Details, { gfm: true, breaks: false, async: false }) as string)
+              }}
+            />
           </div>
         )}
 

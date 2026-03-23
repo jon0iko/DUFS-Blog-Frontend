@@ -252,7 +252,7 @@ class StrapiAPI {
     searchParams.append('sort', sort);
     
     // Populate - default fields to populate
-    const populate = params?.populate || ['featuredImage', 'author', 'category', 'tags'];
+    const populate = params?.populate || ['featuredImage', 'author', 'category', 'tags', 'publication_issue'];
     populate.forEach((field, index) => {
       searchParams.append(`populate[${index}]`, field);
     });
@@ -279,6 +279,7 @@ class StrapiAPI {
     searchParams.append('populate[category]', 'true');
     searchParams.append('populate[tags]', 'true');
     searchParams.append('populate[socialImage]', 'true');
+    searchParams.append('populate[publication_issue][populate]', 'CoverImage');
     // Deep-populate author.users_permissions_user so Avatar is included
     searchParams.append('populate[author][populate][users_permissions_user][populate]', '*');
 
@@ -303,6 +304,7 @@ class StrapiAPI {
     searchParams.append('populate[category]', 'true');
     searchParams.append('populate[tags]', 'true');
     searchParams.append('populate[socialImage]', 'true');
+    searchParams.append('populate[publication_issue][populate]', 'CoverImage');
     // Deep-populate author.users_permissions_user so Avatar is included
     searchParams.append('populate[author][populate][users_permissions_user][populate]', '*');
 
@@ -448,7 +450,7 @@ class StrapiAPI {
     searchParams.append('sort', 'publishedAt:desc');
     
     // Populate necessary fields
-    const populate = ['featuredImage', 'author', 'category', 'tags'];
+    const populate = ['featuredImage', 'author', 'category', 'tags', 'publication_issue'];
     populate.forEach((field, index) => {
       searchParams.append(`populate[${index}]`, field);
     });
@@ -500,6 +502,7 @@ class StrapiAPI {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[slug][$eq]', slug);
     searchParams.append('populate[0]', 'Avatar');
+    searchParams.append('populate[users_permissions_user][populate][0]', 'Avatar');
     
     const response = await this.request<AuthorResponse>(
       `${config.strapi.endpoints.authors}?${searchParams.toString()}`
@@ -1512,6 +1515,9 @@ class StrapiAPI {
     
     // Populate CoverImage
     searchParams.append('populate[CoverImage]', 'true');
+    
+    // Populate publication relation
+    searchParams.append('populate[publication]', 'true');
     
     // Populate the relation pieces (which are Articles), and then their nested author and category
     searchParams.append('populate[pieces][populate][0]', 'featuredImage');

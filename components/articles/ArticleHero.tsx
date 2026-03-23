@@ -13,23 +13,27 @@ interface ArticleHeroProps {
   article: Article;
   imageUrl: string;
   authorAvatar?: string;
+  authorName?: string;
   publishedDate: string;
   shortPublishedDate: string;
   viewCount: number;
+  isPublicationAuthor?: boolean;
 }
 
 export default function ArticleHero({
   article,
   imageUrl,
   authorAvatar,
+  authorName,
   publishedDate,
   shortPublishedDate,
   viewCount,
+  isPublicationAuthor = false,
 }: ArticleHeroProps) {
   return (
     <>
       {/* ── MOBILE ARTICLE HEADER (below lg breakpoint) ── */}
-      <div className="lg:hidden bg-background px-4 pt-5 min-h-[70vh]">
+      <div className={cn("lg:hidden bg-background px-4 pt-5", article.featuredImage && "min-h-[70vh]")}>
         {article.category && (
           <Link
             href={`/browse/?category=${article.category.Slug}`}
@@ -49,7 +53,7 @@ export default function ArticleHero({
 
         <h1
           className={cn(
-            "text-[1.75rem] font-bold leading-snug text-foreground mb-4",
+            "text-3xl font-bold leading-snug text-foreground mb-4",
             getFontClass(article.title),
           )}
         >
@@ -79,6 +83,19 @@ export default function ArticleHero({
             </span>          </Link>
         )}
 
+        {!article.author && authorName && (
+          <div className="flex items-center gap-2.5 mb-3">
+            <span
+              className={cn(
+                "text-sm font-semibold text-foreground",
+                getFontClass(authorName),
+              )}
+            >
+              {authorName}
+            </span>
+          </div>
+        )}
+
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground pb-4 mb-3">
           {shortPublishedDate && (
             <div className="flex items-center gap-1.5">
@@ -102,19 +119,21 @@ export default function ArticleHero({
           </div>
         </div>
 
-        <div className="lg:hidden w-full aspect-video relative bg-muted rounded-xl overflow-hidden">
-          <Image
-            src={imageUrl}
-            alt={article.featuredImage?.alternativeText || article.title}
-            fill
-            className="object-contain"
-            priority
-          />
-          <div
-            className="absolute inset-0 mix-blend-overlay opacity-15"
-            style={{ backgroundImage: `url(/images/GrainTexture.webp)` }}
-          />
-        </div>
+        {article.featuredImage && (
+          <div className="lg:hidden w-full aspect-video relative bg-muted rounded-xl overflow-hidden">
+            <Image
+              src={imageUrl}
+              alt={article.featuredImage?.alternativeText || article.title}
+              fill
+              className="object-contain"
+              priority
+            />
+            <div
+              className="absolute inset-0 mix-blend-overlay opacity-15"
+              style={{ backgroundImage: `url(/images/GrainTexture.webp)` }}
+            />
+          </div>
+        )}
       </div>
 
       {/* ── DESKTOP CINEMATIC HERO (hidden on mobile) ── */}
@@ -136,7 +155,7 @@ export default function ArticleHero({
 
         <div className="absolute inset-0 flex items-end">
           <div className="container max-w-7xl mx-auto px-4 pb-16">
-            <div className="max-w-4xl">
+            <div className="max-w-5xl">
               {article.category && (
                 <Badge className="md:hidden mb-4 text-sm px-4 py-1 bg-white text-black cursor-pointer hover:bg-black hover:text-white">
                   <Link href={`/browse/?category=${article.category.Slug}`}>
@@ -156,16 +175,7 @@ export default function ArticleHero({
                 {article.title}
               </h1>
 
-              <p
-                className={cn(
-                  "text-base md:text-lg text-gray-300 mb-6 leading-relaxed max-w-2xl",
-                  getFontClass(article.excerpt),
-                )}
-              >
-                {article.excerpt}
-              </p>
-
-              <div className="flex flex-wrap items-center gap-6 text-sm text-gray-300">
+              <div className="flex flex-wrap items-center gap-6 text-lg text-gray-300">
                 {article.author && (
                   <Link
                     href={`/author?slug=${article.author.slug}`}
@@ -193,6 +203,20 @@ export default function ArticleHero({
                       </span>
                     </div>
                   </Link>
+                )}
+
+                {!article.author && authorName && (
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    <span
+                      className={cn(
+                        "font-medium text-white",
+                        getFontClass(authorName),
+                      )}
+                    >
+                      {authorName}
+                    </span>
+                  </div>
                 )}
 
                 <div className="flex items-center gap-2">

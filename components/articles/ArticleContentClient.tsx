@@ -157,6 +157,8 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
     : "/images/placeholder.jpg";
 
   const authorAvatar = article.author ? getAuthorAvatar(article.author) : undefined;
+  const hasAuthorProfile = !!article.author;
+  const displayAuthorName = hasAuthorProfile ? article.author?.Name : article.publication_author_name;
 
   const publishedDate = article.publishedAt
     ? new Date(article.publishedAt).toLocaleDateString("en-US", {
@@ -186,6 +188,8 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
     onFontSizeChange: setFontSize,
   };
 
+  console.log("Article data:", article);
+
   return (
     <div className={isSepiaMode ? "sepia-article min-h-screen" : undefined}>
       <ReadingProgressBar className="lg:hidden" targetId="article-content" />
@@ -196,9 +200,11 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
           article={article}
           imageUrl={imageUrl}
           authorAvatar={authorAvatar}
+          authorName={displayAuthorName}
           publishedDate={publishedDate}
           shortPublishedDate={shortPublishedDate}
           viewCount={viewCount}
+          isPublicationAuthor={!hasAuthorProfile}
         />
 
         <div className="container px-4 py-10">
@@ -243,15 +249,27 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                     author={article.author} 
                     authorAvatar={authorAvatar} 
                     publicationAuthorName={article.publication_author_name}
+                    publicationIssue={article.publication_issue}
                   />
                 )}
 
-                <div id="comment-section" className="mt-12">
-                  <CommentSection
-                    articleId={article.id}
-                    articleDocumentId={article.documentId}
+                {!article.author && article.publication_author_name && (
+                  <ArticleAuthorSection 
+                    author={null} 
+                    authorAvatar={undefined} 
+                    publicationAuthorName={article.publication_author_name}
+                    publicationIssue={article.publication_issue}
                   />
-                </div>
+                )}
+
+                {!article.DisableComments && (
+                  <div id="comment-section" className="mt-12">
+                    <CommentSection
+                      articleId={article.id}
+                      articleDocumentId={article.documentId}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

@@ -1,36 +1,38 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Form, FormGroup, FormLabel, FormDescription } from '@/components/ui/form';
-import { RegisterData, register as registerApi, uploadUserAvatar } from '@/lib/auth';
-import { UserPlus, Lock, Mail, User, Phone, Globe, Camera, X as XIcon, ImageIcon, FileText } from 'lucide-react';
+import { RegisterData, register as registerApi, uploadUserAvatar, completeGoogleOnboarding } from '@/lib/auth';
+import { UserPlus, Lock, Mail, User, Camera, X as XIcon, ImageIcon, FileText } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import { COUNTRIES, validatePhoneNumber } from '@/lib/phone-validation';
 import AvatarCropModal from './AvatarCropModal';
 import { useToast } from '@/components/ui/toast';
+import GoogleAuthButton from './GoogleAuthButton';
 
 export default function SignUp() {
   const { refreshUser } = useAuth();
   const toast = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isGoogleMode = searchParams.get('mode') === 'google';
 
   const [formData, setFormData] = useState<RegisterData>({
     username: '',
     email: '',
     password: '',
-    phoneNumber: '',
-    Country: '',
     Bio: '',
   });
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [googleName, setGoogleName] = useState('');
+  const [googlePictureUrl, setGooglePictureUrl] = useState('');
 
   // ─── Avatar state ─────────────────────────────────────────────────────────
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -40,7 +42,19 @@ export default function SignUp() {
   const [croppedAvatarFile, setCroppedAvatarFile] = useState<File | null>(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  useEffect(() => {
+    if (isGoogleMode && typeof window !== 'undefined') {
+      const name = sessionStorage.getItem('google_name') || '';
+      const picture = sessionStorage.getItem('google_picture') || '';
+      setGoogleName(name);
+      setGooglePictureUrl(picture);
+      if (picture && !avatarPreviewUrl) {
+        setAvatarPreviewUrl(picture);
+      }
+    }
+  }, [isGoogleMode, avatarPreviewUrl]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (name === 'confirmPassword') {
       setConfirmPassword(value);
@@ -64,35 +78,25 @@ export default function SignUp() {
       newErrors.username = 'Username must be at least 3 characters';
     }
     
-    // Email validation
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-    
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    }
-    
-    // Confirm password validation
-    if (formData.password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    // Country validation
-    if (!formData.Country) {
-      newErrors.Country = 'Country is required';
-    }
-
-    // Phone number validation
-    if (!formData.phoneNumber) {
-      newErrors.phoneNumber = 'Phone number is required';
-    } else if (!validatePhoneNumber(formData.phoneNumber, formData.Country)) {
-      newErrors.phoneNumber = `Invalid phone number for ${COUNTRIES.find(c => c.code === formData.Country)?.name || 'selected country'}`;
+    if (!isGoogleMode) {
+      // Email validation
+      if (!formData.email) {
+        newErrors.email = 'Email is required';
+      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        newErrors.email = 'Please enter a valid email address';
+      }
+      
+      // Password validation
+      if (!formData.password) {
+        newErrors.password = 'Password is required';
+      } else if (formData.password.length < 8) {
+        newErrors.password = 'Password must be at least 8 characters';
+      }
+      
+      // Confirm password validation
+      if (formData.password !== confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match';
+      }
     }
     
     setErrors(newErrors);
@@ -142,7 +146,8 @@ export default function SignUp() {
     setCroppedAvatarFile(null);
     if (avatarPreviewUrl) {
       URL.revokeObjectURL(avatarPreviewUrl);
-      setAvatarPreviewUrl(null);
+      // Revert to google picture if available
+      setAvatarPreviewUrl(isGoogleMode && googlePictureUrl ? googlePictureUrl : null);
     }
   };
 
@@ -154,13 +159,46 @@ export default function SignUp() {
 
     setIsSubmitting(true);
     try {
-      // Step 1: Register (sets JWT + user in cookies internally)
-      const response = await registerApi(formData);
+      let userId: number | undefined;
 
-      // Step 2: Upload avatar if one was cropped
-      if (croppedAvatarFile && response.user?.id) {
+      if (isGoogleMode) {
+        // Complete Google Onboarding
+        const response = await completeGoogleOnboarding({
+          username: formData.username,
+          fullName: googleName,
+          Bio: formData.Bio,
+        });
+        userId = response.id;
+        
+        if (!croppedAvatarFile && googlePictureUrl && userId) {
+          try {
+            const picRes = await fetch(googlePictureUrl);
+            const blob = await picRes.blob();
+            
+            if (blob.size > 0) {
+              // Ensure valid MIME type and extension
+              const mimeType = (blob.type && blob.type.startsWith('image/')) ? blob.type : 'image/jpeg';
+              const ext = mimeType.includes('png') ? 'png' : mimeType.includes('webp') ? 'webp' : 'jpg';
+              
+              const file = new File([blob], `google_avatar_${userId}.${ext}`, { type: mimeType });
+              await uploadUserAvatar(userId, file);
+            } else {
+              console.warn('Google avatar fetch returned an empty blob.');
+            }
+          } catch (avatarErr) {
+            console.error('Google avatar fetch/upload failed (non-fatal):', avatarErr);
+          }
+        }
+      } else {
+        // Standard Registration
+        const response = await registerApi(formData);
+        userId = response.user?.id;
+      }
+
+      // Upload avatar if one was cropped
+      if (croppedAvatarFile && userId) {
         try {
-          await uploadUserAvatar(response.user.id, croppedAvatarFile);
+          await uploadUserAvatar(userId, croppedAvatarFile);
         } catch (avatarErr) {
           console.error('Avatar upload failed (non-fatal):', avatarErr);
           toast.warning(
@@ -170,17 +208,17 @@ export default function SignUp() {
         }
       }
 
-      // Step 3: Sync AuthContext state
+      // Sync AuthContext state
       await refreshUser();
 
-      // Step 4: Navigate
+      // Navigate
       const redirectUrl = searchParams.get('redirect') || '/';
       router.push(redirectUrl);
     } catch (error) {
       console.error('Registration error:', error);
       setErrors((prev) => ({
         ...prev,
-        form: 'Registration failed. This email or username might already be in use.',
+        form: error instanceof Error ? error.message : 'Registration failed. Please try again.',
       }));
     } finally {
       setIsSubmitting(false);
@@ -201,9 +239,28 @@ export default function SignUp() {
 
       <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h2 className="text-2xl font-black text-white tracking-tight uppercase">Join DUFS Community</h2>
-        <p className="text-sm text-white/50">Create an account</p>
+        <h2 className="text-2xl font-black text-white tracking-tight uppercase">
+          {isGoogleMode ? 'Complete Your Profile' : 'Join DUFS Community'}
+        </h2>
+        <p className="text-sm text-white/50">
+          {isGoogleMode ? 'Almost there! Choose a username.' : 'Create an account'}
+        </p>
       </div>
+
+      {!isGoogleMode && (
+        <>
+          <GoogleAuthButton isSignUp />
+          
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase tracking-widest">
+              <span className="bg-black px-2 text-white/50">Or continue with email</span>
+            </div>
+          </div>
+        </>
+      )}
 
       <Form onSubmit={handleSubmit} className="space-y-4">
         {errors.form && (
@@ -285,6 +342,24 @@ export default function SignUp() {
           />
         </div>
 
+        {isGoogleMode && (
+          <FormGroup>
+            <FormLabel htmlFor="googleName" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
+              <User className="h-4 w-4 text-white/60" />
+              Full Name
+            </FormLabel>
+            <Input
+              id="googleName"
+              type="text"
+              value={googleName}
+              onChange={(e) => setGoogleName(e.target.value)}
+              placeholder="Enter your full name"
+              disabled={isSubmitting}
+              className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
+            />
+          </FormGroup>
+        )}
+
         <FormGroup error={errors.username}>
           <FormLabel htmlFor="username" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
             <User className="h-4 w-4 text-white/60" />
@@ -302,66 +377,26 @@ export default function SignUp() {
             className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
           />
         </FormGroup>
-        
-        <FormGroup error={errors.email}>
-          <FormLabel htmlFor="email" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
-            <Mail className="h-4 w-4 text-white/60" />
-            Email Address
-          </FormLabel>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Enter your email address"
-            disabled={isSubmitting}
-            className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
-          />
-        </FormGroup>
 
-        <FormGroup error={errors.Country}>
-          <FormLabel htmlFor="Country" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
-            <Globe className="h-4 w-4 text-white/60" />
-            Country
-          </FormLabel>
-          <select
-            id="Country"
-            name="Country"
-            value={formData.Country}
-            onChange={handleChange}
-            disabled={isSubmitting}
-            className="mt-1 w-full px-3 py-2 bg-white/5 border border-white/15 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/30 [&>option]:bg-black [&>option]:text-white"
-          >
-            <option value="">Select your country</option>
-            {COUNTRIES.map((country) => (
-              <option key={country.code} value={country.code}>
-                {country.flag} {country.name}
-              </option>
-            ))}
-          </select>
-        </FormGroup>
-
-        <FormGroup error={errors.phoneNumber}>
-          <FormLabel htmlFor="phoneNumber" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
-            <Phone className="h-4 w-4 text-white/60" />
-            Phone Number
-          </FormLabel>
-          <Input
-            id="phoneNumber"
-            name="phoneNumber"
-            type="tel"
-            value={formData.phoneNumber}
-            onChange={handleChange}
-            placeholder={formData.Country ? 'Enter your phone number' : 'Select a country first'}
-            disabled={isSubmitting || !formData.Country}
-            className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
-          />
-          <FormDescription className="mt-1 text-xs text-white/30">
-            Enter a valid phone number for your country
-          </FormDescription>
-        </FormGroup>
+        {!isGoogleMode && (
+          <FormGroup error={errors.email}>
+            <FormLabel htmlFor="email" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
+              <Mail className="h-4 w-4 text-white/60" />
+              Email Address
+            </FormLabel>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your email address"
+              disabled={isSubmitting}
+              className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
+            />
+          </FormGroup>
+        )}
         
         {/* ─── Bio ─── */}
         <FormGroup>
@@ -373,57 +408,61 @@ export default function SignUp() {
             id="Bio"
             name="Bio"
             value={formData.Bio}
-            onChange={(e) => setFormData((prev) => ({ ...prev, Bio: e.target.value }))}
+            onChange={handleChange}
             placeholder="Tell readers a little about yourself…"
             disabled={isSubmitting}
             rows={3}
-            maxLength={300}
+            maxLength={500}
             className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md resize-none"
           />
           <FormDescription className="mt-1 text-xs text-white/30 flex justify-between">
             <span>Optional · shown on your author profile</span>
-            <span>{(formData.Bio?.length ?? 0)}/300</span>
+            <span>{(formData.Bio?.length ?? 0)}/500</span>
           </FormDescription>
         </FormGroup>
 
-        <FormGroup error={errors.password}>
-          <FormLabel htmlFor="password" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
-            <Lock className="h-4 w-4 text-white/60" />
-            Password
-          </FormLabel>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Create a strong password"
-            disabled={isSubmitting}
-            className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
-          />
-          <FormDescription className="mt-1 text-xs text-white/30">
-            Must be at least 8 characters long
-          </FormDescription>
-        </FormGroup>
-        
-        <FormGroup error={errors.confirmPassword}>
-          <FormLabel htmlFor="confirmPassword" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
-            <Lock className="h-4 w-4 text-white/60" />
-            Confirm Password
-          </FormLabel>
-          <Input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            value={confirmPassword}
-            onChange={handleChange}
-            placeholder="Confirm your password"
-            disabled={isSubmitting}
-            className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
-          />
-        </FormGroup>
+        {!isGoogleMode && (
+          <>
+            <FormGroup error={errors.password}>
+              <FormLabel htmlFor="password" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
+                <Lock className="h-4 w-4 text-white/60" />
+                Password
+              </FormLabel>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Create a strong password"
+                disabled={isSubmitting}
+                className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
+              />
+              <FormDescription className="mt-1 text-xs text-white/30">
+                Must be at least 8 characters long
+              </FormDescription>
+            </FormGroup>
+            
+            <FormGroup error={errors.confirmPassword}>
+              <FormLabel htmlFor="confirmPassword" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
+                <Lock className="h-4 w-4 text-white/60" />
+                Confirm Password
+              </FormLabel>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={handleChange}
+                placeholder="Confirm your password"
+                disabled={isSubmitting}
+                className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
+              />
+            </FormGroup>
+          </>
+        )}
         
         <Button
           type="submit"
@@ -436,18 +475,18 @@ export default function SignUp() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
               </svg>
-              Creating account...
+              {isGoogleMode ? 'Completing...' : 'Creating account...'}
             </>
           ) : (
             <>
               <UserPlus className="h-4 w-4" />
-              Create Account
+              {isGoogleMode ? 'Complete Setup' : 'Create Account'}
             </>
           )}
         </Button>
       </Form>
       
-      <div className="pt-4 border-t border-white/10">
+      <div className="pt-4 border-t border-white/10 mt-6">
         <p className="text-sm text-white/50 text-center">
           Already have an account?{' '}<span className="md:hidden"><br /></span>
           <Link href="/auth/signin" className="text-white font-bold underline hover:no-underline transition-colors duration-200">

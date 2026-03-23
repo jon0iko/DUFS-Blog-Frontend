@@ -16,7 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { formatDate, cn } from '@/lib/utils';
 import { strapiAPI, BookmarkedArticle } from '@/lib/api';
 import { config } from '@/lib/config';
-import { updateUserData, changePassword, deleteAccount, getAuthorForCurrentUser, uploadUserAvatar, removeUserAvatar, getUserAvatarUrl } from '@/lib/auth';
+import { updateUserData, changePassword, deleteAccount, getAuthorForCurrentUser, uploadUserAvatar, removeUserAvatar, getUserAvatarUrl, getToken } from '@/lib/auth';
 import { validatePhoneNumber, formatPhoneNumber, COUNTRIES } from '@/lib/phone-validation';
 import { Draft } from '@/types';
 import { useRouter } from 'next/navigation';
@@ -25,6 +25,7 @@ import Link from 'next/link';
 import { Camera, X as CloseIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 import { getFontClass } from '@/lib/fonts';
+import AvatarCropModal from './AvatarCropModal';
 
 // Storage keys for loading drafts into editor
 const STORAGE_KEY = 'tiptap_draft_content';
@@ -42,12 +43,14 @@ export default function AccountProfile() {
   
   // Edit states
   const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [isEditingFullName, setIsEditingFullName] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   
   // Form values
   const [newUsername, setNewUsername] = useState('');
+  const [newFullName, setNewFullName] = useState('');
   const [newBio, setNewBio] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newCountry, setNewCountry] = useState('');
@@ -78,6 +81,10 @@ export default function AccountProfile() {
   // Avatar state
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null);
+  const [cropModalImageSrc, setCropModalImageSrc] = useState<string | null>(null);
+  const [showAvatarCropModal, setShowAvatarCropModal] = useState(false);
+  const [cropFileName, setCropFileName] = useState('avatar.png');
   const avatarInputRef = React.useRef<HTMLInputElement>(null);
   
   // Author slug for "View Posts" link
@@ -87,6 +94,7 @@ export default function AccountProfile() {
   useEffect(() => {
     if (user) {
       setNewUsername(user.username || '');
+      setNewFullName(user.fullName || '');
       setNewBio(user.Bio || '');
       setNewPhone(user.phoneNumber || '');
       setNewCountry(user.Country || 'BD');
@@ -262,6 +270,50 @@ export default function AccountProfile() {
     }
   };
 
+  // Save Full Name
+  const handleSaveFullName = async () => {
+    if (!user) return;
+    if (newFullName === (user.fullName || '')) {
+      setIsEditingFullName(false);
+      return;
+    }
+    
+    setIsSaving(true);
+    setSaveError(null);
+    
+    // We need to extend updateUserData in lib/auth.ts to accept fullName
+    try {
+      const token = getToken();
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch(`${config.strapi.url}/api/users/${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ fullName: newFullName.trim() }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData?.error?.message || 'Failed to update full name');
+      }
+
+      const updatedUser = await response.json();
+      updateLocalUser(updatedUser);
+      toast.success('Full Name updated successfully');
+      setSaveSuccess('Full Name updated successfully');
+      setIsEditingFullName(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update full name';
+      toast.error(errorMessage, 'Update Failed');
+      setSaveError(errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Save bio
   const handleSaveBio = async () => {
     if (!user) return;
@@ -395,6 +447,11 @@ export default function AccountProfile() {
     setIsEditingUsername(false);
   };
 
+  const cancelEditFullName = () => {
+    setNewFullName(user?.fullName || '');
+    setIsEditingFullName(false);
+  };
+
   const cancelEditBio = () => {
     setNewBio(user?.Bio || '');
     setIsEditingBio(false);
@@ -432,26 +489,51 @@ export default function AccountProfile() {
       return;
     }
 
-    // Create preview
+    // Open crop modal with selected image
     const reader = new FileReader();
     reader.onloadend = () => {
-      setAvatarPreview(reader.result as string);
+      setCropModalImageSrc(reader.result as string);
+      setCropFileName(file.name || 'avatar.png');
+      setShowAvatarCropModal(true);
     };
     reader.readAsDataURL(file);
   };
 
+  const handleAvatarCropComplete = (croppedFile: File) => {
+    if (avatarPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+
+    const previewUrl = URL.createObjectURL(croppedFile);
+    setAvatarPreview(previewUrl);
+    setSelectedAvatarFile(croppedFile);
+    setShowAvatarCropModal(false);
+    setCropModalImageSrc(null);
+  };
+
+  const handleAvatarCropCancel = () => {
+    setShowAvatarCropModal(false);
+    setCropModalImageSrc(null);
+    if (avatarInputRef.current) {
+      avatarInputRef.current.value = '';
+    }
+  };
+
   // Upload avatar
   const handleAvatarUpload = async () => {
-    if (!user || !avatarInputRef.current?.files?.[0]) return;
+    if (!user || !selectedAvatarFile) return;
 
     setIsUploadingAvatar(true);
     setSaveError(null);
 
     try {
-      const file = avatarInputRef.current.files[0];
-      const updatedUser = await uploadUserAvatar(user.id, file);
+      const updatedUser = await uploadUserAvatar(user.id, selectedAvatarFile);
       updateLocalUser(updatedUser);
+      if (avatarPreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(avatarPreview);
+      }
       setAvatarPreview(null);
+      setSelectedAvatarFile(null);
       toast.success('Avatar updated successfully');
       setSaveSuccess('Avatar updated successfully');
       // Clear the file input
@@ -469,7 +551,11 @@ export default function AccountProfile() {
 
   // Cancel avatar selection
   const cancelAvatarSelect = () => {
+    if (avatarPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(avatarPreview);
+    }
     setAvatarPreview(null);
+    setSelectedAvatarFile(null);
     if (avatarInputRef.current) {
       avatarInputRef.current.value = '';
     }
@@ -498,6 +584,14 @@ export default function AccountProfile() {
 
   // Get current avatar URL
   const currentAvatarUrl = getUserAvatarUrl(user);
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
 
   if (!user) {
     return (
@@ -716,6 +810,55 @@ export default function AccountProfile() {
                   </div>
                 ) : (
                   <p className="text-foreground pl-6">{user.username}</p>
+                )}
+              </div>
+              
+              {/* Full Name (Editable) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <AtSign className="h-4 w-4" />
+                    Full Name
+                  </div>
+                  {!isEditingFullName && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setIsEditingFullName(true)}
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
+                  )}
+                </div>
+                {isEditingFullName ? (
+                  <div className="pl-6 space-y-2">
+                    <Input
+                      value={newFullName}
+                      onChange={(e) => setNewFullName(e.target.value)}
+                      placeholder="Enter your full name"
+                      disabled={isSaving}
+                    />
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        onClick={handleSaveFullName}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={cancelEditFullName}
+                        disabled={isSaving}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-foreground pl-6">{user.fullName || <span className="text-muted-foreground italic">No full name added</span>}</p>
                 )}
               </div>
               
@@ -1219,6 +1362,15 @@ export default function AccountProfile() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {showAvatarCropModal && cropModalImageSrc && (
+        <AvatarCropModal
+          imageSrc={cropModalImageSrc}
+          fileName={cropFileName}
+          onCropComplete={handleAvatarCropComplete}
+          onCancel={handleAvatarCropCancel}
+        />
+      )}
     </div>
   );
 }

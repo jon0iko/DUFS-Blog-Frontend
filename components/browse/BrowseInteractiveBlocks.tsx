@@ -116,7 +116,7 @@ export default function BrowseInteractiveBlocks({
                 value={activeCategory || "all"}
                 onChange={(e) => setActiveCategory(e.target.value)}
                 className={cn(
-                  "h-12 w-full appearance-none rounded-[4px] border border-[#BDB2AB] bg-[#C9C0BC] px-4 pr-10 text-[1.1rem] lg:text-[1.2rem] font-black text-[#29211D] outline-none transition-all hover:-translate-y-0.5 focus:border-[#84786F] dark:border-[#3A3431] dark:bg-[#302A27] dark:text-[#F3E7DD]",
+                  "h-12 w-full appearance-none rounded-[4px] border border-[#BDB2AB] bg-[#C9C0BC] px-4 pr-10 text-[1.1rem] lg:text-[1.2rem] font-black text-[#29211D] outline-none transition-all  focus:border-[#84786F] dark:border-[#3A3431] dark:bg-[#302A27] dark:text-[#F3E7DD] cursor-pointer",
                   getFontClass(categoryOptions.find(o => o.value === (activeCategory || "all"))?.label || "")
                 )}
               >
@@ -150,7 +150,7 @@ export default function BrowseInteractiveBlocks({
                         <select
                           value={language || "all"}
                           onChange={(e) => onFilterChange("language", e.target.value)}
-                          className="h-10 w-full appearance-none rounded-[4px] border border-[#BDB2AB] bg-[#C9C0BC] px-3 pr-8 text-[0.95rem] font-black text-[#29211D] outline-none transition-all hover:-translate-y-0.5 dark:border-[#3A3431] dark:bg-[#302A27] dark:text-[#F3E7DD]"
+                          className="h-10 w-full appearance-none rounded-[4px] border border-[#BDB2AB] bg-[#C9C0BC] px-3 pr-8 text-[0.95rem] font-black text-[#29211D] outline-none transition-all  dark:border-[#3A3431] dark:bg-[#302A27] dark:text-[#F3E7DD] cursor-pointer"
                         >
                           <option value="all">All</option>
                           <option value="en">English</option>
@@ -169,7 +169,7 @@ export default function BrowseInteractiveBlocks({
                         <select
                           value={sortBy || "recent"}
                           onChange={(e) => onFilterChange("sort", e.target.value)}
-                          className="h-10 w-full appearance-none rounded-[4px] border border-[#BDB2AB] bg-[#C9C0BC] px-3 pr-8 text-[0.95rem] font-black text-[#29211D] outline-none transition-all hover:-translate-y-0.5 dark:border-[#3A3431] dark:bg-[#302A27] dark:text-[#F3E7DD]"
+                          className="h-10 w-full appearance-none rounded-[4px] border border-[#BDB2AB] bg-[#C9C0BC] px-3 pr-8 text-[0.95rem] font-black text-[#29211D] outline-none transition-all  dark:border-[#3A3431] dark:bg-[#302A27] dark:text-[#F3E7DD] cursor-pointer"
                         >
                           <option value="recent">Publish Date</option>
                           <option value="oldest">Oldest First</option>

@@ -26,6 +26,7 @@ export interface UserData {
   id: number;
   documentId?: string; // Strapi v5 includes documentId
   username: string;
+  fullName?: string;
   email: string;
   provider?: string;
   confirmed?: boolean;
@@ -52,8 +53,8 @@ export interface RegisterData {
   username: string;
   email: string;
   password: string;
-  phoneNumber: string;
-  Country: string;
+  phoneNumber?: string;
+  Country?: string;
   Bio?: string;
 }
 
@@ -467,6 +468,70 @@ export async function changePassword(
 }
 
 /**
+ * Delete the author entry linked to the currently authenticated user
+ * No-op if no author exists.
+ */
+async function deleteAuthorForCurrentUser(token: string): Promise<void> {
+  const author = await getAuthorForCurrentUser();
+  if (!author?.documentId) {
+    return;
+  }
+
+  const response = await fetch(`${STRAPI_URL}/api/authors/${author.documentId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.error('Author deletion error:', errorData);
+    const errorMessage =
+      typeof errorData === 'object' &&
+      errorData !== null &&
+      'error' in errorData &&
+      typeof (errorData as { error?: { message?: string } }).error?.message === 'string'
+        ? (errorData as { error: { message: string } }).error.message
+        : 'Failed to delete author';
+    throw new Error(errorMessage);
+  }
+}
+
+/**
+ * Delete the currently authenticated user's avatar file from Strapi media library.
+ * No-op if the user has no avatar.
+ */
+async function deleteCurrentUserAvatarFromMediaLibrary(token: string): Promise<void> {
+  const user = await fetchCurrentUserWithToken(token);
+  const avatarId = user?.Avatar?.id;
+
+  if (!avatarId) {
+    return;
+  }
+
+  const response = await fetch(`${STRAPI_URL}/api/upload/files/${avatarId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.error('Avatar media deletion error:', errorData);
+    const errorMessage =
+      typeof errorData === 'object' &&
+      errorData !== null &&
+      'error' in errorData &&
+      typeof (errorData as { error?: { message?: string } }).error?.message === 'string'
+        ? (errorData as { error: { message: string } }).error.message
+        : 'Failed to delete avatar from media library';
+    throw new Error(errorMessage);
+  }
+}
+
+/**
  * Delete user account
  * Note: This requires proper Strapi permissions for users to delete themselves
  */
@@ -475,6 +540,12 @@ export async function deleteAccount(userId: number): Promise<void> {
   if (!token) {
     throw new Error('Not authenticated');
   }
+
+  // Delete avatar asset first so media files are not orphaned.
+  await deleteCurrentUserAvatarFromMediaLibrary(token);
+
+  // Delete linked author first to avoid leaving orphaned author records.
+  await deleteAuthorForCurrentUser(token);
 
   const response = await fetch(`${STRAPI_URL}/api/users/${userId}`, {
     method: 'DELETE',
@@ -602,6 +673,81 @@ export async function removeUserAvatar(userId: number): Promise<UserData> {
   const updatedUser = await fetchCurrentUser();
   if (!updatedUser) {
     throw new Error('Failed to fetch updated user data');
+  }
+
+  return updatedUser;
+}
+
+/**
+ * Log in with Google access token
+ */
+export async function loginWithGoogleToken(accessToken: string): Promise<AuthResponse> {
+  try {
+    const response = await fetch(`${STRAPI_URL}/api/auth/google/callback?access_token=${accessToken}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData?.error?.message || 'Google authentication failed');
+    }
+
+    const responseData: AuthResponse = await response.json();
+    setToken(responseData.jwt);
+    
+    // Fetch user with Avatar populated
+    const userWithAvatar = await fetchCurrentUserWithToken(responseData.jwt);
+    if (userWithAvatar) {
+      responseData.user = userWithAvatar;
+    }
+    setUser(responseData.user);
+    
+    return responseData;
+  } catch (error) {
+    console.error('Google login error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Complete onboarding for a new Google user
+ */
+export async function completeGoogleOnboarding(data: { username: string, fullName?: string, Bio?: string }): Promise<UserData> {
+  const token = getToken();
+  const user = getUser();
+  if (!token || !user) {
+    throw new Error('Not authenticated');
+  }
+
+  // 1. Update user profile
+  const response = await fetch(`${STRAPI_URL}/api/users/${user.id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      username: data.username,
+      ...(data.fullName ? { fullName: data.fullName } : {}),
+      ...(data.Bio ? { Bio: data.Bio } : {}),
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    if (errorData?.error?.message?.includes('username') || 
+        errorData?.error?.message?.includes('unique') ||
+        errorData?.error?.message?.includes('already')) {
+      throw new Error('This username is already taken. Please choose a different one.');
+    }
+    throw new Error(errorData?.error?.message || 'Failed to complete onboarding');
+  }
+
+  const updatedUser: UserData = await response.json();
+  setUser(updatedUser);
+
+  // 2. Create the Author entry
+  try {
+    await createAuthorForUser(updatedUser, token);
+  } catch (authorError) {
+    console.error('Failed to create author for user:', authorError);
   }
 
   return updatedUser;

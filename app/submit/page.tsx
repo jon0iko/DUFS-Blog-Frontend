@@ -168,13 +168,26 @@ const SubmitPage = () => {
       }
 
       const ctx = gsap.context(() => {
-        // Blink caret
+        // Calculate typing duration - this is how long the character typing takes
+        const typingDuration = headingText.length * 0.15;
+        
+        // Calculate repeat count for caret to match typing duration
+        // repeat + 1 gives us total cycles, multiply by duration to get total time
+        const repeatNeeded = Math.ceil(typingDuration / 0.5) - 1;
+        
+        // Blink caret during typing
         gsap.to(caret, {
           autoAlpha: 0,
           duration: 0.5,
-          repeat: -1,
+          repeat: repeatNeeded,
           yoyo: true,
           ease: 'steps(1)',
+          delay: 0.5,
+        })
+
+        // Fade out caret after typing finishes
+        gsap.delayedCall(0.5 + typingDuration + 0.3, () => {
+          if (caret) caret.style.display = 'none'
         })
 
         const tl = gsap.timeline({ delay: 0.5 })
@@ -191,7 +204,7 @@ const SubmitPage = () => {
       })
 
       return () => ctx.revert()
-    }, 100);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [authLoading, isAuthenticated, headingText])
@@ -219,7 +232,7 @@ const SubmitPage = () => {
         </div>
 
         {/* Hero Title - Alte Haas Grotesk */}
-        <h1 className="font-altehaasgrotesk text-[1.8rem] font-light leading-none tracking-[0.02em] text-foreground md:text-[2.8rem]" aria-label="Writers' Room">
+        <h1 className="font-zillaslab font-bold text-[1.8rem] leading-none tracking-[0.02em] text-foreground md:text-[2.8rem]" aria-label="Writers' Room">
           <span ref={typedTextRef} aria-hidden className="whitespace-pre" />
           <span ref={caretRef} aria-hidden className="inline-block select-none font-sans font-thin ml-0.5">|</span>
         </h1>

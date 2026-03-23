@@ -11,6 +11,9 @@ import { derivePublicationPalette } from '@/lib/publication-colors';
 import { ChevronLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getFontClass } from '@/lib/fonts';
+import { useRouter } from 'next/navigation';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 
 function IssuesInner() {
@@ -20,6 +23,12 @@ function IssuesInner() {
   const [publication, setPublication] = useState<Publication | null>(null);
   const [issues, setIssues] = useState<Publication_Issue[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const router = useRouter();
+
+  const handleBack = () => {
+    router.back();
+  }
 
   useEffect(() => {
     if (!pubId) return;
@@ -88,30 +97,29 @@ function IssuesInner() {
     <div className="min-h-screen relative bg-background">
       {/* Consistent background pattern with main site */}
       <div
-        className="pointer-events-none absolute inset-0 select-none z-0 dark:hidden opacity-30"
+        className="pointer-events-none absolute inset-0 select-none z-0 dark:hidden"
         style={{ backgroundImage: "url(/images/bgpaper.jpg)", backgroundRepeat: "repeat" }}
       />
       <div
-        className="pointer-events-none absolute inset-0 hidden select-none z-0 dark:block opacity-30"
+        className="pointer-events-none absolute inset-0 hidden select-none z-0 dark:block"
         style={{
           backgroundImage: "url(/images/bgpaper_dark.jpg)",
           backgroundRepeat: "repeat",
-          backgroundSize: "1667px 1200px",
         }}
       />
 
       <div className="container relative z-10 pt-16 pb-24">
         {/* Navigation */}
-        <Link href="/publications" className="inline-flex items-center gap-2 text-sm font-semibold text-foreground/70 hover:text-foreground mb-16 transition-colors">
-          <ChevronLeft className="w-4 h-4" /> Back to Publications
-        </Link>
+        <button onClick={handleBack} className="inline-flex items-center gap-2 text-sm font-semibold text-foreground/70 hover:text-foreground mb-16 transition-colors">
+          <ChevronLeft className="w-4 h-4" /> Back
+        </button>
 
         {/* Publication Header */}
         <div className="mb-16">
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
             {/* Cover Image - Desktop only */}
             {publication.Image && (
-              <div className="hidden md:block relative w-full max-w-[320px] h-auto flex-shrink-0 overflow-hidden rounded-lg border border-border">
+              <div className="hidden md:block relative w-full max-w-[320px] h-auto flex-shrink-0 overflow-hidden rounded-lg ">
                 <Image
                   src={getStrapiMediaUrl(publication.Image)}
                   alt={publication.TitleEnglish}
@@ -128,7 +136,6 @@ function IssuesInner() {
             <div className="flex-1">
               <h1 
                 className={`text-5xl md:text-6xl font-black tracking-tight mb-4 ${getFontClass(publication.TitleBangla)}`}
-                style={{ color: palette.titleColor }}
               >
                 {publication.TitleBangla}
               </h1>
@@ -136,16 +143,19 @@ function IssuesInner() {
                 {publication.TitleEnglish}
               </p>
               {publication.Description && (
-                <p className={`text-foreground/70 text-lg md:text-xl ${getFontClass(publication.Description)}`}>
-                  {publication.Description}
-                </p>
+                <div 
+                  className={`text-foreground text-xl md:text-2xl prose prose-invert max-w-none ${getFontClass(publication.Description)}`}
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(marked.parse(publication.Description, { gfm: true, breaks: false, async: false }) as string)
+                  }}
+                />
               )}
             </div>
           </div>
         </div>
 
         {/* Issues Section */}
-        <div className="py-8 border-t border-border">
+        <div className="py-8 border-t border-dashed border-foreground">
           <h2 className={`text-2xl md:text-3xl font-black tracking-tight mb-8 ${getFontClass('Issues')}`}>Issues</h2>
 
         {/* Issues Grid */}
@@ -191,8 +201,8 @@ function IssuesInner() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 px-8 bg-card/30 rounded-lg border border-border">
-            <p className="text-muted-foreground text-sm">No issues found for this publication yet.</p>
+          <div className="text-center py-16 px-8 rounded-lg ">
+            <p className="text-foreground text-xl">Contents for this publication will be uploaded soon!</p>
           </div>
         )}
         </div>

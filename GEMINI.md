@@ -61,3 +61,4 @@ This file provides critical context and instructions for AI agents working on th
 - When adding new features, maintain the "Writer's Desk" aesthetic (torn paper textures, coffee stains, grid patterns).
 - Prioritize GSAP for animations to match the existing interactive feel of the "Writer's Corner".
 - Always update `types/index.ts` if adding new content types or changing Strapi schemas.
+- **Button Hover States:** Never dim the brightness of buttons when hovering. The objective of hover is to make buttons "pop" (e.g., by making the color lighter, increasing opacity, or adding a glow).

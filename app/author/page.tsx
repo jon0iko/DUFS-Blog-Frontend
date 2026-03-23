@@ -165,10 +165,10 @@ function AuthorPageInner() {
     )
   }
 
-  const avatarUrl = author.Avatar?.url 
-    ? (author.Avatar.url.startsWith('http') 
-        ? author.Avatar.url 
-        : `${config.strapi.url}${author.Avatar.url}`)
+  const avatarUrl = author.users_permissions_user?.Avatar?.url 
+    ? (author.users_permissions_user?.Avatar?.url.startsWith('http') 
+        ? author.users_permissions_user?.Avatar?.url 
+        : `${config.strapi.url}${author.users_permissions_user?.Avatar?.url}`)
     : '/images/avatarPlaceholder.png'
 
   const authorNameFont = getFontClass(author.Name || '')

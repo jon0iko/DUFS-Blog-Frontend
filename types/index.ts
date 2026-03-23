@@ -126,11 +126,13 @@ export interface Article {
   gallery?: StrapiMedia[];
   author?: Author; // Populated relation
   publication_author_name?: string; // Author name for publication pieces
+  publication_issue?: Publication_Issue; // Populated relation for articles in issues
   category?: Category; // Populated relation
   tags?: Tag[]; // Populated relation
   isFeatured: boolean;
   isEditorsPick: boolean;
   isHero: boolean;
+  DisableComments?: boolean;
   publishedAt?: string;
   readTime?: number;
   viewCount: number;

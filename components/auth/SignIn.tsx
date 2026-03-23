@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormGroup, FormLabel } from '@/components/ui/form';
 import { LoginData } from '@/lib/auth';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
+import GoogleAuthButton from './GoogleAuthButton';
 
 export default function SignIn() {
   const { login, isLoading } = useAuth();
@@ -68,6 +69,17 @@ export default function SignIn() {
         <p className="text-sm text-white/50">
           Sign in to your account
         </p>
+      </div>
+
+      <GoogleAuthButton />
+
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-white/10"></div>
+        </div>
+        <div className="relative flex justify-center text-xs uppercase tracking-widest">
+          <span className="bg-black px-2 text-white/50">Or continue with</span>
+        </div>
       </div>
       
       <Form onSubmit={handleSubmit} className="space-y-4">
@@ -145,7 +157,7 @@ export default function SignIn() {
         </Button>
       </Form>
       
-      <div className="pt-4 border-t border-white/10">
+      <div className="pt-4 border-t border-white/10 mt-6">
         <p className="text-sm text-white/50 text-center">
           Don&apos;t have an account?{' '}<span className="md:hidden"><br /></span>
           <Link href="/auth/signup" className="text-white font-bold underline hover:no-underline transition-colors duration-200">

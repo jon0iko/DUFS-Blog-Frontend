@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { 
   login as loginApi, 
   register as registerApi, 
@@ -135,7 +136,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+      <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    </GoogleOAuthProvider>
+  );
 }
 
 export const useAuth = () => {

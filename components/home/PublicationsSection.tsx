@@ -56,7 +56,6 @@ export default function PublicationsSection({
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight text-foreground text-center uppercase">
             DUFS Publications
           </h2>
-          <span className="mt-1 block w-8 h-px bg-border" />
         </div>
       </div>
 
