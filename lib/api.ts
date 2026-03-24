@@ -666,17 +666,17 @@ class StrapiAPI {
   /**
    * Get active banners (considering date range and active status)
    */
-  async getActiveBanners(): Promise<BannerResponse> {
+  async getBannerContent(): Promise<BannerResponse> {
     const searchParams = new URLSearchParams();
-    searchParams.append('filters[isActive][$eq]', 'true');
+    // searchParams.append('filters[isActive][$eq]', 'true');
     
-    const currentDate = new Date().toISOString();
-    searchParams.append('filters[$or][0][startDate][$null]', 'true');
-    searchParams.append('filters[$or][1][startDate][$lte]', currentDate);
-    searchParams.append('filters[$or][0][endDate][$null]', 'true');
-    searchParams.append('filters[$or][1][endDate][$gte]', currentDate);
+    // const currentDate = new Date().toISOString();
+    // searchParams.append('filters[$or][0][startDate][$null]', 'true');
+    // searchParams.append('filters[$or][1][startDate][$lte]', currentDate);
+    // searchParams.append('filters[$or][0][endDate][$null]', 'true');
+    // searchParams.append('filters[$or][1][endDate][$gte]', currentDate);
     
-    searchParams.append('sort', 'priority:desc');
+    // searchParams.append('sort', 'priority:desc');
     
     return this.request<BannerResponse>(
       `${config.strapi.endpoints.banners}?${searchParams.toString()}`

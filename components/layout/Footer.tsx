@@ -15,7 +15,7 @@ export default function Footer() {
               <img
                 src="/images/logoo.png"
                 alt="DUFS Logo"
-                className="h-12 w-14"
+                className="h-12 w-14 object-contain"
               />
               <span className="text-2xl font-black text-background dark:text-foreground">
                 DUFS Blog
@@ -23,7 +23,7 @@ export default function Footer() {
             </Link>
             <p className="text-base text-background dark:text-foreground leading-relaxed mb-6 max-w-sm">
               Discover cinematic explorations with cutting-edge analysis and
-              stylish blogs that elevate every adventure in film.
+              blogs that elevate every adventure in film.
             </p>
             {/* Social Links */}
             <div className="flex items-center gap-3">
@@ -40,7 +40,7 @@ export default function Footer() {
                     <img
                       src={link.icon}
                       alt={`${link.platform} icon`}
-                      className="w-[18px] h-[18px] object-contain"
+                      className="w-[17px] h-[17px] object-contain"
                     />
                   ) : (
                     <span className="uppercase text-xs font-semibold">
@@ -61,7 +61,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/"
-                  className="text-base text-background dark:text-foreground hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
+                  className="text-base text-gray-300 hover:text-white hover:underline transition-colors"
                 >
                   Home
                 </Link>
@@ -69,7 +69,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/browse"
-                  className="text-base text-background dark:text-foreground hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
+                  className="text-base text-gray-300 hover:text-white hover:underline transition-colors"
                 >
                   Browse Articles
                 </Link>
@@ -78,7 +78,7 @@ export default function Footer() {
                 <Link
                   href="https://dufs.org"
                   target="_blank"
-                  className="text-base text-background dark:text-foreground hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
+                  className="text-base text-gray-300 hover:text-white hover:underline transition-colors"
                 >
                   About DUFS
                 </Link>
@@ -87,7 +87,7 @@ export default function Footer() {
                 <Link
                   href="https://iiusff.dufs.org"
                   target="_blank"
-                  className="text-base text-background dark:text-foreground hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
+                  className="text-base text-gray-300 hover:text-white hover:underline transition-colors"
                 >
                   IIUSFF
                 </Link>
@@ -104,15 +104,15 @@ export default function Footer() {
               <li>
                 <Link
                   href="/submit"
-                  className="text-base text-background dark:text-foreground hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
+                  className="text-base text-gray-300 hover:text-white hover:underline transition-colors"
                 >
-                  Submit Article
+                  Submit Writing
                 </Link>
               </li>
               <li>
                 <Link
                   href="/author"
-                  className="text-base text-background dark:text-foreground hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
+                  className="text-base text-gray-300 hover:text-white hover:underline transition-colors"
                 >
                   Authors
                 </Link>
@@ -120,7 +120,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/account"
-                  className="text-base text-background dark:text-foreground hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
+                  className="text-base text-gray-300 hover:text-white hover:underline transition-colors"
                 >
                   My Account
                 </Link>
@@ -128,7 +128,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/auth/signin"
-                  className="text-base text-background dark:text-foreground hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
+                  className="text-base text-gray-300 hover:text-white hover:underline transition-colors"
                 >
                   Sign In
                 </Link>
@@ -155,21 +155,10 @@ export default function Footer() {
                   Email
                 </span>
                 <a
-                  href="mailto:info@dufs.org"
-                  className="hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
+                  href="mailto:info@blog.dufs.org"
+                  className="text-gray-300 hover:text-white hover:underline transition-colors"
                 >
-                  info@dufs.org
-                </a>
-              </li>
-              <li>
-                <span className="block font-medium text-background dark:text-foreground mb-1">
-                  Phone
-                </span>
-                <a
-                  href="tel:+8801558641981"
-                  className="hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
-                >
-                  +880 1558641981
+                  info@blog.dufs.org
                 </a>
               </li>
             </ul>

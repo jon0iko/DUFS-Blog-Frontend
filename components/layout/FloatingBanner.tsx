@@ -3,32 +3,61 @@ import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { bannerData } from '@/data/dummy-data';
 import { motion, AnimatePresence } from "framer-motion";
+import { strapiAPI } from '@/lib/api';
+
+interface BannerData {
+  id: number;
+  Active: boolean;
+  headline: string;
+  postTitle: string;
+  subtitle: string;
+  postUrl: string;
+  EndDate?: string;
+}
 
 const FloatingBanner = () => {
-  const [isVisible, setIsVisible] = useState(bannerData.isActive);
+  const [bannerData, setBannerData] = useState<BannerData | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem('bannerDismissed');
-    if (dismissed) {
-      setIsVisible(false);
-    } else {
-      setIsVisible(bannerData.isActive);
-    }
+    const fetchAndSetBannerData = async () => {
+      try {
+        const response = await strapiAPI.getBannerContent();
+        const data: BannerData = response.data;
+
+        if (data) {
+          setBannerData(data);
+
+          const dismissed = localStorage.getItem('bannerDismissed');
+          const isExpired = new Date() > new Date(data.EndDate!);
+
+          if (data.Active && !isExpired && !dismissed) {
+            setIsVisible(true);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching banner data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAndSetBannerData();
   }, []);
 
   const handleDismiss = () => {
     setIsVisible(false);
     localStorage.setItem('bannerDismissed', 'true');
-    
+
     // Reset dismissal after 12 hours
     setTimeout(() => {
       localStorage.removeItem('bannerDismissed');
     }, 12 * 60 * 60 * 1000);
   };
 
-  if (!bannerData?.isActive || !isVisible) {
+  if (isLoading || !isVisible || !bannerData) {
     return null;
   }
 
@@ -49,18 +78,18 @@ const FloatingBanner = () => {
           >
             <Card className="border-2 border-brand-accent shadow-lg overflow-hidden rounded-lg">
               {/* Progress bar now positioned inside the border */}
-              <div className="relative h-1 w-full bg-brand-accent/20">
+              {/* <div className="relative h-1 w-full bg-brand-accent/20">
                 <motion.div 
                   className="absolute top-0 left-0 h-full bg-brand-accent"
                   initial={{ width: "0%" }}
                   animate={{ width: "100%" }}
-                  transition={{ duration: 2 }}
+                  transition={{ duration: 5 }}
                 />
-              </div>
-              
+              </div> */}
+
               <CardHeader className="p-4 pb-2 pt-3">
                 <div className="flex justify-between items-start">
-                  <CardDescription className="text-xs font-medium text-brand-accent animate-pulse">
+                  <CardDescription className="text-xs font-medium text-foreground animate-pulse">
                     {bannerData.headline}
                   </CardDescription>
                   <Button 
@@ -86,7 +115,7 @@ const FloatingBanner = () => {
                 <Button 
                   variant="default" 
                   size="sm" 
-                  className="w-full text-sm bg-brand-accent hover:bg-brand-accent/90 text-white font-medium shadow-md transition-all duration-300 hover:shadow-lg"
+                  className="w-full text-sm bg-brand-accent/80 hover:bg-brand-accent border border-foreground dark:border-neutral-100 text-black font-black tracking-wider shadow-md transition-all duration-300 hover:shadow-lg"
                   onClick={() => window.location.href = bannerData.postUrl}
                 >
                   <motion.span
@@ -99,8 +128,8 @@ const FloatingBanner = () => {
                     }}
                     className="flex items-center"
                   >
-                    Read Post
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    Read
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 font-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
                   </motion.span>

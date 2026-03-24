@@ -15,12 +15,12 @@ export default async function EditorChoice() {
           <div className="container">
             <div className="flex justify-center mb-8">
               <h2 className="text-2xl font-semibold relative text-foreground">
-                <span className="relative z-10">Editor&apos;s Choice</span>
+                <span className="relative z-10">Featured</span>
                 <span className="absolute left-0 right-0 bottom-0 h-[1px] bg-border"></span>
               </h2>
             </div>
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900 rounded-lg p-8 text-center">
-              <p className="text-muted-foreground">No editor&apos;s choice articles found. Mark some articles in Strapi CMS.</p>
+              <p className="text-muted-foreground">No Featured articles found. Mark some articles in Strapi CMS.</p>
             </div>
           </div>
         </section>
@@ -38,12 +38,12 @@ export default async function EditorChoice() {
           <div className="container">
             <div className="flex justify-center mb-8">
               <h2 className="text-2xl font-semibold relative text-foreground">
-                <span className="relative z-10">Editor&apos;s Choice</span>
+                <span className="relative z-10">Featured</span>
                 <span className="absolute left-0 right-0 bottom-0 h-[1px] bg-border"></span>
               </h2>
             </div>
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg p-8 text-center">
-              <p className="text-muted-foreground">editor&apos;s choice articles contain invalid data. Please check your CMS content.</p>
+              <p className="text-muted-foreground">Featured articles contain invalid data.</p>
             </div>
           </div>
         </section>
@@ -129,8 +129,8 @@ export default async function EditorChoice() {
       /> */}
         <div className="container z-10 relative">
           <ScrollReveal className="flex justify-center mb-8" duration={0.6}>
-            <h2 className="text-3xl font-black relative text-brand-black-90">
-              <span className="relative z-10">DUFS Featured</span>
+            <h2 className="ext-2xl md:text-3xl lg:text-4xl font-black relative text-brand-black-90">
+              <span className="relative z-10">Featured</span>
             </h2>
           </ScrollReveal>
 
@@ -154,12 +154,12 @@ export default async function EditorChoice() {
         <div className="container">
           <div className="flex justify-center mb-8">
             <h2 className="text-2xl font-semibold relative text-brand-black-90">
-              <span className="relative z-10">Editor&apos;s Choice</span>
+              <span className="relative z-10">Featured</span>
               <span className="absolute left-0 right-0 bottom-0 h-[1px] bg-border"></span>
             </h2>
           </div>
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg p-8 text-center">
-            <p className="text-brand-black-90">Failed to load editor&apos;s choice articles. Please check your connection.</p>
+            <p className="text-brand-black-90">Failed to load Featured articles. Please check your connection.</p>
             <p className="text-sm text-muted-foreground mt-2">{error instanceof Error ? error.message : 'Unknown error'}</p>
           </div>
         </div>

@@ -152,8 +152,8 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
         kenBurnsEl,
         { scale: 1 },
         {
-          scale: 1.08,
-          duration: SLIDE_DURATION / 1000 + 0.5,
+          scale: 1.1,
+          duration: SLIDE_DURATION / 1000 + 10,
           ease: "power1.out",
           overwrite: true,
           force3D: true,
@@ -448,13 +448,13 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
                       >
                         {currentArticle?.title}
                       </h1>
-                      {currentArticle?.excerpt && (
+                      {/* {currentArticle?.excerpt && (
                         <p
                           className={`${excerptFontClass} text-xs font-light md:text-lg text-white/90 line-clamp-2 md:line-clamp-3 max-w-2xl drop-shadow-md`}
                         >
                           {currentArticle.excerpt}
                         </p>
-                      )}
+                      )} */}
                     </div>
                   </div>
                 </div>

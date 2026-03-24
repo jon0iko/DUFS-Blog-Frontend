@@ -9,7 +9,7 @@ export const config = {
       categories: '/api/categories',
       tags: '/api/tags',
       siteConfig: '/api/site-config',
-      banners: '/api/banners',
+      banners: '/api/banner',
       submissions: '/api/submissions',
       navigation: '/api/navigation-items',
       socialLinks: '/api/social-links',

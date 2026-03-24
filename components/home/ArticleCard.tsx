@@ -9,7 +9,6 @@ interface ArticleCardData {
   id: number | string;
   title: string;
   slug: string;
-  excerpt: string;
   image: string;
   category: string;
   author: {
@@ -32,9 +31,22 @@ export default function ArticleCard({
   forceBlackText = false,
 }: ArticleCardProps) {
   const titleFontClass = getFontClass(article.title);
-  const excerptFontClass = getFontClass(article.excerpt);
   const categoryFontClass = getFontClass(article.category);
   const authorfontclass = getFontClass(article.author.name);
+  let isauthornamebn, iscategorynamebn;
+  if (authorfontclass == 'font-kalpurush') {
+    isauthornamebn = true;
+  }
+  else {
+    isauthornamebn = false;
+  }
+
+  if (categoryFontClass == 'font-kalpurush') {
+    iscategorynamebn = true;
+  }
+  else {
+    iscategorynamebn = false;
+  }
 
   return (
     <article className="flex flex-col h-full">
@@ -45,7 +57,9 @@ export default function ArticleCard({
             className="block mt-3"
           >
             <div
-              className={`relative aspect-video rounded-xl overflow-hidden mb-4 shadow-md`}
+              className={cn("relative aspect-video rounded-xl overflow-hidden mb-4",
+                forceBlackText ? 'drop-shadow-lg' : 'shadow-md'
+              )}
             >
               <Image
                 src={article.image}
@@ -57,8 +71,9 @@ export default function ArticleCard({
               <div className="absolute top-0 left-0 m-2">
                 <span
                   className={cn(
-                    "bg-black text-white text-xs px-2 py-1 uppercase font-medium rounded-2xl",
+                    "bg-black text-white px-2 tracking-tighter uppercase font-bold rounded-full",
                     categoryFontClass,
+                    iscategorynamebn ? 'text-sm py-0' : 'text-xs py-1'
                   )}
                 >
                   {article.category}
@@ -73,14 +88,14 @@ export default function ArticleCard({
           >
             <h2
               className={cn(
-                "text-lg md:text-xl font-semibold line-clamp-2 group-hover:underline px-1 tracking-tight",
+                "text-lg md:text-xl font-semibold line-clamp-3 group-hover:underline px-1 tracking-tight",
                 forceBlackText ? "text-gray-900" : "text-foreground",
                 titleFontClass,
               )}
             >
               {article.title}
             </h2>
-            <p
+            {/* <p
               className={cn(
                 "mt-2 text-sm line-clamp-3 font-normal px-1",
                 forceBlackText
@@ -90,32 +105,36 @@ export default function ArticleCard({
               )}
             >
               {article.excerpt}
-            </p>
+            </p> */}
           </Link>
         </div>
         <div
           className={cn(
-            "mt-3 flex items-center text-xs px-1",
+            "mt-1 flex items-center px-1",
             forceBlackText
               ? "text-gray-500"
-              : "text-gray-500 dark:text-gray-400",
+              : "text-gray-500 dark:text-gray-300"
           )}
         >
           {article.author.slug ? (
             <Link
               href={`/author?slug=${article.author.slug}`}
               className={cn(
-                "hover:text-primary hover:underline transition-colors",
+                "transition-colors",
+                forceBlackText ? "hover:text-black" : "hover:text-foreground",
                 authorfontclass,
+                isauthornamebn ? 'text-base' : 'text-sm'
               )}
             >
               {article.author.name}
             </Link>
           ) : (
-            <span>{article.author.name}</span>
+            <span className={`transition-colors ${authorfontclass}`}>
+              {article.author.name}
+            </span>
           )}
           <span className="mx-2">•</span>
-          <time dateTime={article.publishedAt}>{article.publishedAt}</time>
+          <time dateTime={article.publishedAt} className="text-sm">{article.publishedAt}</time>
         </div>
       </div>
     </article>
