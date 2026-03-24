@@ -66,7 +66,7 @@ export default function SignIn() {
     <div className="space-y-6">
       <div className="space-y-2 text-center">
         <h2 className="text-2xl font-black text-white tracking-tight uppercase">Welcome Back</h2>
-        <p className="text-sm text-white/50">
+        <p className="text-sm text-white/80">
           Sign in to your account
         </p>
       </div>
@@ -78,7 +78,7 @@ export default function SignIn() {
           <div className="w-full border-t border-white/10"></div>
         </div>
         <div className="relative flex justify-center text-xs uppercase tracking-widest">
-          <span className="bg-black px-2 text-white/50">Or continue with</span>
+          <span className="bg-black px-2 text-white/80">Or continue with</span>
         </div>
       </div>
       
@@ -116,7 +116,7 @@ export default function SignIn() {
             </FormLabel>
             <Link 
               href="/auth/forgot-password" 
-              className="text-xs text-white/50 hover:text-white font-medium transition-colors duration-200"
+              className="text-xs text-white/80 hover:text-white font-medium transition-colors duration-200"
             >
               Forgot password?
             </Link>
@@ -158,7 +158,7 @@ export default function SignIn() {
       </Form>
       
       <div className="pt-4 border-t border-white/10 mt-6">
-        <p className="text-sm text-white/50 text-center">
+        <p className="text-sm text-white/80 text-center">
           Don&apos;t have an account?{' '}<span className="md:hidden"><br /></span>
           <Link href="/auth/signup" className="text-white font-bold underline hover:no-underline transition-colors duration-200">
             Sign Up

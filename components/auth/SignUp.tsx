@@ -242,7 +242,7 @@ export default function SignUp() {
         <h2 className="text-2xl font-black text-white tracking-tight uppercase">
           {isGoogleMode ? 'Complete Your Profile' : 'Join DUFS Community'}
         </h2>
-        <p className="text-sm text-white/50">
+        <p className="text-sm text-white/80">
           {isGoogleMode ? 'Almost there! Choose a username.' : 'Create an account'}
         </p>
       </div>

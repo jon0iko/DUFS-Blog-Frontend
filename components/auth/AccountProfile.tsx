@@ -37,6 +37,7 @@ export default function AccountProfile() {
   const { user, logout, updateLocalUser } = useAuth();
   const router = useRouter();
   const toast = useToast();
+  const auth = useAuth();
   
   // Tab state
   const [activeTab, setActiveTab] = useState('information');
@@ -432,7 +433,12 @@ export default function AccountProfile() {
     try {
       await deleteAccount(user.id);
       toast.success('Account deleted successfully');
-      router.push('/');
+      // go to homepage and refresh to clear any user data
+      auth.refreshUser();
+      // Add a small delay to ensure the state update is processed before navigation
+      setTimeout(() => {
+        window.location.href = '/?reason=account-deleted';
+      }, 100);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete account';
       toast.error(errorMessage, 'Delete Failed');

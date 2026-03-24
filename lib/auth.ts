@@ -60,9 +60,12 @@ export interface RegisterData {
 
 const STRAPI_URL = config.strapi.url;
 
+import { authChannel } from './auth-channel';
+
 // Set authentication token in cookies
 export const setToken = (token: string) => {
-  Cookies.set('token', token, { expires: 7 }); // Token valid for 7 days
+  Cookies.set('token', token, { expires: 7, path: '/' }); // Token valid for 7 days
+  authChannel?.postMessage({ type: 'login' });
 };
 
 // Get token from cookies
@@ -72,12 +75,13 @@ export const getToken = (): string | undefined => {
 
 // Remove token from cookies (logout)
 export const removeToken = () => {
-  Cookies.remove('token');
+  Cookies.remove('token', { path: '/' });
+  authChannel?.postMessage({ type: 'logout' });
 };
 
 // Store user data in cookies
 export const setUser = (user: UserData) => {
-  Cookies.set('user', JSON.stringify(user), { expires: 7 });
+  Cookies.set('user', JSON.stringify(user), { expires: 7, path: '/' });
 };
 
 // Get user data from cookies
@@ -88,7 +92,7 @@ export const getUser = (): UserData | null => {
 
 // Remove user data from cookies
 export const removeUser = () => {
-  Cookies.remove('user');
+  Cookies.remove('user', { path: '/' });
 };
 
 // Login API call - Strapi v5 endpoint

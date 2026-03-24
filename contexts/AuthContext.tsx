@@ -14,6 +14,7 @@ import {
   LoginData,
   RegisterData
 } from '@/lib/auth';
+import { authChannel } from '@/lib/auth-channel';
 
 interface AuthContextType {
   isLoading: boolean;
@@ -36,6 +37,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Effect for handling cross-tab auth events
+  useEffect(() => {
+    const handleAuthMessage = (event: MessageEvent) => {
+      if (event.data.type === 'logout') {
+        // Another tab logged out or deleted account. Redirect to sign-in.
+        // A full page navigation is the most robust way to reset all state.
+        window.location.href = '/auth/signin?reason=session-ended';
+      } else if (event.data.type === 'login') {
+        // Another tab logged in. Reload to sync the new session.
+        window.location.reload();
+      }
+    };
+
+    authChannel?.addEventListener('message', handleAuthMessage);
+
+    return () => {
+      authChannel?.removeEventListener('message', handleAuthMessage);
+    };
+  }, []);
+
   // Check if the user is already authenticated when the app loads
   useEffect(() => {
     const initAuth = async () => {
@@ -48,11 +69,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const currentUser = await fetchCurrentUser();
             if (currentUser) {
               setUser(currentUser);
+            } else {
+              // Token is invalid, log out
+              logoutApi();
             }
           }
         }
       } catch (error) {
         console.error('Authentication initialization error:', error);
+        logoutApi(); // Clear invalid data
       } finally {
         setIsLoading(false);
       }
@@ -102,8 +127,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    logoutApi();
-    setUser(null);
+    logoutApi(); // from @lib/auth, removes cookies and broadcasts
+    setUser(null); // Update state for the current tab
     router.push('/');
   };
 
@@ -111,15 +136,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = useCallback(async () => {
     try {
       const currentUser = await fetchCurrentUser();
-      if (currentUser) {
-        setUser(currentUser);
-      }
+      setUser(currentUser); // It's okay to set null if fetch fails
     } catch (error) {
       console.error('Error refreshing user:', error);
+      setUser(null);
     }
   }, []);
 
-  // Update local user state (without fetching from server)
+  // Update local user state (e.g., after profile update)
   const updateLocalUser = useCallback((userData: UserData) => {
     setUser(userData);
   }, []);
