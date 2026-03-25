@@ -129,6 +129,7 @@ export interface Article {
   publication_issue?: Publication_Issue; // Populated relation for articles in issues
   category?: Category; // Populated relation
   tags?: Tag[]; // Populated relation
+  storyState: 'published' | 'draft' | 'archived'; 
   isFeatured: boolean;
   isEditorsPick: boolean;
   isHero: boolean;

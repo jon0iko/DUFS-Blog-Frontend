@@ -2,11 +2,15 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { ArrowUpRight, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import {
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+} from "lucide-react";
 import { Category, Article } from "@/types";
 import { strapiAPI } from "@/lib/api";
 import { getArticleData } from "@/lib/strapi-helpers";
-import { getFontClass } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import ArticleCard from "./ArticleCard";
 
@@ -32,12 +36,14 @@ interface BrowseContentSectionProps {
 export default function BrowseContentSection({
   initialCategories,
 }: BrowseContentSectionProps) {
-  const [categories] = useState<Category[]>(initialCategories);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [languageFilter, setLanguageFilter] = useState<LanguageFilter>("all");
+  const [categoryLanguage, setCategoryLanguage] = useState<"bn" | "en">("bn");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(false);
+  const [dropdownAlign, setDropdownAlign] = useState<"left" | "right">("left"); // Default to left for safety
 
   const MOBILE_CAT_LIMIT = 4;
   const DESKTOP_CAT_LIMIT = 6;
@@ -55,6 +61,50 @@ export default function BrowseContentSection({
   const hasTriggeredRef = useRef(false);
   // Ref for filter dropdown
   const filterDropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownPanelRef = useRef<HTMLDivElement>(null);
+
+  // Sort categories by latest article publication date
+  useEffect(() => {
+    const sortCategoriesByLatestArticle = async () => {
+      try {
+        // Fetch all published articles without pagination
+        const response = await strapiAPI.getArticles({
+          pageSize: 1000,
+          sort: "publishedAt:desc",
+        });
+        const allArticles = response.data || [];
+        console.log("Fetched all articles for category sorting:", allArticles);
+
+        // Create a map of category slug to latest published date
+        const categoryLatestDates = new Map<string, Date>();
+
+        allArticles.forEach((article) => {
+          if (article.category && article.publishedAt) {
+            const categorySlug = article.category.Slug || "";
+            const publishedDate = new Date(article.publishedAt);
+
+            const currentLatest = categoryLatestDates.get(categorySlug);
+            if (!currentLatest || publishedDate > currentLatest) {
+              categoryLatestDates.set(categorySlug, publishedDate);
+            }
+          }
+        });
+
+        // Sort categories by latest published date (descending)
+        const sortedCategories = [...categories].sort((a, b) => {
+          const dateA = categoryLatestDates.get(a.Slug || "") || new Date(0);
+          const dateB = categoryLatestDates.get(b.Slug || "") || new Date(0);
+          return dateB.getTime() - dateA.getTime();
+        });
+
+        setCategories(sortedCategories);
+      } catch (error) {
+        console.error("Failed to sort categories by latest article:", error);
+      }
+    };
+
+    sortCategoriesByLatestArticle();
+  }, []);
 
   // Fetch articles based on active filters
   useEffect(() => {
@@ -150,7 +200,7 @@ export default function BrowseContentSection({
     setCurrentPage(1);
   }, [activeCategory, sortBy, languageFilter]);
 
-  // Close filter dropdown when clicking outside
+  // Close filter dropdown when clicking outside & handle dynamic positioning
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -160,10 +210,52 @@ export default function BrowseContentSection({
         setIsFilterOpen(false);
       }
     };
+
+    // Detect positioning to avoid cutoff
+    const detectPosition = () => {
+      if (filterDropdownRef.current && dropdownPanelRef.current) {
+        const buttonRect = filterDropdownRef.current.getBoundingClientRect();
+        const panelRect = dropdownPanelRef.current.getBoundingClientRect();
+        const viewport = window.innerWidth;
+        const padding = 20;
+
+        // Check if opening to the LEFT would fit in viewport
+        const leftAlignedRight = buttonRect.left + panelRect.width;
+        const wouldFitLeft = leftAlignedRight + padding <= viewport;
+
+        // Check if opening to the RIGHT would fit in viewport
+        const rightAlignedLeft = buttonRect.right - panelRect.width;
+        const wouldFitRight = rightAlignedLeft - padding >= 0;
+
+        // Decide alignment based on available space
+        if (wouldFitLeft && !wouldFitRight) {
+          setDropdownAlign("left");
+        } else if (wouldFitRight && !wouldFitLeft) {
+          setDropdownAlign("right");
+        } else if (wouldFitLeft) {
+          // Both fit - prefer left (current default)
+          setDropdownAlign("left");
+        } else {
+          // Neither fit perfectly - left is safer (doesn't clip left edge usually)
+          setDropdownAlign("left");
+        }
+      }
+    };
+
     if (isFilterOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      // Use requestAnimationFrame twice to ensure layout is complete
+      requestAnimationFrame(() => {
+        requestAnimationFrame(detectPosition);
+      });
+      // Also detect on window resize
+      window.addEventListener("resize", detectPosition);
     }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("resize", detectPosition);
+    };
   }, [isFilterOpen]);
 
   // Handle page changes - memoized for performance
@@ -235,39 +327,75 @@ export default function BrowseContentSection({
           ref={headerRef}
           className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-4"
         >
-          <div>
-            <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-4 text-foreground">
-              In F
-              <svg
-                key={spinTrigger}
-                className={cn(
-                  "inline-block w-[0.85em] h-[0.6em] -mx-[0.1em]",
-                  spinTrigger > 0 && "animate-spin-reveal",
-                )}
-                viewBox="0 0 131 131"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-              >
-                <path
-                  d="M65.5 0C101.675 0 131 29.3253 131 65.5C131 101.675 101.675 131 65.5 131C29.3253 131 0 101.675 0 65.5C0 29.3253 29.3253 0 65.5 0ZM65 83C58.3726 83 53 88.3726 53 95C53 101.627 58.3726 107 65 107C71.6274 107 77 101.627 77 95C77 88.3726 71.6274 83 65 83ZM37 53C30.3726 53 25 58.3726 25 65C25 71.6274 30.3726 77 37 77C43.6274 77 49 71.6274 49 65C49 58.3726 43.6274 53 37 53ZM94 53C87.3726 53 82 58.3726 82 65C82 71.6274 87.3726 77 94 77C100.627 77 106 71.6274 106 65C106 58.3726 100.627 53 94 53ZM65 24C58.3726 24 53 29.3726 53 36C53 42.6274 58.3726 48 65 48C71.6274 48 77 42.6274 77 36C77 29.3726 71.6274 24 65 24Z"
-                  fill="currentColor"
-                />
-              </svg>
-              cus
-            </h2>
-            <p className="text-muted-foreground text-base md:text-lg max-w-xl font-normal">
-              Explore our collection of film analysis, reviews, and
-              publications.
-            </p>
+          <div className="flex flex-col md:flex-row md:items-end gap-4 flex-1">
+            <div>
+              <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-4 text-foreground">
+                In F
+                <svg
+                  key={spinTrigger}
+                  className={cn(
+                    "inline-block w-[0.85em] h-[0.6em] -mx-[0.1em]",
+                    spinTrigger > 0 && "animate-spin-reveal",
+                  )}
+                  viewBox="0 0 131 131"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M65.5 0C101.675 0 131 29.3253 131 65.5C131 101.675 101.675 131 65.5 131C29.3253 131 0 101.675 0 65.5C0 29.3253 29.3253 0 65.5 0ZM65 83C58.3726 83 53 88.3726 53 95C53 101.627 58.3726 107 65 107C71.6274 107 77 101.627 77 95C77 88.3726 71.6274 83 65 83ZM37 53C30.3726 53 25 58.3726 25 65C25 71.6274 30.3726 77 37 77C43.6274 77 49 71.6274 49 65C49 58.3726 43.6274 53 37 53ZM94 53C87.3726 53 82 58.3726 82 65C82 71.6274 87.3726 77 94 77C100.627 77 106 71.6274 106 65C106 58.3726 100.627 53 94 53ZM65 24C58.3726 24 53 29.3726 53 36C53 42.6274 58.3726 48 65 48C71.6274 48 77 42.6274 77 36C77 29.3726 71.6274 24 65 24Z"
+                    fill="currentColor"
+                  />
+                </svg>
+                cus
+              </h2>
+              <p className="text-foreground/70 text-base md:text-lg max-w-xl font-normal">
+                Explore our collection of film analysis, reviews, and
+                publications.
+              </p>
+            </div>
           </div>
-          <Link
-            href="/browse"
-            className="inline-flex items-center gap-2 text-sm font-normal uppercase tracking-widest hover:underline decoration-1 underline-offset-4 transition-all"
-          >
-            View all
-            <ArrowUpRight className="w-4 h-4" />
-          </Link>
+          <div className="flex flex-col md:items-end gap-4">
+            {/* Category Language Switcher */}
+            <div className="flex items-center gap-2 h-fit">
+              <div className="inline-flex rounded-md border border-foreground bg-background shadow-sm overflow-hidden">
+                <button
+                  onClick={() => setCategoryLanguage("bn")}
+                  className={cn(
+                    "px-3 md:px-4 py-2 text-xs md:text-sm font-semibold transition-all duration-200",
+                    categoryLanguage === "bn"
+                      ? "bg-foreground text-background"
+                      : "text-foreground hover:bg-accent/5",
+                  )}
+                  title="Show categories in Bengali"
+                  aria-pressed={categoryLanguage === "bn"}
+                >
+                  BN
+                </button>
+                <div className="w-px bg-border" />
+                <button
+                  onClick={() => setCategoryLanguage("en")}
+                  className={cn(
+                    "px-3 md:px-4 py-2 text-xs md:text-sm font-semibold transition-all duration-200",
+                    categoryLanguage === "en"
+                      ? "bg-foreground text-background"
+                      : "text-foreground hover:bg-accent/5",
+                  )}
+                  title="Show categories in English"
+                  aria-pressed={categoryLanguage === "en"}
+                >
+                  EN
+                </button>
+              </div>
+            </div>
+            <Link
+              href="/browse"
+              className="inline-flex items-center gap-2 text-sm font-normal uppercase tracking-widest hover:underline decoration-1 underline-offset-4 transition-all" 
+            >
+              View all
+              <ArrowUpRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
 
         {/* Filter Section */}
@@ -287,9 +415,11 @@ export default function BrowseContentSection({
                 All
               </button>
               {categories.map((category, index) => {
-                const categoryName = category.Name || "";
+                const categoryName =
+                  categoryLanguage === "bn"
+                    ? category.nameBn || ""
+                    : category.nameEn || "";
                 const categorySlug = category.Slug || "";
-                const fontClass = getFontClass(categoryName);
 
                 // Hide categories beyond the limit unless expanded
                 const isMobileHidden =
@@ -301,9 +431,14 @@ export default function BrowseContentSection({
                   <button
                     key={category.documentId}
                     onClick={() => setActiveCategory(categorySlug)}
+                    style={{
+                      fontFamily:
+                        categoryLanguage === "bn"
+                          ? "var(--font-kalpurush)"
+                          : "var(--font-montserrat)",
+                    }}
                     className={cn(
                       "px-4 py-2 text-sm md:text-base font-semibold rounded-md border transition-all duration-200",
-                      fontClass,
                       activeCategory === categorySlug
                         ? "bg-foreground text-background border-foreground"
                         : "bg-background text-foreground border-border hover:border-foreground/50",
@@ -362,22 +497,35 @@ export default function BrowseContentSection({
               <div ref={filterDropdownRef} className="relative">
                 <button
                   onClick={() => setIsFilterOpen((prev) => !prev)}
-                  className="relative flex items-center gap-2 py-2 text-sm md:text-base font-semibold rounded-full transition-all duration-200 bg-background text-foreground border-border hover:border-foreground/50"
+                  className="relative flex items-center p-1 gap-2 text-sm md:text-base font-semibold rounded-full transition-all duration-200 bg-background dark:text-white  hover:border-foreground/100 hover:bg-brand-accent dark:hover:text-black border border-foreground/50"
                   aria-label="Filter by language"
                   aria-expanded={isFilterOpen}
                 >
                   {/* Filter SVG icon */}
                   <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 50 50"
-                    fill="none"
+                    width={24}
+                    height={24}
+                    viewBox="0 0 24 24"
+                    role="img"
                     xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden="true"
-                    className="flex-shrink-0"
+                    aria-labelledby="languageIconTitle"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    fill="none"
+                    color="currentColor"
                   >
+                    {" "}
+                    <title id="languageIconTitle">Language</title>{" "}
+                    <circle cx="12" cy="12" r="10" />{" "}
                     <path
-                      d="M29.1667 25V41.4167C29.25 42.0417 29.0417 42.7083 28.5625 43.1458C28.3698 43.339 28.1409 43.4922 27.8888 43.5967C27.6368 43.7013 27.3666 43.7551 27.0938 43.7551C26.8209 43.7551 26.5508 43.7013 26.2987 43.5967C26.0467 43.4922 25.8178 43.339 25.625 43.1458L21.4375 38.9583C21.2104 38.7361 21.0378 38.4644 20.933 38.1645C20.8282 37.8646 20.7941 37.5445 20.8334 37.2292V25H20.7709L8.77086 9.625C8.43255 9.19069 8.27989 8.64012 8.34625 8.0936C8.41262 7.54709 8.6926 7.04905 9.12503 6.70833C9.52086 6.41667 9.95836 6.25 10.4167 6.25H39.5834C40.0417 6.25 40.4792 6.41667 40.875 6.70833C41.3075 7.04905 41.5874 7.54709 41.6538 8.0936C41.7202 8.64012 41.5675 9.19069 41.2292 9.625L29.2292 25H29.1667Z"
+                      stroke-linecap="round"
+                      d="M12,22 C14.6666667,19.5757576 16,16.2424242 16,12 C16,7.75757576 14.6666667,4.42424242 12,2 C9.33333333,4.42424242 8,7.75757576 8,12 C8,16.2424242 9.33333333,19.5757576 12,22 Z"
+                    />
+                    <path
+                      stroke-linecap="round"
+                      d="M2.5 9L21.5 9M2.5 15L21.5 15"
                       fill="currentColor"
                     />
                   </svg>
@@ -390,7 +538,13 @@ export default function BrowseContentSection({
 
                 {/* Dropdown panel */}
                 {isFilterOpen && (
-                  <div className="absolute left-0 md:left-auto md:right-0 top-full mt-2 z-50 min-w-[160px] rounded-md border border-border bg-background shadow-lg overflow-hidden">
+                  <div
+                    ref={dropdownPanelRef}
+                    className={cn(
+                      "absolute top-full mt-2 z-50 min-w-[160px] rounded-md border border-border bg-background shadow-lg overflow-hidden",
+                      dropdownAlign === "left" ? "left-0" : "right-0",
+                    )}
+                  >
                     <div className="px-3 py-2 border-b border-border">
                       <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                         Language
@@ -432,14 +586,14 @@ export default function BrowseContentSection({
 
               {/* Sort Filter */}
               <div className="flex items-center gap-3">
-                <span className="text-base md:text-xs font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                <span className="text-sm md:text-base font-semibold uppercase tracking-widest text-muted-foreground whitespace-nowrap">
                   Sort:
                 </span>
                 <div className="relative min-w-[130px] md:min-w-[150px]">
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="w-full appearance-none bg-background border-2 border-foreground/10 focus:border-foreground/30 rounded-sm py-2 pl-3 pr-10 outline-none transition-all text-sm font-bold uppercase tracking-tight cursor-pointer"
+                    className="w-full appearance-none bg-background border-2 border-foreground/10 focus:border-foreground/30 rounded-sm py-2 pl-3 pr-10 outline-none transition-all text-sm md:text-base  font-bold uppercase tracking-tight cursor-pointer"
                   >
                     <option value="newest">Newest</option>
                     <option value="oldest">Oldest</option>

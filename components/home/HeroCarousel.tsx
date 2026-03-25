@@ -322,7 +322,6 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
   if (processedArticles.length === 0) return null;
 
   const currentArticle = processedArticles[currentIndex];
-  console.log("Current Article:", currentArticle);
 
   // Font classes
   const titleFontClass = currentArticle?.title
