@@ -401,7 +401,7 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
               )}
 
               {/* Content Overlay */}
-              <div className="absolute inset-0 flex flex-col justify-end pb-12 md:pb-20 pointer-events-none z-20">
+              <div className="absolute inset-0 flex flex-col justify-end pb-12 md:pb-8 pointer-events-none z-20">
                 <div className="container px-6 md:px-6">
                   <div className="max-w-5xl">
                     {/* GSAP stagger-reveal text — children animated by useEffect above */}
@@ -501,10 +501,10 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
           onTouchStart={() => setIsUserInteracting(true)}
           onTouchEnd={() => setIsUserInteracting(false)}
         >
-          {/* Small Left Arrow */}
+          {/* Small Left Arrow - Circular button for mobile */}
           <button
             onClick={handlePrev}
-            className="md:hidden pointer-events-auto opacity-70 hover:opacity-100 transition-opacity mr-1"
+            className="md:hidden pointer-events-auto opacity-70 hover:opacity-100 transition-opacity p-2 -mr-1 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30"
             aria-label="Previous Slide"
           >
             <Image
@@ -530,10 +530,10 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
             />
           ))}
 
-          {/* Small Right Arrow */}
+          {/* Small Right Arrow - Circular button for mobile */}
           <button
             onClick={handleNext}
-            className="md:hidden pointer-events-auto opacity-70 hover:opacity-100 transition-opacity ml-1"
+            className="md:hidden pointer-events-auto opacity-70 hover:opacity-100 transition-opacity p-2 -ml-1 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30"
             aria-label="Next Slide"
           >
             <Image
