@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AvatarCropModal from './AvatarCropModal';
 import { useToast } from '@/components/ui/toast';
 import GoogleAuthButton from './GoogleAuthButton';
+import { fetchAndValidateGoogleAvatar, createAvatarFile, revokeAvatarUrl } from '@/lib/google-avatar-handler';
 
 export default function SignUp() {
   const { refreshUser } = useAuth();
@@ -41,6 +42,7 @@ export default function SignUp() {
   const [showCropModal, setShowCropModal] = useState(false);
   const [croppedAvatarFile, setCroppedAvatarFile] = useState<File | null>(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+  const [avatarPreviewError, setAvatarPreviewError] = useState(false);
 
   useEffect(() => {
     if (isGoogleMode && typeof window !== 'undefined') {
@@ -50,9 +52,20 @@ export default function SignUp() {
       setGooglePictureUrl(picture);
       if (picture && !avatarPreviewUrl) {
         setAvatarPreviewUrl(picture);
+        setAvatarPreviewError(false);
       }
     }
   }, [isGoogleMode, avatarPreviewUrl]);
+
+  // Cleanup: revoke blob URLs on unmount or when preview changes
+  useEffect(() => {
+    return () => {
+      // Clean up blob URLs created by canvas operations (but not Google picture URLs)
+      if (avatarPreviewUrl && avatarPreviewUrl.startsWith('blob:')) {
+        revokeAvatarUrl(avatarPreviewUrl);
+      }
+    };
+  }, [avatarPreviewUrl]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -131,7 +144,9 @@ export default function SignUp() {
 
   const handleCropComplete = useCallback((file: File) => {
     setCroppedAvatarFile(file);
-    setAvatarPreviewUrl(URL.createObjectURL(file));
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreviewUrl(previewUrl);
+    setAvatarPreviewError(false);
     setShowCropModal(false);
     setRawImageSrc(null);
     setErrors((prev) => ({ ...prev, avatar: '' }));
@@ -144,11 +159,13 @@ export default function SignUp() {
 
   const handleRemoveAvatar = () => {
     setCroppedAvatarFile(null);
-    if (avatarPreviewUrl) {
-      URL.revokeObjectURL(avatarPreviewUrl);
-      // Revert to google picture if available
-      setAvatarPreviewUrl(isGoogleMode && googlePictureUrl ? googlePictureUrl : null);
+    // Only revoke blob: URLs (data URLs created by canvas operations)
+    // Keep direct image URLs intact for Google pictures
+    if (avatarPreviewUrl && avatarPreviewUrl.startsWith('blob:')) {
+      revokeAvatarUrl(avatarPreviewUrl);
     }
+    // Revert to google picture if available
+    setAvatarPreviewUrl(isGoogleMode && googlePictureUrl ? googlePictureUrl : null);
   };
 
   // ─── Form submit ───────────────────────────────────────────────────────────
@@ -172,22 +189,27 @@ export default function SignUp() {
         
         if (!croppedAvatarFile && googlePictureUrl && userId) {
           try {
-            const picRes = await fetch(googlePictureUrl);
-            const blob = await picRes.blob();
+            // Fetch, validate, and re-encode Google avatar with production-grade handling
+            const { blob } = await fetchAndValidateGoogleAvatar(googlePictureUrl);
             
             if (blob.size > 0) {
-              // Ensure valid MIME type and extension
-              const mimeType = (blob.type && blob.type.startsWith('image/')) ? blob.type : 'image/jpeg';
-              const ext = mimeType.includes('png') ? 'png' : mimeType.includes('webp') ? 'webp' : 'jpg';
-              
-              const file = new File([blob], `google_avatar_${userId}.${ext}`, { type: mimeType });
+              // Create properly-formatted file for upload
+              const file = createAvatarFile(blob, userId, 'image/png');
               await uploadUserAvatar(userId, file);
             } else {
-              console.warn('Google avatar fetch returned an empty blob.');
+              console.warn('Google avatar validation resulted in empty blob.');
             }
           } catch (avatarErr) {
             console.error('Google avatar fetch/upload failed (non-fatal):', avatarErr);
+            // Non-blocking error: continue signup even if avatar fails
           }
+        }
+        
+        // Clear Google data from session storage
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('google_name');
+          sessionStorage.removeItem('google_picture');
+          sessionStorage.removeItem('google_email');
         }
       } else {
         // Standard Registration
@@ -278,9 +300,17 @@ export default function SignUp() {
               onClick={() => avatarInputRef.current?.click()}
               title="Choose a profile photo"
             >
-              {avatarPreviewUrl ? (
+              {avatarPreviewUrl && !avatarPreviewError ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarPreviewUrl} alt="Avatar preview" className="w-full h-full object-cover" />
+                <img
+                  src={avatarPreviewUrl}
+                  alt="Avatar preview"
+                  className="w-full h-full object-cover"
+                  crossOrigin="anonymous"
+                  referrerPolicy="no-referrer"
+                  onError={() => setAvatarPreviewError(true)}
+                  onLoad={() => setAvatarPreviewError(false)}
+                />
               ) : (
                 <ImageIcon className="h-8 w-8 text-white/20" />
               )}
@@ -313,7 +343,7 @@ export default function SignUp() {
             <p className="text-xs font-semibold text-white/50 uppercase tracking-wide">
               {croppedAvatarFile ? 'Photo selected ✓' : 'Profile Photo'}
             </p>
-            <p className="text-xs text-white/25 mt-0.5">
+            <p className="text-xs text-white/70 mt-0.5">
               {croppedAvatarFile ? (
                 <button
                   type="button"
@@ -355,7 +385,7 @@ export default function SignUp() {
               onChange={(e) => setGoogleName(e.target.value)}
               placeholder="Enter your full name"
               disabled={isSubmitting}
-              className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
+              className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white-50 focus:ring-white/30 focus:border-white/30 rounded-md"
             />
           </FormGroup>
         )}
@@ -374,7 +404,7 @@ export default function SignUp() {
             onChange={handleChange}
             placeholder="This will be your author name"
             disabled={isSubmitting}
-            className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
+            className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white-50 focus:ring-white/30 focus:border-white/30 rounded-md"
           />
         </FormGroup>
 
@@ -393,7 +423,7 @@ export default function SignUp() {
               onChange={handleChange}
               placeholder="Enter your email address"
               disabled={isSubmitting}
-              className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
+              className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white-50 focus:ring-white/30 focus:border-white/30 rounded-md"
             />
           </FormGroup>
         )}
@@ -402,7 +432,7 @@ export default function SignUp() {
         <FormGroup>
           <FormLabel htmlFor="Bio" className="text-white/80 font-semibold flex items-center gap-2 tracking-wide uppercase text-xs">
             <FileText className="h-4 w-4 text-white/60" />
-            Bio
+            Bio (Optional)
           </FormLabel>
           <Textarea
             id="Bio"
@@ -413,10 +443,10 @@ export default function SignUp() {
             disabled={isSubmitting}
             rows={3}
             maxLength={500}
-            className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md resize-none"
+            className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white-50 focus:ring-white/30 focus:border-white/30 rounded-md resize-none"
           />
-          <FormDescription className="mt-1 text-xs text-white/30 flex justify-between">
-            <span>Optional · shown on your author profile</span>
+          <FormDescription className="mt-1 text-xs text-white/60 flex justify-between">
+            <span>Shown on your author profile</span>
             <span>{(formData.Bio?.length ?? 0)}/500</span>
           </FormDescription>
         </FormGroup>
@@ -437,7 +467,7 @@ export default function SignUp() {
                 onChange={handleChange}
                 placeholder="Create a strong password"
                 disabled={isSubmitting}
-                className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
+                className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white-50 focus:ring-white/30 focus:border-white/30 rounded-md"
               />
               <FormDescription className="mt-1 text-xs text-white/30">
                 Must be at least 8 characters long
@@ -458,7 +488,7 @@ export default function SignUp() {
                 onChange={handleChange}
                 placeholder="Confirm your password"
                 disabled={isSubmitting}
-                className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
+                className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white-50 focus:ring-white/30 focus:border-white/30 rounded-md"
               />
             </FormGroup>
           </>

@@ -9,6 +9,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 
+/**
+ * Helper to get a high-quality version of the Google profile picture.
+ * Google's default URL usually ends in '=s96-c' (96x96).
+ * Replacing it with '=s400-c' gives a 400x400 image.
+ */
+const getHighResGoogleAvatar = (url: string) => {
+  if (!url) return '';
+  // Replace the size parameter (e.g., =s96-c) with a larger one
+  return url.replace(/=s\d+-c/, '=s400-c');
+};
+
 export default function GoogleAuthButton({ isSignUp = false }: { isSignUp?: boolean }) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -21,18 +32,42 @@ export default function GoogleAuthButton({ isSignUp = false }: { isSignUp?: bool
       setIsLoading(true);
       try {
         // 1. Fetch user profile from Google to get name and picture
+        // We do this manually to get high-quality info for onboarding
         const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         });
+        
+        if (!userInfoRes.ok) {
+          throw new Error('Failed to fetch user info from Google');
+        }
+        
         const userInfo = await userInfoRes.json();
+        const highResPicture = getHighResGoogleAvatar(userInfo.picture);
         
         // 2. Log in to Strapi using the Google access token
-        const authResponse = await loginWithGoogleToken(tokenResponse.access_token);
+        let authResponse;
+        try {
+          authResponse = await loginWithGoogleToken(tokenResponse.access_token);
+        } catch (strapiError: any) {
+          // Check for specific Strapi errors (like email already taken)
+          const errorMessage = strapiError?.message || '';
+          if (errorMessage.toLowerCase().includes('email') || errorMessage.toLowerCase().includes('taken')) {
+            toast.error(
+              'An account with this email already exists. Please sign in with your password instead.',
+              'Account Conflict'
+            );
+          } else {
+            throw strapiError;
+          }
+          setIsLoading(false);
+          return;
+        }
         
         if (!authResponse || !authResponse.jwt) {
           throw new Error('Failed to authenticate with Strapi using Google token.');
         }
 
+        // Update AuthContext with the new user
         await refreshUser();
         
         // 3. Check if user has an Author entry
@@ -42,17 +77,22 @@ export default function GoogleAuthButton({ isSignUp = false }: { isSignUp?: bool
           // Existing user with author profile completed
           const redirectUrl = searchParams.get('redirect') || '/';
           router.push(redirectUrl);
+          toast.success('Welcome back!', 'Authentication Successful');
         } else {
-          // New user needing onboarding
+          // New user needing onboarding - Store info for the signup page
           if (typeof window !== 'undefined') {
             sessionStorage.setItem('google_name', userInfo.name || '');
-            sessionStorage.setItem('google_picture', userInfo.picture || '');
+            sessionStorage.setItem('google_picture', highResPicture || '');
+            sessionStorage.setItem('google_email', userInfo.email || '');
           }
           router.push('/auth/signup?mode=google');
         }
       } catch (error) {
         console.error('Google Auth Error:', error);
-        toast.error('Google authentication failed. Please try again.', 'Authentication Error');
+        toast.error(
+          'Google authentication failed. Please try again or use another method.',
+          'Authentication Error'
+        );
       } finally {
         setIsLoading(false);
       }
