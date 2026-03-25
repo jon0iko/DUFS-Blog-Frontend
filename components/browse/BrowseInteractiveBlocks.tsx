@@ -8,6 +8,7 @@ import { Category } from "@/types";
 import { cn } from "@/lib/utils";
 import { getFontClass } from "@/lib/fonts";
 import ArticlesList from "./ArticlesList";
+import CategoryDropdown from "./CategoryDropdown";
 
 interface BrowseInteractiveBlocksProps {
   categories: Category[];
@@ -40,7 +41,7 @@ export default function BrowseInteractiveBlocks({
       { value: "all", label: "All Categories" },
       ...categories.map((category) => ({
         value: category.Slug || "",
-        label: category.Name || "Untitled",
+        label: `${category.nameBn || category.Name} (${category.nameEn || category.Name})`,
       })),
     ],
     [categories]
@@ -83,7 +84,7 @@ export default function BrowseInteractiveBlocks({
       />
 
       {/* Action Bar with SVG Background */}
-      <div className="relative z-30 w-full overflow-hidden">
+      <div className="relative z-30 w-full overflow-visible">
         {/* The SVG Background - Fixed to stay centered and hold content in its body */}
         <div className="absolute inset-0">
           <Image
@@ -111,23 +112,11 @@ export default function BrowseInteractiveBlocks({
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-center lg:gap-8">
             
             {/* 1. Category Dropdown */}
-            <div className="relative w-full lg:w-auto lg:min-w-[240px]">
-              <select
-                value={activeCategory || "all"}
-                onChange={(e) => setActiveCategory(e.target.value)}
-                className={cn(
-                  "h-12 w-full appearance-none rounded-[4px] border border-[#BDB2AB] bg-[#C9C0BC] px-4 pr-10 text-[1.1rem] lg:text-[1.2rem] font-black text-[#29211D] outline-none transition-all  focus:border-[#84786F] dark:border-[#3A3431] dark:bg-[#302A27] dark:text-[#F3E7DD] cursor-pointer",
-                  getFontClass(categoryOptions.find(o => o.value === (activeCategory || "all"))?.label || "")
-                )}
-              >
-                {categoryOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#29211D] dark:text-[#AFA39B]" />
-            </div>
+            <CategoryDropdown
+              options={categoryOptions}
+              value={activeCategory || "all"}
+              onChange={setActiveCategory}
+            />
 
             {/* 2. Dynamic Middle Section (Filters or Search) */}
             <div className="flex w-full flex-grow items-center justify-center lg:w-auto">
