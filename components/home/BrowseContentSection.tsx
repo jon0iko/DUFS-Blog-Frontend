@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Category, Article } from "@/types";
 import { strapiAPI } from "@/lib/api";
-import { getArticleData } from "@/lib/strapi-helpers";
+import { getArticleData, getArticleDataEnglishcategory } from "@/lib/strapi-helpers";
 import { cn } from "@/lib/utils";
 import ArticleCard from "./ArticleCard";
 
@@ -305,6 +305,11 @@ export default function BrowseContentSection({
   const validArticles = articles
     .map((article) => ({ raw: article, data: getArticleData(article) }))
     .filter((item) => item.data !== null);
+  
+  const validArticlesEn = articles
+    .map((article) => ({ raw: article, data: getArticleDataEnglishcategory(article) }))
+    .filter((item) => item.data !== null);
+  
 
   return (
     <section className="relative -mt-12 md:-mt-16  py-12 md:py-16 bg-background overflow-hidden">
@@ -438,7 +443,7 @@ export default function BrowseContentSection({
                           : "var(--font-montserrat)",
                     }}
                     className={cn(
-                      "px-4 py-2 text-sm md:text-base font-semibold rounded-md border transition-all duration-200",
+                      "px-4 py-2 font-semibold rounded-md border transition-all duration-200",
                       activeCategory === categorySlug
                         ? "bg-foreground text-background border-foreground"
                         : "bg-background text-foreground border-border hover:border-foreground/50",
@@ -446,6 +451,7 @@ export default function BrowseContentSection({
                         ? "hidden md:inline-flex"
                         : "",
                       isMobileHidden && isDesktopHidden ? "hidden" : "",
+                      categoryLanguage === "bn" ? 'text-base md:text-lg' : 'text-sm md:text-base'
                     )}
                   >
                     {categoryName}
@@ -497,7 +503,7 @@ export default function BrowseContentSection({
               <div ref={filterDropdownRef} className="relative">
                 <button
                   onClick={() => setIsFilterOpen((prev) => !prev)}
-                  className="relative flex items-center p-1 gap-2 text-sm md:text-base font-semibold rounded-full transition-all duration-200 bg-background dark:text-white  hover:border-foreground/100 hover:bg-brand-accent dark:hover:text-black border border-foreground/50"
+                  className="relative flex items-center p-1 gap-2 text-sm md:text-base font-semibold rounded-full transition-all duration-200 bg-background dark:text-white  hover:border-foreground/100 hover:bg-foreground hover:text-white dark:hover:text-black border border-foreground/50"
                   aria-label="Filter by language"
                   aria-expanded={isFilterOpen}
                 >
@@ -645,11 +651,19 @@ export default function BrowseContentSection({
                 Showing {(currentPage - 1) * ARTICLES_PER_PAGE + 1} - {Math.min(currentPage * ARTICLES_PER_PAGE, totalArticles)} of {totalArticles} articles
               </div> */}
 
+              { categoryLanguage === "bn" ?
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
                 {validArticles.map(({ raw, data }) => (
-                  <ArticleCard key={raw.documentId} article={data!} />
+                  <ArticleCard key={`${raw.documentId}-${categoryLanguage}`} article={data!} />
                 ))}
               </div>
+              :
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+                {validArticlesEn.map(({ raw, data }) => (
+                  <ArticleCard key={`${raw.documentId}-${categoryLanguage}`} article={data!} />
+                ))}
+              </div>
+              }
             </>
           )}
         </div>

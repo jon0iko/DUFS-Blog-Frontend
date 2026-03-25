@@ -82,7 +82,12 @@ export function getCategoryName(category?: Category): string {
  */
 export function getCategoryNameBn(category?: Category): string {
   if (!category) return 'শ্রেণীবিহীন';
-  return category.nameBn || category.Name || 'শ্রেণীবিহীন';
+  return category.nameBn || 'শ্রেণীবিহীন';
+}
+
+export function getCategoryNameEn(category?: Category): string {
+  if (!category) return 'Uncategorized';
+  return category.nameEn || 'Uncategorized';
 }
 
 /**
@@ -173,6 +178,40 @@ export function getArticleData(article: Article | null | undefined) {
     content: article.content || '',
     image: getArticleImage(article),
     category: getCategoryName(article.category),
+    author: {
+      name: article.publication_author_name || getAuthorName(article.author),
+      avatar: getAuthorAvatar(article.author),
+      slug: getAuthorSlug(article.author),
+    },
+    publishedAt: formatPublishDate(article.publishedAt),
+    language: article.language || 'en',
+    readTime: article.readTime || estimateReadingTime(article.content),
+    viewCount: article.viewCount || 0,
+    likes: article.likes || 0,
+    tags: article.tags?.map(tag => tag.name) || [],
+    isFeatured: article.isFeatured || false,
+    isEditorsPick: article.isEditorsPick || false,
+    isHero: article.isHero || false,
+  };
+}
+
+
+export function getArticleDataEnglishcategory(article: Article | null | undefined) {
+  // Validate article structure - return null for proper error handling
+  if (!article || !article.title) {
+    console.error('Invalid or missing article data');
+    return null;
+  }
+
+  return {
+    id: article.id,
+    documentId: article.documentId,
+    title: article.title,
+    slug: article.slug || '',
+    excerpt: article.excerpt || '',
+    content: article.content || '',
+    image: getArticleImage(article),
+    category: getCategoryNameEn(article.category),
     author: {
       name: article.publication_author_name || getAuthorName(article.author),
       avatar: getAuthorAvatar(article.author),

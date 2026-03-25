@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
 import { getFontClass } from "@/lib/fonts";
+import { useState } from "react";
 
 interface ArticleCardData {
   id: number | string;
@@ -24,6 +25,7 @@ interface ArticleCardProps {
   article: ArticleCardData;
   imageHeight?: string;
   forceBlackText?: boolean;
+  showcategoryenglish?: boolean;
 }
 
 export default function ArticleCard({
@@ -32,6 +34,7 @@ export default function ArticleCard({
 }: ArticleCardProps) {
   const titleFontClass = getFontClass(article.title);
   const categoryFontClass = getFontClass(article.category);
+  console.log("the category font for this article ",article.title, "is ", categoryFontClass);
   const authorfontclass = getFontClass(article.author.name);
   let isauthornamebn, iscategorynamebn;
   if (authorfontclass == 'font-kalpurush') {
