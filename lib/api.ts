@@ -552,8 +552,6 @@ class StrapiAPI {
   async getCategories(): Promise<CategoryResponse> {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[isActive][$eq]', 'true');
-    searchParams.append('sort', 'sortOrder:asc');
-    searchParams.append('populate', 'Illustration');
     
     return this.request<CategoryResponse>(
       `${config.strapi.endpoints.categories}?${searchParams.toString()}`
@@ -693,7 +691,6 @@ class StrapiAPI {
   async getNavigationItems(): Promise<NavigationResponse> {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[isActive][$eq]', 'true');
-    searchParams.append('sort', 'sortOrder:asc');
     
     return this.request<NavigationResponse>(
       `${config.strapi.endpoints.navigation}?${searchParams.toString()}`

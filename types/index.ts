@@ -76,7 +76,7 @@ export interface Author {
 }
 
 // Category interface - FLATTENED format matching backend schema
-// Backend schema uses: Name, Slug, nameEn, nameBn, etc. (capital letters)
+// Backend schema uses: Name, Slug, nameEn, nameBn, isActive (capital letters)
 export interface Category {
   id: number;
   documentId: string;
@@ -84,12 +84,7 @@ export interface Category {
   nameEn: string;
   nameBn?: string;
   Slug: string; // Backend uses capital S
-  description?: string;
-  color?: string;
-  Illustration?: StrapiMedia; // Media field for category illustration
   isActive: boolean;
-  sortOrder: number;
-  articlesCount?: number;
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;

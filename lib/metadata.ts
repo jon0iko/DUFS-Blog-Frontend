@@ -156,12 +156,10 @@ export function generateAuthorMetadata(author: Author, articlesCount?: number): 
 export function generateCategoryMetadata(category: Category, articlesCount?: number): Metadata {
   // Strapi v5: Backend uses capital S in Slug, nameEn or Name for name
   const name = getCategoryName(category);
-  const description = category.description || '';
   const slug = category.Slug || 'unknown';
 
   const title = `${name} - Browse Articles`;
-  const desc = description || 
-    `Browse ${name} articles on ${config.site.name}. ${articlesCount ? `${articlesCount} articles available.` : ''}`;
+  const desc = `Browse ${name} articles on ${config.site.name}. ${articlesCount ? `${articlesCount} articles available.` : ''}`;
 
   return generateMetadata({
     title,

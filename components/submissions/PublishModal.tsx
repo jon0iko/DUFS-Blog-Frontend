@@ -688,15 +688,7 @@ export default function PublishModal({
                           key={category.id}
                           value={category.id.toString()}
                         >
-                          <span className="flex items-center gap-2">
-                            {category.color && (
-                              <span
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: category.color }}
-                              />
-                            )}
-                            {category.Name}
-                          </span>
+                          {category.Name}
                         </SelectItem>
                       ))}
                     </SelectContent>

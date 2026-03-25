@@ -52,41 +52,22 @@ export default async function CategoriesSection() {
 
           <StaggerReveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" staggerDelay={0.09} start="top 88%">
             {categories.map((category) => {
-              const hasIllustration = !!category.Illustration?.url;
-              
               return (
                 <Link 
                   key={category.documentId} 
                   href={`/browse?category=${category.Slug}`}
                   className="group relative block w-full aspect-[3/1] md:aspect-[2.4/1] overflow-hidden border border-border bg-card transition-all duration-500 hover:border-foreground/50"
                 >
-                  {/* Background Content */}
-                  {hasIllustration ? (
-                    <div className="absolute inset-0">
-                      <Image
-                        src={getStrapiMediaUrl(category.Illustration)}
-                        alt={category.Name}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-105 filter grayscale group-hover:grayscale-0"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                      />
-                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500" />
-                    </div>
-                  ) : (
-                    <div className="absolute inset-0 bg-foreground group-hover:bg-background transition-colors duration-500 flex items-center justify-center">
-                       {/* Icon in background for texture */}
-                       <div className="opacity-[0.03] group-hover:opacity-[0.05] transform scale-[3] text-background group-hover:text-foreground transition-colors duration-500">
-                           {getCategoryIcon(category.Slug)}
-                       </div>
-                    </div>
-                  )}
+                  {/* Background - Gradient fallback */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-foreground/10 to-background/10 group-hover:from-foreground/20 group-hover:to-background/20 transition-colors duration-500" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] group-hover:opacity-[0.05] transform scale-[3] text-background group-hover:text-foreground transition-colors duration-500">
+                    {getCategoryIcon(category.Slug)}
+                  </div>
 
                   {/* Foreground Content */}
                   <div className={cn(
                     "absolute inset-0 p-5 flex flex-col justify-between z-10 transition-colors duration-500",
-                    hasIllustration 
-                      ? "text-white" 
-                      : "text-background group-hover:text-foreground"
+                    "text-foreground"
                   )}>
                     <div className="flex justify-between items-start">
                        {/* Icon */}
@@ -96,7 +77,7 @@ export default async function CategoriesSection() {
                        
                        <ArrowUpRight className={cn(
                          "w-6 h-6 transform translate-x-4 -translate-y-4 opacity-0 transition-all duration-500 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100",
-                         hasIllustration ? "text-white" : "text-foreground"
+                         "text-foreground"
                        )} />
                     </div>
                     
@@ -104,14 +85,6 @@ export default async function CategoriesSection() {
                       <h3 className={cn("text-xl md:text-2xl font-bold uppercase tracking-wider mb-2", getFontClass(category.Name))}>
                         {category.Name}
                       </h3>
-                      {category.articlesCount !== undefined && (
-                        <p className={cn(
-                          "text-xs font-mono uppercase tracking-widest opacity-60",
-                           hasIllustration ? "text-white" : "text-background/70 group-hover:text-foreground/70"
-                        )}>
-                          {category.articlesCount} {category.articlesCount === 1 ? 'Entry' : 'Entries'}
-                        </p>
-                      )}
                     </div>
                   </div>
                 </Link>
