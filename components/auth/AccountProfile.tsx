@@ -16,6 +16,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { formatDate, cn } from '@/lib/utils';
 import { strapiAPI, BookmarkedArticle } from '@/lib/api';
 import { config } from '@/lib/config';
+import { formatRelativeTime } from '@/lib/date-utils';
+import { getWordCount } from '@/lib/content-utils';
+import { getStorageKey, EDITOR_STORAGE_KEYS, saveDraftToStorage } from '@/lib/storage-utils';
 import { updateUserData, changePassword, deleteAccount, getAuthorForCurrentUser, uploadUserAvatar, removeUserAvatar, getUserAvatarUrl, getToken } from '@/lib/auth';
 import { validatePhoneNumber, formatPhoneNumber, COUNTRIES } from '@/lib/phone-validation';
 import { Draft } from '@/types';
@@ -26,12 +29,9 @@ import { Camera, X as CloseIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 import { getFontClass } from '@/lib/fonts';
 import AvatarCropModal from './AvatarCropModal';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
-// Storage keys for loading drafts into editor
-const STORAGE_KEY = 'tiptap_draft_content';
-const STORAGE_WORD_COUNT_KEY = 'tiptap_draft_word_count';
-const STORAGE_DRAFT_ID_KEY = 'tiptap_current_draft_id';
-const STORAGE_DRAFT_NAME_KEY = 'tiptap_current_draft_name';
+
 
 export default function AccountProfile() {
   const { user, logout, updateLocalUser } = useAuth();
@@ -178,43 +178,30 @@ export default function AccountProfile() {
     }
   };
 
-  // Format relative time
-  const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays}d ago`;
-    
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    });
+  const handleNew = () => {
+    // Clear the editor content storage
+    if (typeof window !== 'undefined' && user?.id) {
+      localStorage.removeItem(getStorageKey(user.id, EDITOR_STORAGE_KEYS.CONTENT));
+      localStorage.removeItem(getStorageKey(user.id, EDITOR_STORAGE_KEYS.WORD_COUNT));
+      localStorage.removeItem(getStorageKey(user.id, EDITOR_STORAGE_KEYS.DRAFT_ID));
+      localStorage.removeItem(getStorageKey(user.id, EDITOR_STORAGE_KEYS.DRAFT_NAME));
+    }
+    router.push('/editor');
   };
 
-  // Get word count from content
-  const getWordCount = (content: string) => {
-    const text = content.replace(/<[^>]*>/g, ' ').trim();
-    if (!text) return 0;
-    return text.split(/\s+/).filter(word => word.length > 0).length;
-  };
+
 
   // Handle opening a draft in the editor
   const handleOpenDraft = (draft: Draft) => {
     const wordCount = getWordCount(draft.content);
     
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, draft.content);
-      localStorage.setItem(STORAGE_WORD_COUNT_KEY, wordCount.toString());
-      localStorage.setItem(STORAGE_DRAFT_ID_KEY, draft.documentId);
-      localStorage.setItem(STORAGE_DRAFT_NAME_KEY, draft.name);
+    if (typeof window !== 'undefined' && user?.id) {
+      saveDraftToStorage(user.id, {
+        content: draft.content,
+        wordCount,
+        draftId: draft.documentId,
+        draftName: draft.name,
+      });
     }
     
     router.push('/editor');
@@ -1169,7 +1156,7 @@ export default function AccountProfile() {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => router.push('/editor')}
+                  onClick={handleNew}
                   className="w-full sm:w-auto"
                 >
                   <Edit3 className="h-4 w-4 mr-2" />

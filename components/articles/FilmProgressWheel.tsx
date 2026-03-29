@@ -4,110 +4,82 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { gsap } from '@/lib/gsap';
 
 // ── Geometry ─────────────────────────────────────────────────────────────────
-const SIZE        = 76;
-const CENTER      = SIZE / 2;           // 38
-const PROGRESS_R  = 33;                 // progress arc radius
-const PROGRESS_W  = 2.5;
-const PROGRESS_C  = 2 * Math.PI * PROGRESS_R;
-const BEZEL_R     = 26;                 // centre of the metallic ring stroke
-const BEZEL_W     = 11;                 // stroke width → outer 31.5, inner 20.5
-const INNER_R     = 16;                 // solid centre disc
-const NUM_TICKS   = 24;
-const NUM_SPROCK  = 6;
+const SIZE = 76;
 
-// Brand accent — warm linen/film tone (#E0D5D0)
-const ACCENT = '#E0D5D0';
+// Light Mode SVG overlay math (BacktoTop_light.svg is 107x107)
+const L_CX = 53.5;
+const L_CY = 53.5;
+const L_R  = 49.475;                 // Dead center of the gap 
+const L_W  = 6;                      // Kept slightly thinner than the actual 8px gap to prevent anti-aliasing bleeds
+const L_C  = 2 * Math.PI * L_R;
+const L_ARR = L_C + 4;               // Slightly larger array to prevent repeating dash gaps
 
-// Rewind SVG path (original viewBox 0 0 28 28, two stacked upward triangles)
-const REWIND_PATH =
-  'M23.1421 12.3648C23.9871 13.4298 23.2281 14.9988 21.8691 14.9988H17.2991' +
-  'L23.1401 22.3638C23.9851 23.4298 23.2261 24.9998 21.8671 24.9998H6.12812' +
-  'C4.76912 24.9998 4.01112 23.4298 4.85512 22.3658L10.6951 14.9998H6.13012' +
-  'C4.77112 14.9998 4.01212 13.4298 4.85712 12.3658L12.4971 2.72876' +
-  'C12.6766 2.50243 12.9049 2.31959 13.165 2.1939C13.4251 2.06821 13.7103 2.00293' +
-  ' 13.9991 2.00293C14.288 2.00293 14.5731 2.06821 14.8332 2.1939' +
-  'C15.0933 2.31959 15.3216 2.50243 15.5011 2.72876L23.1421 12.3648Z';
-
-// Icon: scale 28→17px, centred
-const ICON_PX     = 17;
-const ICON_SCALE  = ICON_PX / 28;
-const ICON_OFF    = CENTER - ICON_PX / 2;   // 38 - 8.5 = 29.5
-
-// Pre-compute static tick mark geometry
-const TICK_OUTER = BEZEL_R + BEZEL_W / 2 - 1;   // ~31
-const ticks = Array.from({ length: NUM_TICKS }, (_, i) => {
-  const angle   = (i / NUM_TICKS) * 2 * Math.PI - Math.PI / 2;
-  const isMajor = i % 4 === 0;
-  const inner   = TICK_OUTER - (isMajor ? 5.5 : 2.5);
-  return {
-    x1: CENTER + TICK_OUTER * Math.cos(angle),
-    y1: CENTER + TICK_OUTER * Math.sin(angle),
-    x2: CENTER + inner      * Math.cos(angle),
-    y2: CENTER + inner      * Math.sin(angle),
-    isMajor,
-  };
-});
-
-const sprockets = Array.from({ length: NUM_SPROCK }, (_, i) => {
-  const a = (i / NUM_SPROCK) * 2 * Math.PI;
-  return { cx: CENTER + BEZEL_R * Math.cos(a), cy: CENTER + BEZEL_R * Math.sin(a) };
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
+// Dark Mode SVG overlay math (BacktoTop_dark.svg is 104x104)
+const D_CX = 52.02;
+const D_CY = 52.02;
+const D_R  = 48.085;                 // Dead center of the gap 
+const D_W  = 5.8;                    // Kept slightly thinner than the actual 7.8px gap to prevent anti-aliasing bleeds
+const D_C  = 2 * Math.PI * D_R;
+const D_ARR = D_C + 4;
 
 interface FilmProgressWheelProps { targetId?: string }
 
 export default function FilmProgressWheel({ targetId }: FilmProgressWheelProps) {
-  const rafRef      = useRef<number>(0);
-  const buttonRef   = useRef<HTMLButtonElement>(null);
-  const bezelRef    = useRef<SVGGElement>(null);
-  const arcRef      = useRef<SVGCircleElement>(null);
-  const pctRef      = useRef<SVGTextElement>(null);
-  const visibleRef  = useRef(false);
-  const rotSetter   = useRef<((v: number) => void) | null>(null);
+  const rafRef       = useRef<number>(0);
+  const buttonRef    = useRef<HTMLButtonElement>(null);
+  const arcLightRef  = useRef<SVGCircleElement>(null);
+  const arcDarkRef   = useRef<SVGCircleElement>(null);
+  const visibleRef   = useRef(false);
 
-  const computeProgress = useCallback((): number => {
+  const computeProgress = useCallback(() => {
+    let p = 0;
+    let isPast = false;
+
     if (targetId) {
       const el = document.getElementById(targetId);
       if (el) {
         const { top, height } = el.getBoundingClientRect();
         const scrollable = height - window.innerHeight;
-        if (scrollable <= 0) return top <= 0 ? 1 : 0;
-        return Math.min(1, Math.max(0, -top / scrollable));
+        if (scrollable <= 0) p = top <= 0 ? 1 : 0;
+        else p = Math.min(1, Math.max(0, -top / scrollable));
+      }
+    } else {
+      const s = document.documentElement.scrollHeight - window.innerHeight;
+      p = s > 0 ? Math.min(1, Math.max(0, window.scrollY / s)) : 0;
+    }
+
+    // Check if we reached related articles or footer area
+    const relatedSection = document.getElementById('related-articles-section');
+    if (relatedSection) {
+      const relatedTop = relatedSection.getBoundingClientRect().top;
+      // Hide when the related section comes well into view
+      if (relatedTop < window.innerHeight - 100) {
+        isPast = true;
+      }
+    } else {
+      // Fallback: hide if at the absolute bottom of the page
+      const isAtBottom = (window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 150;
+      if (p === 1 && isAtBottom) {
+        isPast = true;
       }
     }
-    const s = document.documentElement.scrollHeight - window.innerHeight;
-    return s > 0 ? Math.min(1, Math.max(0, window.scrollY / s)) : 0;
-  }, [targetId]);
 
-  // Init GSAP quick setter for bezel rotation
-  useEffect(() => {
-    const bezel = bezelRef.current;
-    if (!bezel) return;
-    // svgOrigin keeps rotation anchored to the SVG coordinate centre
-    gsap.set(bezel, { svgOrigin: `${CENTER} ${CENTER}` });
-    rotSetter.current = gsap.quickSetter(bezel, 'rotation', 'deg') as (v: number) => void;
-  }, []);
+    return { p, isPast };
+  }, [targetId]);
 
   // Scroll handler — all DOM updates skip React state for max fps
   useEffect(() => {
     const btn = buttonRef.current;
-    const arc = arcRef.current;
-    if (!btn || !arc) return;
+    if (!btn) return;
 
     const update = () => {
-      const p           = computeProgress();
+      const { p, isPast } = computeProgress();
       const wasVisible  = visibleRef.current;
-      const isVisible   = p > 0.015;
+      const isVisible   = p > 0.015 && !isPast;
 
       // Direct DOM: progress arc dashOffset
-      arc.style.strokeDashoffset = String(PROGRESS_C * (1 - p));
-
-      // Direct DOM: percentage label
-      if (pctRef.current) pctRef.current.textContent = `${Math.round(p * 100)}`;
-
-      // Bezel spin (2 full rotations over full article)
-      if (rotSetter.current) rotSetter.current(p * 720);
+      if (arcLightRef.current) arcLightRef.current.style.strokeDashoffset = String(L_C * (1 - p));
+      if (arcDarkRef.current)  arcDarkRef.current.style.strokeDashoffset  = String(D_C * (1 - p));
 
       if (!wasVisible && isVisible) {
         visibleRef.current = true;
@@ -149,11 +121,7 @@ export default function FilmProgressWheel({ targetId }: FilmProgressWheelProps) 
 
   const handleMouseEnter = useCallback(() => {
     if (!buttonRef.current) return;
-    gsap.to(buttonRef.current, { scale: 1.12, duration: 0.22, ease: 'power2.out' });
-    // Pause bezel spin on hover — gentle slowdown illusion via a slight extra nudge
-    if (bezelRef.current) {
-      gsap.to(bezelRef.current, { rotation: '+=8', duration: 0.3, ease: 'power1.out' });
-    }
+    gsap.to(buttonRef.current, { scale: 1.08, duration: 0.22, ease: 'power2.out' });
   }, []);
 
   const handleMouseLeave = useCallback(() => {
@@ -162,188 +130,75 @@ export default function FilmProgressWheel({ targetId }: FilmProgressWheelProps) 
   }, []);
 
   const handleClick = useCallback(() => {
-    const btn   = buttonRef.current;
-    const bezel = bezelRef.current;
+    const btn = buttonRef.current;
     if (!btn) return;
 
     // Press burst then elastic return
     gsap.timeline()
-      .to(btn,   { scale: 0.84, duration: 0.1,  ease: 'power3.in' })
-      .to(btn,   { scale: 1.08, duration: 0.28, ease: 'power2.out' })
+      .to(btn,   { scale: 0.9, duration: 0.1,  ease: 'power3.in' })
+      .to(btn,   { scale: 1.05, duration: 0.28, ease: 'power2.out' })
       .to(btn,   { scale: 1,    duration: 0.5,  ease: 'elastic.out(1.2, 0.35)' });
-
-    // Spin-up the bezel for a snappy rewind feel
-    if (bezel) {
-      const currentRot = gsap.getProperty(bezel, 'rotation') as number;
-      gsap.to(bezel, {
-        rotation: currentRot + 480,
-        duration: 0.75,
-        ease: 'power3.inOut',
-      });
-    }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   return (
-    <button
-      ref={buttonRef}
-      onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      aria-label="Back to top"
-      className="hidden lg:flex items-center justify-center fixed bottom-8 right-6 z-30 rounded-full cursor-pointer select-none focus-visible:outline-none"
-      style={{ width: SIZE, height: SIZE }}
-    >
-      <svg
-        width={SIZE}
-        height={SIZE}
-        viewBox={`0 0 ${SIZE} ${SIZE}`}
-        aria-hidden="true"
-        className="block overflow-visible"
-      >
-        <defs>
-          {/* Drop shadow */}
-          <filter id="fpw-shadow" x="-30%" y="-30%" width="160%" height="160%">
-            <feDropShadow dx="0" dy="4" stdDeviation="6" floodOpacity="0.5" floodColor="#000" />
-          </filter>
-
-          {/* Metallic bezel gradient — dark chrome */}
-          <radialGradient id="fpw-metal" cx="32%" cy="22%" r="72%">
-            <stop offset="0%"   stopColor="#909090" />
-            <stop offset="28%"  stopColor="#505050" />
-            <stop offset="60%"  stopColor="#242424" />
-            <stop offset="100%" stopColor="#080808" />
-          </radialGradient>
-
-          {/* Subtle highlight sweep across the top of the bezel */}
-          <linearGradient id="fpw-glint" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%"   stopColor="rgba(255,255,255,0.18)" />
-            <stop offset="45%"  stopColor="rgba(255,255,255,0.04)" />
-            <stop offset="100%" stopColor="rgba(0,0,0,0)" />
-          </linearGradient>
-
-          {/* Inner disc glint */}
-          <radialGradient id="fpw-inner-glint" cx="40%" cy="28%" r="62%">
-            <stop offset="0%"   stopColor="rgba(255,255,255,0.14)" />
-            <stop offset="100%" stopColor="rgba(0,0,0,0)" />
-          </radialGradient>
-        </defs>
-
-        {/* ── Outer shadow base disc ── */}
-        <circle
-          cx={CENTER} cy={CENTER} r={CENTER - 1}
-          className="fill-background"
-          filter="url(#fpw-shadow)"
-        />
-
-        {/* ── Progress track (dim full ring) ── */}
-        <circle
-          cx={CENTER} cy={CENTER} r={PROGRESS_R}
-          fill="none"
-          strokeWidth={PROGRESS_W}
-          stroke="rgba(128,128,128,0.18)"
-        />
-
-        {/* ── Progress arc — brand accent, clockwise from 12 o'clock ── */}
-        <circle
-          ref={arcRef}
-          cx={CENTER} cy={CENTER} r={PROGRESS_R}
-          fill="none"
-          strokeWidth={PROGRESS_W}
-          strokeLinecap="round"
-          strokeDasharray={PROGRESS_C}
-          strokeDashoffset={PROGRESS_C}
-          stroke={ACCENT}
-          style={{
-            transformOrigin: `${CENTER}px ${CENTER}px`,
-            transform: 'rotate(-90deg)',
-          }}
-        />
-
-        {/* ══ SPINNING METALLIC BEZEL GROUP ══ */}
-        <g ref={bezelRef}>
-
-          {/* Bezel ring body */}
-          <circle
-            cx={CENTER} cy={CENTER} r={BEZEL_R}
-            fill="none"
-            strokeWidth={BEZEL_W}
-            stroke="url(#fpw-metal)"
-          />
-
-          {/* Glint sweep on top of metal */}
-          <circle
-            cx={CENTER} cy={CENTER} r={BEZEL_R}
-            fill="none"
-            strokeWidth={BEZEL_W}
-            stroke="url(#fpw-glint)"
-            style={{ pointerEvents: 'none' }}
-          />
-
-          {/* Tick marks */}
-          {ticks.map((t, i) => (
-            <line
-              key={i}
-              x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
-              strokeWidth={t.isMajor ? 1.6 : 0.7}
-              stroke={t.isMajor
-                ? 'rgba(255,255,255,0.55)'
-                : 'rgba(255,255,255,0.16)'}
-              strokeLinecap="round"
-            />
-          ))}
-
-          {/* Sprocket punch-holes */}
-          {sprockets.map((s, i) => (
-            <circle
-              key={i}
-              cx={s.cx} cy={s.cy} r={2.6}
-              fill="#040404"
-              stroke="rgba(255,255,255,0.1)"
-              strokeWidth={0.5}
-            />
-          ))}
-        </g>
-
-        {/* ── Centre disc — mode-responsive background ── */}
-        <circle
-          cx={CENTER} cy={CENTER} r={INNER_R}
-          className="fill-background"
-          stroke="rgba(128,128,128,0.22)"
-          strokeWidth={0.5}
-        />
-        {/* Subtle glint on centre disc */}
-        <circle
-          cx={CENTER} cy={CENTER} r={INNER_R}
-          fill="url(#fpw-inner-glint)"
-          style={{ pointerEvents: 'none' }}
-        />
-
-        {/* ── Rewind icon ── */}
-        <g
-          transform={`translate(${ICON_OFF},${ICON_OFF}) scale(${ICON_SCALE})`}
-          className="fill-foreground"
-          style={{ pointerEvents: 'none' }}
+    <div className="fixed bottom-8 inset-x-0 z-30 pointer-events-none">
+      <div className="container mx-auto px-4 flex justify-end">
+        <button
+          ref={buttonRef}
+          onClick={handleClick}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          aria-label="Back to top"
+          className="hidden lg:flex relative items-center justify-center rounded-full cursor-pointer select-none focus-visible:outline-none drop-shadow-lg pointer-events-auto"
+          style={{ width: SIZE, height: SIZE }}
         >
-          <path d={REWIND_PATH} />
-        </g>
+          {/* Light Mode Layer */}
+          <div className="w-full h-full absolute inset-0 dark:hidden">
+            <img 
+              src="/images/BacktoTop_light.svg" 
+              alt="Back to top" 
+              className="w-full h-full object-contain" 
+            />
+            <svg viewBox="0 0 107 107" aria-hidden="true" className="absolute inset-0 w-full h-full pointer-events-none">
+              <circle
+                ref={arcLightRef}
+                cx={L_CX} cy={L_CY} r={L_R}
+                fill="none"
+                strokeWidth={L_W}
+                strokeLinecap="round"
+                strokeDasharray={L_ARR}
+                strokeDashoffset={L_ARR}
+                className="stroke-border transition-colors duration-300"
+                style={{ transformOrigin: `${L_CX}px ${L_CY}px`, transform: 'rotate(-90deg)' }}
+              />
+            </svg>
+          </div>
 
-        {/* ── Percentage readout (tiny, below icon) ── */}
-        <text
-          ref={pctRef}
-          x={CENTER}
-          y={CENTER + INNER_R - 3.5}
-          textAnchor="middle"
-          fontSize="5"
-          fontFamily="monospace"
-          letterSpacing="0.5"
-          className="fill-foreground/35 select-none"
-          style={{ pointerEvents: 'none' }}
-        >
-          0
-        </text>
-      </svg>
-    </button>
+          {/* Dark Mode Layer */}
+          <div className="w-full h-full absolute inset-0 hidden dark:block">
+            <img 
+              src="/images/BacktoTop_dark.svg" 
+              alt="Back to top" 
+              className="w-full h-full object-contain" 
+            />
+            <svg viewBox="0 0 104 104" aria-hidden="true" className="absolute inset-0 w-full h-full pointer-events-none">
+              <circle
+                ref={arcDarkRef}
+                cx={D_CX} cy={D_CY} r={D_R}
+                fill="none"
+                strokeWidth={D_W}
+                strokeLinecap="round"
+                strokeDasharray={D_ARR}
+                strokeDashoffset={D_ARR}
+                className="stroke-border transition-colors duration-300"
+                style={{ transformOrigin: `${D_CX}px ${D_CY}px`, transform: 'rotate(-90deg)' }}
+              />
+            </svg>
+          </div>
+        </button>
+      </div>
+    </div>
   );
 }

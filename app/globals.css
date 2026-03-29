@@ -320,29 +320,126 @@
    * the complex strokes can look thin on bright white.
    * Dark mode: no shadow needed — light text on dark bg is inherently crisp.
    */
-  .article-content {
+  .dufs-article-render {
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+    @apply font-zillaslab text-gray-800 dark:text-gray-200 max-w-none;
   }
 
-  :root .article-content p,
-  :root .article-content li,
-  :root .article-content blockquote {
+  .dufs-article-render p {
+    @apply mb-8 text-gray-700 dark:text-gray-300 tracking-wide;
+  }
+
+  .dufs-article-render h1, 
+  .dufs-article-render h2, 
+  .dufs-article-render h3 {
+    @apply font-bold tracking-wide text-gray-900 dark:text-gray-100;
+  }
+
+  .dufs-article-render strong, .dufs-article-render b {
+    @apply font-bold text-gray-900 dark:text-gray-100;
+  }
+
+  .dufs-article-render em, .dufs-article-render i {
+    @apply italic text-gray-700 dark:text-gray-300;
+  }
+
+  .dufs-article-render a {
+    @apply text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 transition-colors font-medium;
+  }
+
+  .dufs-article-render code {
+    @apply bg-gray-100 dark:bg-brand-black-90 text-pink-600 dark:text-pink-400 px-2 py-1 rounded font-mono;
+  }
+
+  .dufs-article-render ul, .dufs-article-render ol {
+    @apply my-7 ml-6 space-y-3 text-gray-700 dark:text-gray-300 list-outside;
+  }
+
+  .dufs-article-render ul { @apply list-disc; }
+  .dufs-article-render ol { @apply list-decimal; }
+
+  .dufs-article-render li {
+    @apply ml-2 leading-[1.75];
+  }
+
+  .dufs-article-render hr {
+    @apply my-10 border-t border-gray-300 dark:border-gray-600;
+  }
+
+  .dufs-article-render figure[data-image-caption] {
+    @apply my-10 flex flex-col items-center;
+  }
+
+  .dufs-article-render figcaption {
+    @apply mt-2 text-center italic text-gray-600 dark:text-gray-400;
+  }
+
+  .dufs-article-render blockquote {
+    @apply flex-1 flex items-center italic leading-[1.55] text-gray-600 dark:text-gray-300 my-0;
+  }
+
+  .dufs-article-render .quote-icon {
+    @apply shrink-0 w-20 h-20 md:w-[80px] md:h-[80px];
+  }
+
+  /* Typography scales with improved readability */
+  
+  /* Small - Optimized for compact reading without strain */
+  .dufs-article-render[data-size="small"] p,
+  .dufs-article-render[data-size="small"] li { @apply text-base md:text-[1.125rem] leading-[1.75]; }
+  .dufs-article-render[data-size="small"] h1 { @apply text-3xl md:text-4xl mb-8; }
+  .dufs-article-render[data-size="small"] h2 { @apply text-2xl md:text-3xl mb-5; }
+  .dufs-article-render[data-size="small"] h3 { @apply text-xl md:text-2xl mb-4; }
+  .dufs-article-render[data-size="small"] blockquote { @apply text-xl md:text-2xl; }
+  .dufs-article-render[data-size="small"] figcaption { @apply text-sm md:text-base; }
+  .dufs-article-render[data-size="small"] code { @apply text-xs md:text-sm; }
+
+  /* Medium - Balanced cinematic reading experience */
+  .dufs-article-render[data-size="medium"] p,
+  .dufs-article-render[data-size="medium"] li { @apply text-lg md:text-[1.25rem] leading-[1.8]; }
+  .dufs-article-render[data-size="medium"] h1 { @apply text-4xl md:text-5xl mb-8; }
+  .dufs-article-render[data-size="medium"] h2 { @apply text-3xl md:text-4xl mb-5; }
+  .dufs-article-render[data-size="medium"] h3 { @apply text-2xl md:text-3xl mb-4; }
+  .dufs-article-render[data-size="medium"] blockquote { @apply text-2xl md:text-3xl; }
+  .dufs-article-render[data-size="medium"] figcaption { @apply text-base md:text-lg; }
+  .dufs-article-render[data-size="medium"] code { @apply text-sm md:text-base; }
+
+  /* Large - Enhanced for high readability and visual impact */
+  .dufs-article-render[data-size="large"] p,
+  .dufs-article-render[data-size="large"] li { @apply text-xl md:text-[1.5rem] leading-[1.85]; }
+  .dufs-article-render[data-size="large"] h1 { @apply text-5xl md:text-6xl mb-8; }
+  .dufs-article-render[data-size="large"] h2 { @apply text-4xl md:text-5xl mb-5; }
+  .dufs-article-render[data-size="large"] h3 { @apply text-3xl md:text-4xl mb-4; }
+  .dufs-article-render[data-size="large"] blockquote { @apply text-3xl md:text-4xl; }
+  .dufs-article-render[data-size="large"] figcaption { @apply text-lg md:text-xl; }
+  .dufs-article-render[data-size="large"] code { @apply text-base md:text-lg; }
+
+  /* Bengali support */
+  .dufs-article-render .font-kalpurush {
+    /* Increase size slightly for Bengali optically */
+    font-size: 1.05em; 
+    line-height: 1.8;
+  }
+
+  :root .dufs-article-render p,
+  :root .dufs-article-render li,
+  :root .dufs-article-render blockquote {
     text-shadow: 0 0.3px 0.8px rgba(0, 0, 0, 0.18);
   }
 
-  :root .article-content h1,
-  :root .article-content h2,
-  :root .article-content h3 {
+  :root .dufs-article-render h1,
+  :root .dufs-article-render h2,
+  :root .dufs-article-render h3 {
     text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.15);
   }
 
-  .dark .article-content p,
-  .dark .article-content li,
-  .dark .article-content blockquote,
-  .dark .article-content h1,
-  .dark .article-content h2,
-  .dark .article-content h3 {
+  .dark .dufs-article-render p,
+  .dark .dufs-article-render li,
+  .dark .dufs-article-render blockquote,
+  .dark .dufs-article-render h1,
+  .dark .dufs-article-render h2,
+  .dark .dufs-article-render h3 {
     text-shadow: none;
   }
 }

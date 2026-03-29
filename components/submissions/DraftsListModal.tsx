@@ -8,6 +8,9 @@ import { Draft } from '@/types';
 import { strapiAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/toast';
+import { formatRelativeTime } from '@/lib/date-utils';
+import { getWordCount } from '@/lib/content-utils';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 interface DraftsListModalProps {
   isOpen: boolean;
@@ -16,7 +19,7 @@ interface DraftsListModalProps {
   onDeleteDraft?: (documentId: string) => void;
 }
 
-export default function DraftsListModal({
+export default function YDraftsListModal({
   isOpen,
   onClose,
   onLoadDraft,
@@ -28,6 +31,13 @@ export default function DraftsListModal({
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    draft: Draft | null;
+  }>({
+    isOpen: false,
+    draft: null,
+  });
 
   // Fetch drafts when modal opens
   const fetchDrafts = useCallback(async () => {
@@ -53,37 +63,20 @@ export default function DraftsListModal({
     }
   }, [isOpen, user?.id, fetchDrafts]);
 
-  // Format date to relative time
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays}d ago`;
-    
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
-    });
-  };
 
   // Handle draft deletion
   const handleDelete = async (draft: Draft, e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (!confirm(`Are you sure you want to delete "${draft.name}"?`)) {
-      return;
-    }
+    setConfirmDialog({ isOpen: true, draft });
+  };
 
+  const handleConfirmDelete = async () => {
+    if (!confirmDialog.draft) return;
+    
+    const draft = confirmDialog.draft;
     setDeletingId(draft.documentId);
+    setConfirmDialog({ isOpen: false, draft: null });
     
     try {
       await strapiAPI.deleteDraft(draft.documentId);
@@ -124,17 +117,17 @@ export default function DraftsListModal({
       {/* Modal */}
       <div className={cn(
         "relative w-full max-w-lg mx-4 rounded-2xl",
-        "bg-white dark:bg-brand-black-90",
-        "border border-gray-200 dark:border-gray-700",
+        "bg-white dark:bg-brand-black-100",
+        "border border-border",
         "shadow-2xl",
         "animate-in fade-in-0 zoom-in-95 duration-200",
         "max-h-[80vh] flex flex-col"
       )}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-md bg-primary/10">
-              <FolderOpen className="w-6 h-6 text-primary" />
+              <FileText className="h-6 w-6" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
@@ -174,7 +167,7 @@ export default function DraftsListModal({
             </div>
           ) : drafts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-brand-black-90 flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-brand-black-100 flex items-center justify-center mb-4">
                 <FileText className="w-8 h-8 text-gray-400" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
@@ -192,8 +185,8 @@ export default function DraftsListModal({
                   onClick={() => handleLoadDraft(draft)}
                   className={cn(
                     "group p-4 rounded-md cursor-pointer",
-                    "bg-gray-50 dark:bg-brand-black-90/50",
-                    "border border-gray-100 dark:border-gray-700/50",
+                    "bg-gray-50 dark:bg-brand-black-100",
+                    "border border-border",
                     "hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10",
                     "transition-all duration-200"
                   )}
@@ -209,7 +202,7 @@ export default function DraftsListModal({
                       <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
                         <span className="flex items-center gap-1">
                           <Clock className="w-3.5 h-3.5" />
-                          {formatDate(draft.updatedAt)}
+                          {formatRelativeTime(draft.updatedAt)}
                         </span>
                         <span>•</span>
                         <span>{getWordCount(draft.content)} words</span>
@@ -239,7 +232,7 @@ export default function DraftsListModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-t border-border">
           <Button
             variant="outline"
             onClick={onClose}
@@ -249,6 +242,17 @@ export default function DraftsListModal({
           </Button>
         </div>
       </div>
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="Delete Draft"
+        message={`Are you sure you want to delete "${confirmDialog.draft?.name}"?`}
+        confirmText="Delete"
+        isDangerous={true}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDialog({ isOpen: false, draft: null })}
+      />
     </div>
   );
 }

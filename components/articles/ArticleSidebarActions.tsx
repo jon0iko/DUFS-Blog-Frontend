@@ -4,6 +4,7 @@ import React from "react";
 import { Heart, Bookmark, MessageCircle, Share2, Sun, Moon, Coffee } from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
+import ShareMenu from "./ShareMenu";
 
 type FontSize = "small" | "medium" | "large";
 
@@ -39,7 +40,6 @@ export interface ArticleSidebarActionsProps {
   isSepiaMode: boolean;
   onLike: () => void;
   onBookmark: () => void;
-  onShare: () => void;
   onDiscuss: () => void;
   onSepiaChange: (isSepia: boolean) => void;
 }
@@ -56,7 +56,6 @@ export default function ArticleSidebarActions({
   isSepiaMode,
   onLike,
   onBookmark,
-  onShare,
   onDiscuss,
   onSepiaChange,
 }: ArticleSidebarActionsProps) {
@@ -160,13 +159,14 @@ export default function ArticleSidebarActions({
       </button>
 
       {/* Share */}
-      <button
-        onClick={onShare}
-        className="flex items-center justify-center w-10 h-10 rounded-xl text-muted-foreground hover:text-foreground transition-all"
-        title="Share article"
-      >
-        <Share2 className="w-5 h-5" />
-      </button>
+      <ShareMenu align="right">
+        <button
+          className="flex items-center justify-center w-10 h-10 rounded-xl text-muted-foreground hover:text-foreground transition-all"
+          title="Share article"
+        >
+          <Share2 className="w-5 h-5" />
+        </button>
+      </ShareMenu>
     </aside>
   );
 }

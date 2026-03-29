@@ -25,7 +25,7 @@ export default function ArticleRightSidebar({ article }: ArticleRightSidebarProp
             <Link href={`/browse?category=${article.category.Slug}`} className="block">
               <div
                 className={cn(
-                  "w-full text-center py-2 px-3 rounded-lg text-sm font-medium cursor-pointer transition-opacity hover:opacity-80 shadow-xl dark:shadow-xl dark:shadow-accent/30",
+                  "w-full text-center py-2 px-3 rounded-lg text-sm font-medium cursor-pointer transition-opacity opacity-80 hover:opacity-100 shadow-xl dark:shadow-xl",
                   "bg-black text-white",
                   getFontClass(article.category.Name),
                 )}

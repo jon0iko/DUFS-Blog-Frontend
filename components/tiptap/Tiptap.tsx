@@ -17,6 +17,7 @@ import MenuBar from './MenuBar'
 import './tiptap.css'
 import { uploadImageToStrapi, validateImageFile, getStrapiMediaUrl } from '@/lib/strapi-media'
 import ImageWithCaption from './ImageWithCaption'
+import StyledBlockquote from './StyledBlockquote'
 import type { TiptapRef, TiptapProps } from './types'
 import { useToast } from '@/components/ui/toast'
 import { getToken } from '@/lib/auth'
@@ -145,7 +146,9 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
         heading: {
           levels: [1, 2, 3],
         },
+        blockquote: false,
       }),
+      StyledBlockquote,
       Underline,
       Link.configure({
         openOnClick: false,
@@ -188,7 +191,8 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
     content: '',
     editorProps: {
       attributes: {
-        class: 'font-zillaslab prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none focus:outline-none min-h-[500px] p-6',
+        class: 'dufs-article-render focus:outline-none min-h-[500px] p-6',
+        'data-size': 'medium',
       },
       handlePaste: (_view, event) => {
         const clipboardItems = event.clipboardData?.items

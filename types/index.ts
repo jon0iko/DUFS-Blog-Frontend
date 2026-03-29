@@ -165,6 +165,17 @@ export interface SiteConfig {
   locale?: string;
 }
 
+// Terms and Conditions - FLATTENED format
+export interface TermsAndConditions {
+  id: number;
+  documentId: string;
+  Content: string; // Rich text content
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  locale?: string;
+}
+
 // Navigation Item - FLATTENED format
 export interface NavigationItem {
   id: number;
@@ -318,6 +329,7 @@ export type IssueResponse = StrapiResponse<Publication_Issue[]>;
 export type NavigationResponse = StrapiResponse<NavigationItem[]>;
 export type SocialLinkResponse = StrapiResponse<SocialLink[]>;
 export type SiteConfigResponse = StrapiResponse<SiteConfig>;
+export type TermsAndConditionsResponse = StrapiResponse<TermsAndConditions>;
 
 // Legacy types for backward compatibility (will be gradually replaced)
 export interface LegacyArticle {

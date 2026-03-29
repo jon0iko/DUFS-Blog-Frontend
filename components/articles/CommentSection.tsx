@@ -18,6 +18,7 @@ import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { strapiAPI } from '@/lib/api';
 import { config } from '@/lib/config';
+import { formatRelativeTimeCompact } from '@/lib/date-utils';
 import { getUserAvatarUrl, UserData } from '@/lib/auth';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -25,6 +26,7 @@ import Link from 'next/link';
 interface CommentSectionProps {
   articleId: number;
   articleDocumentId: string;
+  articleSlug: string;
   initialComments?: StrapiComment[];
   totalCommentsCount?: number;
 }
@@ -422,7 +424,7 @@ function CommentItem({
                 userId={user?.id}
                 user={user}
                 isAuthenticated={isAuthenticated}
-                formatDate={formatDate}
+                formatDate={formatRelativeTimeCompact}
                 refreshComments={refreshComments}
                 setTotalCount={setTotalCount}
                 onDeleted={(docId) => setLocalReplies(prev => prev.filter(r => r.documentId !== docId))}
@@ -451,6 +453,7 @@ export default function CommentSection({
   articleDocumentId,
   initialComments = [],
   totalCommentsCount: initialTotalCount = 0,
+  articleSlug
 }: CommentSectionProps) {
   const { user, isAuthenticated } = useAuth();
   const [comments, setComments] = useState<StrapiComment[]>(initialComments);
@@ -462,23 +465,7 @@ export default function CommentSection({
   const [hasMoreComments, setHasMoreComments] = useState(true);
   const [totalCount, setTotalCount] = useState(initialTotalCount || initialComments.length);
 
-  // Relative-time formatter
-  const formatDate = useCallback((dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    if (diffMins < 1) return 'just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays === 1) return 'yesterday';
-    if (diffDays < 7) return `${diffDays}d ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`;
-    return `${Math.floor(diffDays / 365)}y ago`;
-  }, []);
+
 
   // Paginated loader
   const loadComments = useCallback(async (page: number, append = false) => {
@@ -590,8 +577,8 @@ export default function CommentSection({
             {/* <p className="text-sm text-muted-foreground mb-2">
               Join the discussion and share your thoughts.
             </p> */}
-            <Button asChild size="sm" variant="outline" className='border-foreground shadow-lg dark:shadow-lg dark:shadow-accent/40'>
-              <Link href="/auth/signin">Sign in to comment</Link>
+            <Button asChild size="sm" variant="outline" className='border-foreground shadow-sm'>
+              <Link href={`/auth/signin?redirect=/read-article?slug=${articleSlug}`}>Sign in to comment</Link>
             </Button>
           </div>
         </div>
@@ -620,7 +607,7 @@ export default function CommentSection({
               userId={user?.id}
               user={user}
               isAuthenticated={isAuthenticated}
-              formatDate={formatDate}
+              formatDate={formatRelativeTimeCompact}
               refreshComments={refreshComments}
               setTotalCount={setTotalCount}
             />

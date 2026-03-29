@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getFontClass } from '@/lib/fonts'
 import { cn, formatDate } from '@/lib/utils'
+import ArticleCard from '@/components/home/ArticleCard'
 import type { Author, Article } from '@/types'
 
 /**
@@ -176,7 +177,7 @@ function AuthorPageInner() {
 
   return (
     <div className="bg-background min-h-screen">
-      <div className="container mx-auto max-w-6xl py-10 px-4 sm:px-6">
+      <div className="container py-10 px-4 sm:px-6">
         {/* Author Header */}
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10 mb-12">
           <div className="relative w-32 h-32 rounded-full overflow-hidden bg-primary/10 flex-shrink-0">
@@ -202,11 +203,11 @@ function AuthorPageInner() {
         </div>
         </div>
 
-        <Separator className="mb-10" />
+        <Separator className="mb-10 bg-foreground border border-dashed" />
         
-        <h2 className="text-2xl font-bold mb-8">
-          <span className="font-roboto">Articles by </span>
-          <span className={authorNameFont}>{author.Name}</span>
+        <h2 className="text-2xl mb-8">
+          <span>Articles by </span>
+          <span className={`${authorNameFont} font-bold`}>{author.Name}</span>
         </h2>
         
         {isLoading ? (
@@ -226,60 +227,31 @@ function AuthorPageInner() {
           <>
             {/* Articles Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {articles.map((article) => {
-                const imageUrl = article.featuredImage?.url
-                  ? `${config.strapi.url}${article.featuredImage.url}`
-                  : '/images/hero.jpg'
-                const titleFont = getFontClass(article.title || '')
-                const excerptFont = getFontClass(article.excerpt || '')
-                const categoryName = article.category?.Name || article.category?.nameEn || ''
-                const categoryFont = getFontClass(categoryName)
-
-                return (
-                  <article 
-                    key={article.documentId} 
-                    className="bg-card rounded-xl overflow-hidden shadow-sm border border-border hover:shadow-md transition-shadow"
-                  >
-                    <Link href={`/read-article?slug=${article.slug}`}>
-                      <div className="h-48 relative">
-                        <Image
-                          src={imageUrl}
-                          alt={article.title || 'Article'}
-                          fill
-                          className="object-cover"
-                        />
-                        {article.category && (
-                          <span className={cn(
-                            "absolute top-3 left-3 bg-black/80 text-white text-xs px-2 py-1 rounded-full",
-                            categoryFont
-                          )}>
-                            {categoryName}
-                          </span>
-                        )}
-                      </div>
-                      <div className="p-5">
-                        <h3 className={cn(
-                          "text-lg font-semibold mb-2 line-clamp-2 hover:text-primary transition-colors",
-                          titleFont
-                        )}>
-                          {article.title}
-                        </h3>
-                        {article.excerpt && (
-                          <p className={cn(
-                            "text-muted-foreground text-sm line-clamp-2 mb-3",
-                            excerptFont
-                          )}>
-                            {article.excerpt}
-                          </p>
-                        )}
-                        <time className="text-xs text-muted-foreground">
-                          {formatDate(article.publishedAt)}
-                        </time>
-                      </div>
-                    </Link>
-                  </article>
-                )
-              })}
+              {articles.map((article) => (
+                <ArticleCard
+                  key={article.documentId}
+                  article={{
+                    id: article.documentId,
+                    title: article.title || '',
+                    slug: article.slug || '',
+                    image: article.featuredImage?.url
+                      ? `${config.strapi.url}${article.featuredImage.url}`
+                      : '/images/hero.jpg',
+                    category: article.category?.Name || article.category?.nameEn || '',
+                    author: {
+                      name: author.Name || 'Unknown',
+                      avatar: author.users_permissions_user?.Avatar?.url
+                        ? author.users_permissions_user?.Avatar?.url.startsWith('http')
+                          ? author.users_permissions_user?.Avatar?.url
+                          : `${config.strapi.url}${author.users_permissions_user?.Avatar?.url}`
+                        : undefined,
+                      slug: author.slug,
+                    },
+                    publishedAt: formatDate(article.publishedAt),
+                    language: 'both' as const,
+                  }}
+                />
+              ))}
             </div>
 
             {/* Pagination */}

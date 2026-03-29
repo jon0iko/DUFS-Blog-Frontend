@@ -815,7 +815,7 @@ export default function PublishModal({
                   <span>
                     I agree to the{' '}
                     <a
-                      href="/terms-of-publication"
+                      href="/terms-and-conditions"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="underline font-medium hover:opacity-80"

@@ -73,43 +73,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [slug]);
 
-  const copyToClipboard = async (url: string) => {
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(url);
-      } else {
-        // Fallback for non-secure contexts (e.g. LAN IP on Android during dev)
-        const el = document.createElement("textarea");
-        el.value = url;
-        el.setAttribute("readonly", "");
-        el.style.cssText = "position:absolute;left:-9999px;top:-9999px";
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand("copy");
-        document.body.removeChild(el);
-      }
-      toast.success("Link copied to clipboard!");
-    } catch {
-      toast.error("Could not copy link");
-    }
-  };
 
-  const handleShare = async () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      try {
-        // Pass only `url` — most universally accepted by iOS Safari, Android Chrome, etc.
-        await navigator.share({ url });
-      } catch (err: unknown) {
-        // AbortError = user dismissed the share sheet; not a real failure
-        if (err instanceof Error && err.name !== "AbortError") {
-          await copyToClipboard(url);
-        }
-      }
-    } else {
-      await copyToClipboard(url);
-    }
-  };
 
   const handleDiscuss = () => {
     const el = document.getElementById("comment-section");
@@ -183,7 +147,6 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
     fontSize,
     onLike: handleLike,
     onBookmark: handleBookmark,
-    onShare: handleShare,
     onDiscuss: handleDiscuss,
     onFontSizeChange: setFontSize,
   };
@@ -192,7 +155,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
 
   return (
     <div className={isSepiaMode ? "sepia-article min-h-screen" : undefined}>
-      <ReadingProgressBar className="lg:hidden" targetId="article-content" />
+      <ReadingProgressBar className="lg:hidden" targetId="article-content" isSepiaMode={isSepiaMode}/>
       <FilmProgressWheel targetId="article-content" />
 
       <article className="relative">
@@ -267,6 +230,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
                     <CommentSection
                       articleId={article.id}
                       articleDocumentId={article.documentId}
+                      articleSlug={article.slug}
                     />
                   </div>
                 )}
@@ -278,7 +242,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
         </div>
 
         {relatedArticles.length > 0 && (
-          <div className={`py-14 ${isSepiaMode ? "bg-secondary" : "bg-secondary dark:bg-brand-black-90"}`}>
+          <div id="related-articles-section" className={`py-14 ${isSepiaMode ? "bg-secondary" : "bg-secondary dark:bg-brand-black-90"}`}>
             <div className="container mx-auto px-4">
               <RelatedArticles articles={relatedArticles} />
             </div>

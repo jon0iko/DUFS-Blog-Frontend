@@ -232,7 +232,7 @@ const SubmitPage = () => {
         </div>
 
         {/* Hero Title - Alte Haas Grotesk */}
-        <h1 className="font-zillaslab font-bold text-[1.8rem] leading-none tracking-[0.02em] text-foreground md:text-[2.8rem]" aria-label="Writers' Room">
+        <h1 className="font-zillaslab font-bold text-4xl leading-none tracking-[0.02em] text-foreground md:text-6xl" aria-label="Writers' Room">
           <span ref={typedTextRef} aria-hidden className="whitespace-pre" />
           <span ref={caretRef} aria-hidden className="inline-block select-none font-sans font-thin ml-0.5">|</span>
         </h1>

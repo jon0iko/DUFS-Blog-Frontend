@@ -7,9 +7,10 @@ import { cn } from '@/lib/utils';
 interface ReadingProgressBarProps {
   targetId?: string;
   className?: string;
+  isSepiaMode?: boolean;
 }
 
-export default function ReadingProgressBar({ targetId, className }: ReadingProgressBarProps) {
+export default function ReadingProgressBar({ targetId, className, isSepiaMode }: ReadingProgressBarProps) {
   const barRef = useReadProgress({ targetId });
 
   return (
@@ -23,7 +24,10 @@ export default function ReadingProgressBar({ targetId, className }: ReadingProgr
       {/* scaleX transform is GPU-composited (no layout/paint) — perfectly smooth */}
       <div
         ref={barRef}
-        className="h-full bg-black dark:bg-white"
+        className={cn(
+          "h-full transition-colors", 
+          isSepiaMode ? "!bg-foreground" : "bg-black dark:bg-white"
+        )}
         style={{
           transformOrigin: '0% 50%',
           transform: 'scaleX(0)',

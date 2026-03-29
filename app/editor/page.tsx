@@ -10,31 +10,14 @@ import SubmitHeader from '@/components/submissions/SubmitHeader';
 import PublishModal from '@/components/submissions/PublishModal';
 import SaveDraftModal from '@/components/submissions/SaveDraftModal';
 import DraftsListModal from '@/components/submissions/DraftsListModal';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { strapiAPI } from '@/lib/api';
 import { Draft } from '@/types';
 import { useToast } from '@/components/ui/toast';
+import { getStorageKey, EDITOR_STORAGE_KEYS, saveDraftToStorage, loadDraftFromStorage, clearDraftFromStorage } from '@/lib/storage-utils';
+import { normalizeContent } from '@/lib/content-utils';
 
-// Helper to generate user-specific storage keys
-const getStorageKey = (userId: number | undefined, key: string): string => {
-  if (!userId) return `tiptap_guest_${key}`;
-  return `tiptap_user_${userId}_${key}`;
-};
 
-// Storage key constants
-const STORAGE_KEYS = {
-  CONTENT: 'draft_content',
-  WORD_COUNT: 'draft_word_count',
-  DRAFT_ID: 'current_draft_id',
-  DRAFT_NAME: 'current_draft_name',
-} as const;
-
-const normalizeLoadedContent = (value: string): string => {
-  const trimmed = value.trim();
-  if (!trimmed || trimmed === '<p></p>' || trimmed === '<p><br></p>') {
-    return '';
-  }
-  return value;
-};
 
 export default function EditorPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -54,6 +37,19 @@ export default function EditorPage() {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showSaveDraftModal, setShowSaveDraftModal] = useState(false);
   const [showDraftsListModal, setShowDraftsListModal] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    confirmText?: string;
+    isDangerous?: boolean;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
   
   // Draft tracking
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
@@ -67,12 +63,12 @@ export default function EditorPage() {
     if (user?.id && typeof window !== 'undefined') {
       // Check if there's guest data and migrate it
       const guestContent = localStorage.getItem('tiptap_guest_draft_content');
-      const userContent = localStorage.getItem(getStorageKey(user.id, STORAGE_KEYS.CONTENT));
+      const userContent = localStorage.getItem(getStorageKey(user.id, EDITOR_STORAGE_KEYS.CONTENT));
       
       // If user has no content but guest has content, offer to migrate
       if (guestContent && !userContent) {
-        localStorage.setItem(getStorageKey(user.id, STORAGE_KEYS.CONTENT), guestContent);
-        localStorage.setItem(getStorageKey(user.id, STORAGE_KEYS.WORD_COUNT), 
+        localStorage.setItem(getStorageKey(user.id, EDITOR_STORAGE_KEYS.CONTENT), guestContent);
+        localStorage.setItem(getStorageKey(user.id, EDITOR_STORAGE_KEYS.WORD_COUNT), 
           localStorage.getItem('tiptap_guest_draft_word_count') || '0');
       }
       
@@ -87,11 +83,11 @@ export default function EditorPage() {
   // Load content from local storage on mount (user-specific)
   useEffect(() => {
     if (typeof window !== 'undefined' && !authLoading) {
-      const rawSavedContent = localStorage.getItem(getStorageKey(user?.id, STORAGE_KEYS.CONTENT)) || '';
-      const savedContent = normalizeLoadedContent(rawSavedContent);
-      const savedWordCount = parseInt(localStorage.getItem(getStorageKey(user?.id, STORAGE_KEYS.WORD_COUNT)) || '0', 10);
-      const savedDraftId = localStorage.getItem(getStorageKey(user?.id, STORAGE_KEYS.DRAFT_ID)) || null;
-      const savedDraftName = localStorage.getItem(getStorageKey(user?.id, STORAGE_KEYS.DRAFT_NAME)) || '';
+      const rawSavedContent = localStorage.getItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.CONTENT)) || '';
+      const savedContent = normalizeContent(rawSavedContent);
+      const savedWordCount = parseInt(localStorage.getItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.WORD_COUNT)) || '0', 10);
+      const savedDraftId = localStorage.getItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.DRAFT_ID)) || null;
+      const savedDraftName = localStorage.getItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.DRAFT_NAME)) || '';
       
       setInitialContent(savedContent);
       setContent(savedContent);
@@ -113,7 +109,7 @@ export default function EditorPage() {
     setContent(html);
     // Save to local storage immediately
     if (typeof window !== 'undefined' && isPageReady) {
-      localStorage.setItem(getStorageKey(user?.id, STORAGE_KEYS.CONTENT), html);
+      localStorage.setItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.CONTENT), html);
     }
   }, [user?.id, isPageReady]);
 
@@ -128,7 +124,7 @@ export default function EditorPage() {
   // Save word count to localStorage periodically (debounced via content change)
   useEffect(() => {
     if (isPageReady && typeof window !== 'undefined') {
-      localStorage.setItem(getStorageKey(user?.id, STORAGE_KEYS.WORD_COUNT), wordCount.toString());
+      localStorage.setItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.WORD_COUNT), wordCount.toString());
     }
   }, [wordCount, user?.id, isPageReady]);
 
@@ -159,14 +155,14 @@ export default function EditorPage() {
         
         // Save draft ID to local storage
         if (typeof window !== 'undefined') {
-          localStorage.setItem(getStorageKey(user.id, STORAGE_KEYS.DRAFT_ID), newDraft.documentId);
+          localStorage.setItem(getStorageKey(user.id, EDITOR_STORAGE_KEYS.DRAFT_ID), newDraft.documentId);
         }
         toast.success('Draft saved successfully');
       }
       
       setCurrentDraftName(name);
       if (typeof window !== 'undefined') {
-        localStorage.setItem(getStorageKey(user?.id, STORAGE_KEYS.DRAFT_NAME), name);
+        localStorage.setItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.DRAFT_NAME), name);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to save draft';
@@ -197,10 +193,10 @@ export default function EditorPage() {
       
       // Save to local storage
       if (typeof window !== 'undefined' && user?.id) {
-        localStorage.setItem(getStorageKey(user.id, STORAGE_KEYS.CONTENT), draft.content);
-        localStorage.setItem(getStorageKey(user.id, STORAGE_KEYS.WORD_COUNT), count.toString());
-        localStorage.setItem(getStorageKey(user.id, STORAGE_KEYS.DRAFT_ID), draft.documentId);
-        localStorage.setItem(getStorageKey(user.id, STORAGE_KEYS.DRAFT_NAME), draft.name);
+        localStorage.setItem(getStorageKey(user.id, EDITOR_STORAGE_KEYS.CONTENT), draft.content);
+        localStorage.setItem(getStorageKey(user.id, EDITOR_STORAGE_KEYS.WORD_COUNT), count.toString());
+        localStorage.setItem(getStorageKey(user.id, EDITOR_STORAGE_KEYS.DRAFT_ID), draft.documentId);
+        localStorage.setItem(getStorageKey(user.id, EDITOR_STORAGE_KEYS.DRAFT_NAME), draft.name);
       }
       
       // Update the editor directly via ref
@@ -229,7 +225,7 @@ export default function EditorPage() {
 
     const latestMarkdown = tiptapRef.current?.getMarkdown() || contentMarkdown;
     if (!latestMarkdown.trim()) {
-      toast.warning('Could not prepare markdown content. Please try again.', 'Content Error');
+      toast.warning('Could not prepare content. Please try again.', 'Content Error');
       return;
     }
 
@@ -239,20 +235,20 @@ export default function EditorPage() {
 
   const handlePublishSuccess = useCallback(async () => {
     // If we were editing a draft, delete it after successful publish
-    if (currentDraftId) {
-      try {
-        await strapiAPI.deleteDraft(currentDraftId);
-      } catch (err) {
-        console.error('Failed to delete draft after publish:', err);
-      }
-    }
+    // if (currentDraftId) {
+    //   try {
+    //     await strapiAPI.deleteDraft(currentDraftId);
+    //   } catch (err) {
+    //     console.error('Failed to delete draft after publish:', err);
+    //   }
+    // }
     
     // Clear local storage
     if (typeof window !== 'undefined') {
-      localStorage.removeItem(getStorageKey(user?.id, STORAGE_KEYS.CONTENT));
-      localStorage.removeItem(getStorageKey(user?.id, STORAGE_KEYS.WORD_COUNT));
-      localStorage.removeItem(getStorageKey(user?.id, STORAGE_KEYS.DRAFT_ID));
-      localStorage.removeItem(getStorageKey(user?.id, STORAGE_KEYS.DRAFT_NAME));
+      localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.CONTENT));
+      localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.WORD_COUNT));
+      localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.DRAFT_ID));
+      localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.DRAFT_NAME));
     }
     
     toast.success('Article posted for review successfully! Redirecting...', 'Success');
@@ -260,8 +256,81 @@ export default function EditorPage() {
   }, [router, currentDraftId, user?.id, toast]);
 
   const handleClear = useCallback(() => {
-    if (confirm('Are you sure you want to clear all content? This will not delete saved drafts in the cloud.')) {
-      // Clear state
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Clear Content',
+      message: 'Are you sure you want to clear all content? This will not delete saved drafts in the cloud.',
+      confirmText: 'Clear',
+      isDangerous: true,
+      onConfirm: () => {
+        // Clear state
+        setContent('');
+        setWordCount(0);
+        setCurrentDraftId(null);
+        setCurrentDraftName('');
+        
+        // Clear local storage
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.CONTENT));
+          localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.WORD_COUNT));
+          localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.DRAFT_ID));
+          localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.DRAFT_NAME));
+        }
+        
+        // Clear editor via ref
+        if (tiptapRef.current) {
+          tiptapRef.current.clearContent();
+        } else {
+          // Fallback: force editor re-render
+          setInitialContent('');
+          setEditorKey(prev => prev + 1);
+        }
+        
+        toast.info('Content cleared successfully');
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+      },
+    });
+  }, [user?.id, toast]);
+
+  const handleNewArticle = useCallback(() => {
+    // If there's unsaved content, confirm before clearing
+    const hasContent = content && content !== '<p></p>';
+    if (hasContent) {
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Start New Article',
+        message: 'Any unsaved changes will be lost. Make sure to save your draft first if needed.',
+        confirmText: 'Start New',
+        isDangerous: false,
+        onConfirm: () => {
+          // Clear state
+          setContent('');
+          setWordCount(0);
+          setCurrentDraftId(null);
+          setCurrentDraftName('');
+          
+          // Clear local storage
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.CONTENT));
+            localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.WORD_COUNT));
+            localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.DRAFT_ID));
+            localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.DRAFT_NAME));
+          }
+          
+          // Clear editor via ref
+          if (tiptapRef.current) {
+            tiptapRef.current.clearContent();
+          } else {
+            // Fallback: force editor re-render
+            setInitialContent('');
+            setEditorKey(prev => prev + 1);
+          }
+          
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        },
+      });
+    } else {
+      // No content, just clear
       setContent('');
       setWordCount(0);
       setCurrentDraftId(null);
@@ -269,10 +338,10 @@ export default function EditorPage() {
       
       // Clear local storage
       if (typeof window !== 'undefined') {
-        localStorage.removeItem(getStorageKey(user?.id, STORAGE_KEYS.CONTENT));
-        localStorage.removeItem(getStorageKey(user?.id, STORAGE_KEYS.WORD_COUNT));
-        localStorage.removeItem(getStorageKey(user?.id, STORAGE_KEYS.DRAFT_ID));
-        localStorage.removeItem(getStorageKey(user?.id, STORAGE_KEYS.DRAFT_NAME));
+        localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.CONTENT));
+        localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.WORD_COUNT));
+        localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.DRAFT_ID));
+        localStorage.removeItem(getStorageKey(user?.id, EDITOR_STORAGE_KEYS.DRAFT_NAME));
       }
       
       // Clear editor via ref
@@ -283,47 +352,12 @@ export default function EditorPage() {
         setInitialContent('');
         setEditorKey(prev => prev + 1);
       }
-      
-      toast.info('Content cleared successfully');
-    }
-  }, [user?.id, toast]);
-
-  const handleNewArticle = useCallback(() => {
-    // If there's unsaved content, confirm before clearing
-    const hasContent = content && content !== '<p></p>';
-    if (hasContent) {
-      if (!confirm('Start a new article? Any unsaved changes will be lost. Make sure to save your draft first if needed.')) {
-        return;
-      }
-    }
-    
-    // Clear state
-    setContent('');
-    setWordCount(0);
-    setCurrentDraftId(null);
-    setCurrentDraftName('');
-    
-    // Clear local storage
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(getStorageKey(user?.id, STORAGE_KEYS.CONTENT));
-      localStorage.removeItem(getStorageKey(user?.id, STORAGE_KEYS.WORD_COUNT));
-      localStorage.removeItem(getStorageKey(user?.id, STORAGE_KEYS.DRAFT_ID));
-      localStorage.removeItem(getStorageKey(user?.id, STORAGE_KEYS.DRAFT_NAME));
-    }
-    
-    // Clear editor via ref
-    if (tiptapRef.current) {
-      tiptapRef.current.clearContent();
-    } else {
-      // Fallback: force editor re-render
-      setInitialContent('');
-      setEditorKey(prev => prev + 1);
     }
   }, [content, user?.id]);
 
   const handleBack = useCallback(() => {
     // Content is already saved to local storage on every change
-    router.push('/submit');
+    router.back();
   }, [router]);
 
   // Show loading while checking auth
@@ -393,6 +427,17 @@ export default function EditorPage() {
         isOpen={showDraftsListModal}
         onClose={() => setShowDraftsListModal(false)}
         onLoadDraft={handleLoadDraft}
+      />
+      
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        isDangerous={confirmDialog.isDangerous}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
       />
     </>
   );

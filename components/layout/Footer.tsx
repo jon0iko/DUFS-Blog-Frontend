@@ -180,7 +180,7 @@ export default function Footer() {
                 Privacy Policy
               </Link>
               <Link
-                href="#"
+                href="/terms-and-conditions"
                 className="hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
               >
                 Terms of Publication

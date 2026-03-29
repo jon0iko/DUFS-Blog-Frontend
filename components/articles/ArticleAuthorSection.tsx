@@ -8,6 +8,7 @@ import { Author, Publication_Issue } from "@/types";
 import { getFontClass } from "@/lib/fonts";
 import { getStrapiMediaUrl } from "@/lib/strapi-helpers";
 import { cn } from "@/lib/utils";
+import { get } from "http";
 
 interface ArticleAuthorSectionProps {
   author?: Author | null;
@@ -23,6 +24,11 @@ export default function ArticleAuthorSection({
   publicationIssue,
 }: ArticleAuthorSectionProps) {
   const displayName = publicationAuthorName || author?.Name;
+  let isbioinbangla = false;
+
+  if (getFontClass(author?.Bio || "") === "font-kalpurush") {
+    isbioinbangla = true;
+  }
 
   const PublicationIssueCard = () => (
     publicationIssue && (
@@ -95,7 +101,7 @@ export default function ArticleAuthorSection({
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">
           Written By
         </p>
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3">
           <Link
             href={`/author?slug=${author.slug}`}
             className="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0 border-2 border-border block"
@@ -118,6 +124,17 @@ export default function ArticleAuthorSection({
                 {displayName}
               </h3>
             </Link>
+            {author.Bio && (
+              <p
+                className={cn(
+                  "text-foreground/75 font-bold line-clamp-3",
+                  getFontClass(author.Bio),
+                  isbioinbangla ? "text-base" : "text-base"
+                )}
+              >
+                {author.Bio}
+              </p>
+            )}
           </div>
           {/* <Button
             variant="outline"
@@ -132,7 +149,7 @@ export default function ArticleAuthorSection({
 
       {/* Desktop author section — Medium-like aesthetic */}
       <div className="hidden lg:block border-t border-b pb-8 border-border pt-8">
-        <div className="flex items-start gap-5">
+        <div className="flex items-center gap-5">
           <Link
             href={`/author?slug=${author.slug}`}
             className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0 border-2 border-border hover:border-primary transition-colors block"
@@ -145,7 +162,7 @@ export default function ArticleAuthorSection({
             />
           </Link>
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1">
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">
               Written by
             </p>
             <Link href={`/author?slug=${author.slug}`}>
@@ -161,8 +178,9 @@ export default function ArticleAuthorSection({
             {author.Bio && (
               <p
                 className={cn(
-                  "text-sm text-muted-foreground mt-2 line-clamp-3",
+                  "text-foreground/75 font-bold line-clamp-3 ",
                   getFontClass(author.Bio),
+                  isbioinbangla ? "text-lg " : "text-lg"
                 )}
               >
                 {author.Bio}

@@ -13,6 +13,7 @@ import {
   Author,
   Tag,
   SiteConfig,
+  TermsAndConditions,
   Submission,
   Comment,
   Draft,
@@ -393,7 +394,8 @@ class StrapiAPI {
   }
 
   /**
-   * Get related articles based on category
+   * Get related articles based on category (faster, basic filtering)
+   * Used as fallback when full recommendations aren't needed
    */
   async getRelatedArticles(
     currentArticleId: string,
@@ -424,6 +426,84 @@ class StrapiAPI {
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
     );
+  }
+
+  /**
+   * Get articles for intelligent recommendations
+   * Fetches a larger pool of related articles with full metadata for client-side ranking
+   * This enables sophisticated multi-factor recommendation scoring while keeping API calls minimal
+   */
+  async getRecommendationsCandidates(
+    currentArticleId: string,
+    categorySlug: string,
+    limit: number = 12
+  ): Promise<ArticleResponse> {
+    const searchParams = new URLSearchParams();
+    
+    // Strapi v5 draft/publish system
+    searchParams.append('status', 'published');
+    
+    // Fetch all articles regardless of category for diversity
+    // Don't filter by category - let client-side ranking decide what's relevant
+    searchParams.append('filters[documentId][$ne]', currentArticleId);
+    
+    // Fetch more than needed to implement smart time-based sampling
+    // Will fetch 4 latest + 4 oldest + 4 from middle = 12 candidates
+    searchParams.append('pagination[pageSize]', (limit * 3).toString());
+    
+    // Sort by published date (latest first) for smart sampling
+    searchParams.append('sort', 'publishedAt:desc');
+    
+    // Populate all fields needed for intelligent scoring
+    const populate = [
+      'featuredImage',
+      'author',
+      'category',
+      'tags', // Needed for tag overlap scoring
+    ];
+    populate.forEach((field, index) => {
+      searchParams.append(`populate[${index}]`, field);
+    });
+
+    const response = await this.request<ArticleResponse>(
+      `${config.strapi.endpoints.articles}?${searchParams.toString()}`
+    );
+
+    // Smart sampling: pick 4 latest, 4 oldest, 4 from middle
+    if (response.data.length <= limit) {
+      return response; // Return all if fewer than limit
+    }
+
+    const articles = response.data;
+    const result: typeof articles = [];
+
+    // 4 Latest (already sorted first)
+    result.push(...articles.slice(0, 4));
+
+    // 4 Oldest (from the end)
+    if (articles.length >= 8) {
+      result.push(...articles.slice(articles.length - 4));
+    }
+
+    // 4 From middle
+    if (articles.length > 8) {
+      const middleStart = Math.floor((articles.length - 8) / 2);
+      const middleArticles = articles.slice(middleStart, middleStart + 4);
+      result.push(...middleArticles);
+    }
+
+    // Remove duplicates and return up to `limit` articles
+    const seen = new Set<string>();
+    const unique = result.filter((article) => {
+      if (seen.has(article.documentId)) return false;
+      seen.add(article.documentId);
+      return true;
+    });
+
+    return {
+      ...response,
+      data: unique.slice(0, limit),
+    };
   }
 
   /**
@@ -752,6 +832,23 @@ class StrapiAPI {
       return response.data;
     } catch (error) {
       console.warn('Site config not available:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get terms and conditions content (single type)
+   * Strapi v5: GET /api/terms-and-conditions
+   */
+  async getTermsAndConditions(): Promise<TermsAndConditions | null> {
+    try {
+      const response = await this.request<{ data: TermsAndConditions; meta: object }>(
+        '/api/terms-and-condition'
+      );
+      
+      return response.data || null;
+    } catch (error) {
+      console.warn('Terms and conditions not available:', error);
       return null;
     }
   }

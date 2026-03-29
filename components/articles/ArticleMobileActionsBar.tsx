@@ -4,6 +4,7 @@ import React from "react";
 import { Heart, Bookmark, Share2, MessageCircle, Sun, Moon, Coffee } from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
+import ShareMenu from "./ShareMenu";
 
 type ThemeOption = "light" | "dark" | "sepia";
 const THEME_CYCLE: ThemeOption[] = ["light", "dark", "sepia"];
@@ -25,7 +26,6 @@ interface ArticleMobileActionsBarProps {
   isSepiaMode: boolean;
   onLike: () => void;
   onBookmark: () => void;
-  onShare: () => void;
   onDiscuss: () => void;
   onFontSizeChange: (size: "small" | "medium" | "large") => void;
   onSepiaChange: (isSepia: boolean) => void;
@@ -42,7 +42,6 @@ export default function ArticleMobileActionsBar({
   isSepiaMode,
   onLike,
   onBookmark,
-  onShare,
   onDiscuss,
   onSepiaChange,
 }: ArticleMobileActionsBarProps) {
@@ -111,13 +110,16 @@ export default function ArticleMobileActionsBar({
           </button>
 
           {/* Share */}
-          <button
-            onClick={onShare}
-            className="flex flex-col items-center gap-0.5 flex-1 py-1.5 rounded-xl text-muted-foreground active:scale-95 transition-all"
-          >
-            <Share2 className="w-5 h-5" />
-            <span className="text-[11px] font-medium">Share</span>
-          </button>
+          <div className="flex flex-1 justify-center relative cursor-pointer">
+            <ShareMenu align="left" directNativeShare>
+              <button
+                className="flex flex-col items-center justify-center gap-0.5 w-full py-1.5 rounded-xl text-muted-foreground active:scale-95 transition-all"
+              >
+                <Share2 className="w-5 h-5" />
+                <span className="text-[11px] font-medium">Share</span>
+              </button>
+            </ShareMenu>
+          </div>
 
           
           {/* Theme — cycles light → dark → sepia */}
