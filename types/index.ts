@@ -245,7 +245,15 @@ export interface Publication_Issue
   id: number;
   documentId: string;
   Title: string;
-  Details: string; // Rich text
+  TableOfContents: string; // Rich text
+  Editorial?: string; // Rich text
+  Year?: string;
+  Editor?: string;
+  CoverDesigner?: string;
+  Designer?: string;
+  Imprint?: string;
+  PageNumber?: string;
+  Price?: string;
   CoverImage?: StrapiMedia;
   PublishedDate: string;
   publication?: Publication; 

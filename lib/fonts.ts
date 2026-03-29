@@ -50,6 +50,10 @@ export const getFontClassZillaSlab = (text: string): string => {
 export const getFontClassAlteHaasGrotesk = (text: string): string => {
   return isPureBengaliText(text) ? 'font-kalpurush' : 'font-altehaasgrotesk'
 }
+
+export const getFontClassMono = (text: string): string => {
+  return isPureBengaliText(text) ? 'font-kalpurush' : 'font-mono'
+}
 /**
  * Split text into Bengali and English segments for mixed content
  */

@@ -78,7 +78,7 @@ export default function SignIn() {
           <div className="w-full border-t border-white/10"></div>
         </div>
         <div className="relative flex justify-center text-xs uppercase tracking-widest">
-          <span className="bg-black px-2 text-white/80">Or continue with</span>
+          <span className=" px-2 text-white/90">Or continue with</span>
         </div>
       </div>
       
@@ -149,7 +149,7 @@ export default function SignIn() {
         
         <Button 
           type="submit" 
-          className="w-full mt-6 bg-white hover:bg-white/70 text-black font-black uppercase tracking-widest py-2 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 text-sm"
+          className="w-full mt-6 bg-white/90 hover:bg-white text-black font-black uppercase tracking-widest py-2 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 text-sm"
           disabled={isLoading}
         >
           <LogIn className="h-4 w-4" />

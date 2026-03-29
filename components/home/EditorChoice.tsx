@@ -129,7 +129,7 @@ export default async function EditorChoice() {
       /> */}
         <div className="container z-10 relative">
           <ScrollReveal className="flex justify-center mb-8" duration={0.6}>
-            <h2 className="ext-2xl md:text-3xl lg:text-4xl font-black relative text-brand-black-90">
+            <h2 className="text-3xl md:text-3xl lg:text-4xl font-black relative text-brand-black-90">
               <span className="relative z-10">Featured</span>
             </h2>
           </ScrollReveal>

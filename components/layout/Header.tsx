@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, Moon, Sun, LogIn, UserPlus, LogOut, Palette, Search, X } from "lucide-react";
+import { Menu, Moon, Sun, LogIn, UserPlus, LogOut, Palette, Search, X, SquareUserRound, User, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import Sidebar from "./Sidebar";
@@ -14,6 +14,8 @@ import Avatar from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { getUserAvatarUrl } from '@/lib/auth'; 
 import { gsap } from "@/lib/gsap";
+import { strapiAPI } from "@/lib/api";
+import { useToast } from "@/components/ui/toast";
 
 
 export default function Header() {
@@ -21,11 +23,15 @@ export default function Header() {
   const { isAuthenticated, user, logout } = useAuth();
   const pathname = usePathname();
   const isHomePage = pathname === '/' || pathname === '';
+  const toast = useToast();
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportIssueText, setReportIssueText] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   // Ref for GSAP-driven header show/hide
   const headerRef = useRef<HTMLElement>(null);
@@ -100,6 +106,26 @@ export default function Header() {
 
   const handleLogout = () => {
     logout();
+  };
+
+  const handleReportIssue = async () => {
+    if (!reportIssueText.trim()) return;
+
+    setIsSubmittingReport(true);
+    try {
+      await strapiAPI.createUserRequestReport({
+        section: "IssueReportHome",
+        description: reportIssueText,
+      });
+      toast.success("Your report has been submitted successfully.");
+      setIsReportModalOpen(false);
+      setReportIssueText("");
+    } catch (error) {
+      console.error("Error submitting report:", error);
+      toast.error("Failed to submit your report.");
+    } finally {
+      setIsSubmittingReport(false);
+    }
   };
 
   return (
@@ -288,17 +314,20 @@ export default function Header() {
                       window.location.href = "/account";
                     }}
                   >
+                    <div className="flex gap-1 items-center ">
+                    <User className="h-4 w-4 stroke-2"/>
                     Profile
+                    </div>
                   </DropdownMenuItem>
                   
                   {/* Theme Settings Nested Dropdown */}
                   <div className="relative">
                     <DropdownMenuItem
-                      onSelect={(e) => {
+                      onSelect={(e:any) => {
                         e.preventDefault();
                         e.stopPropagation();
                       }}
-                      onClick={(e) => {
+                      onClick={(e:any) => {
                         e.preventDefault();
                         e.stopPropagation();
                         setIsThemeMenuOpen(!isThemeMenuOpen);
@@ -313,7 +342,7 @@ export default function Header() {
                     </DropdownMenuItem>
                     
                     {isThemeMenuOpen && (
-                      <div className="pl-6 space-y-1 py-1 border-l-2 border-gray-200 dark:border-gray-700 ml-2">
+                      <div className="pl-6 space-y-1 py-1 border-l-2 border-border ml-2">
                         <button
                           onClick={(e) => {
                             e.preventDefault();
@@ -366,7 +395,16 @@ export default function Header() {
                     )}
                   </div>
 
-                  <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                  <div className="border-t border-border my-1"></div>
+                  <DropdownMenuItem
+                    onClick={() => setIsReportModalOpen(true)}
+                    className="text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                  >
+                    <AlertTriangle className="mr-2 h-4 w-4 inline stroke-2" />
+                    Report Issue
+                  </DropdownMenuItem>
+
+                  <div className="border-t border-border my-1"></div>
                   <DropdownMenuItem
                     onClick={handleLogout}
                     className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -382,6 +420,59 @@ export default function Header() {
       </header>
 
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+
+      {/* Report Issue Modal */}
+      {isReportModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-background border border-border p-6 md:p-8 rounded-lg shadow-lg animate-in duration-200">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold uppercase tracking-widest text-foreground">Report Issue</h3>
+              <button 
+                onClick={() => setIsReportModalOpen(false)}
+                className="p-1 hover:bg-foreground/5 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-foreground" />
+              </button>
+            </div>
+            
+            <p className="text-xs text-muted-foreground mb-4 leading-relaxed font-medium">
+              Please describe the issue you encountered. We will review and take action.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-foreground/60 mb-1.5">
+                  Issue Description
+                </label>
+                <textarea
+                  value={reportIssueText}
+                  onChange={(e) => setReportIssueText(e.target.value)}
+                  placeholder="Describe the issue you're experiencing..."
+                  rows={4}
+                  className="w-full bg-muted border-2 border-foreground/10 focus:border-foreground/30 rounded-sm py-3 px-4 outline-none transition-all text-sm font-medium resize-none"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex flex-col gap-3 pt-2">
+                <button
+                  onClick={handleReportIssue}
+                  disabled={!reportIssueText.trim() || isSubmittingReport}
+                  className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold uppercase tracking-wide text-xs rounded-md transition-colors disabled:opacity-50"
+                >
+                  {isSubmittingReport ? "Submitting..." : "Submit Report"}
+                </button>
+                <button
+                  onClick={() => setIsReportModalOpen(false)}
+                  className="w-full py-2.5 bg-muted hover:bg-muted/80 text-foreground font-semibold uppercase tracking-wide text-xs rounded-md transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

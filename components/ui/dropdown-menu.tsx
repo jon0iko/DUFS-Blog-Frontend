@@ -140,18 +140,28 @@ const DropdownMenu = ({ children, trigger, align = "left" }: DropdownMenuProps) 
     }
   }, [isOpen, isPositioned]);
 
-  const toggleDropdown = (e: React.MouseEvent) => {
+  const toggleDropdown = (e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation();
     setIsOpen(!isOpen);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      toggleDropdown(e);
+    }
   };
 
   return (
     <div className="relative inline-block" ref={dropdownRef}>
       <div 
         onClick={toggleDropdown}
+        onKeyDown={handleKeyDown}
         className="inline-block"
         role="button"
         tabIndex={0}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
       >
         {trigger}
       </div>
@@ -159,15 +169,19 @@ const DropdownMenu = ({ children, trigger, align = "left" }: DropdownMenuProps) 
       {isOpen && isPositioned && (
         <div
           ref={dropdownContentRef}
-          className="fixed bg-background dark:bg-brand-black-100 border border-border rounded-md shadow-md w-max"
+          className="fixed bg-background dark:bg-brand-black-100 border border-border rounded-md shadow-lg animate-in fade-in zoom-in-95 duration-100"
           style={{
             top: `${position.top}px`,
             ...(position.left !== undefined && { left: `${position.left}px` }),
             ...(position.right !== undefined && { right: `${position.right}px` }),
-            ...(constrainedWidth && { maxWidth: `${constrainedWidth}px` }),
+            ...(constrainedWidth ? { width: `${constrainedWidth}px` } : { width: 'auto' }),
+            minWidth: '160px',
+            maxWidth: constrainedWidth ? `${constrainedWidth}px` : '320px',
             zIndex: 9999,
-            overflow: constrainedWidth ? 'hidden' : 'visible',
+            overflow: 'auto',
+            maxHeight: '80vh',
           }}
+          role="menu"
         >
           <div className="py-1">
             {React.Children.map(children, (child) => {
@@ -193,7 +207,7 @@ const DropdownMenuItem = ({ children, onClick, className, isActive = false }: Dr
       onClick={onClick}
       type="button"
       className={cn(
-        "w-full text-left px-3 py-1.5 text-sm transition-colors duration-150 cursor-pointer whitespace-nowrap",
+        "w-full text-left px-4 py-2.5 text-sm md:text-sm transition-colors duration-150 cursor-pointer",
         "text-foreground dark:text-white",
         "hover:bg-secondary dark:hover:bg-brand-black-90",
         "active:bg-secondary dark:active:bg-brand-black-90",
