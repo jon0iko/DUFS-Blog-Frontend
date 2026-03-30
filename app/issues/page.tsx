@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getFontClass } from '@/lib/fonts';
 import { useRouter } from 'next/navigation';
 import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import DOMPurify from 'isomorphic-dompurify';//import DOMPurify from 'dompurify';
 
 
 function IssuesInner() {
@@ -108,25 +108,25 @@ function IssuesInner() {
         }}
       />
 
-      <div className="container relative z-10 pt-16 pb-24">
+      <div className="container relative z-10 pt-8 pb-24">
         {/* Navigation */}
-        <button onClick={handleBack} className="inline-flex items-center gap-2 text-sm font-semibold text-foreground/70 hover:text-foreground mb-16 transition-colors">
+        <button onClick={handleBack} className="inline-flex items-center gap-2 text-sm font-semibold text-foreground/70 hover:text-foreground mb-8 transition-colors">
           <ChevronLeft className="w-4 h-4" /> Back
         </button>
 
         {/* Publication Header */}
         <div className="mb-16">
-          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
-            {/* Cover Image - Desktop only */}
+          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center md:items-start">
+            {/* Cover Image */}
             {publication.Image && (
-              <div className="hidden md:block relative w-full max-w-[320px] h-auto flex-shrink-0 overflow-hidden rounded-lg ">
+              <div className="relative w-full max-w-[220px] md:max-w-[320px] h-auto flex-shrink-0 overflow-hidden rounded-lg">
                 <Image
                   src={getStrapiMediaUrl(publication.Image)}
                   alt={publication.TitleEnglish}
                   width={320}
                   height={400}
                   className="w-full h-auto object-cover object-center"
-                  sizes="320px"
+                  sizes="(max-width: 768px) 220px, 320px"
                   priority
                 />
               </div>
@@ -135,7 +135,7 @@ function IssuesInner() {
             {/* Text Content */}
             <div className="flex-1">
               <h1 
-                className={`text-5xl md:text-6xl font-black tracking-tight mb-4 ${getFontClass(publication.TitleBangla)}`}
+                className={`text-4xl md:text-6xl font-black tracking-tight mb-4 ${getFontClass(publication.TitleBangla)}`}
               >
                 {publication.TitleBangla}
               </h1>
@@ -144,7 +144,7 @@ function IssuesInner() {
               </p>
               {publication.Description && (
                 <div 
-                  className={`text-foreground text-xl md:text-2xl prose prose-invert max-w-none ${getFontClass(publication.Description)}`}
+                  className={`text-foreground text-lg md:text-2xl prose prose-invert max-w-none ${getFontClass(publication.Description)}`}
                   dangerouslySetInnerHTML={{
                     __html: DOMPurify.sanitize(marked.parse(publication.Description, { gfm: true, breaks: false, async: false }) as string)
                   }}
@@ -156,7 +156,9 @@ function IssuesInner() {
 
         {/* Issues Section */}
         <div className="py-8 border-t border-dashed border-foreground">
+          {issues.length > 0 ? (
           <h2 className={`text-2xl md:text-3xl font-black tracking-tight mb-8 ${getFontClass('Issues')}`}>Issues</h2>
+          ) : <></>}
 
         {/* Issues Grid */}
         {issues.length > 0 ? (
@@ -202,7 +204,7 @@ function IssuesInner() {
           </div>
         ) : (
           <div className="text-center py-16 px-8 rounded-lg ">
-            <p className="text-foreground text-xl">Contents for this publication will be uploaded soon!</p>
+            <p className="text-foreground text-lg md:text-xl">Contents for this publication will be uploaded soon!</p>
           </div>
         )}
         </div>

@@ -16,7 +16,6 @@ import { useArticleData } from "@/hooks/useArticleData";
 import { useViewCount } from "@/hooks/useViewCount";
 import { useArticleInteractions } from "@/hooks/useArticleInteractions";
 import { useMobileBarVisibility } from "@/hooks/useMobileBarVisibility";
-import { useArticleReadProgress } from "@/hooks/useArticleReadProgress";
 
 // Sub-components
 import ArticleHTMLContent from "./ArticleHTMLContent";
@@ -60,15 +59,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
   } = useArticleInteractions({ article, userId: user?.id, isAuthenticated, isAuthLoading });
   const showMobileBar = useMobileBarVisibility(!!article);
 
-  // Restore article read progress once content is in the DOM
-  useArticleReadProgress({
-    slug,
-    contentRef,
-    isReady: !loading && !!article,
-  });
-
-  // Scroll to top whenever the slug changes (restore will override if there
-  // is a saved position, since it runs after article data loads)
+  // Always scroll to top on page load/slug change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [slug]);

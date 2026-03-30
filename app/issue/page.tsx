@@ -13,7 +13,7 @@ import { ChevronLeft, FolderOpen, ChevronDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import ArticleCard from '@/components/home/ArticleCard';
 import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import DOMPurify from 'isomorphic-dompurify';//import DOMPurify from 'dompurify';
 
 // Collapsible section component
 function CollapsibleSection({ title, children }: { title: string; children: React.ReactNode }) {
@@ -103,6 +103,11 @@ function IssueInner() {
     return isPureBengaliText(text) ? 'text-base md:text-lg' : 'text-sm md:text-base';
   };
 
+  const gefontSizeSection = (text: string): string => {
+    return isPureBengaliText(text) ? 'text-lg md:text-xl' : 'text-base md:text-lg';
+  }
+
+
 
   if (!issueId) {
     return (
@@ -168,29 +173,29 @@ function IssueInner() {
           <ChevronLeft className="w-4 h-4" /> Back
         </button>
 
-        {/* Publication Category */}
-        {issue.publication && (
-          <Link
-            href={`/issues?pub=${issue.publication.documentId}`}
-            className="block mb-8 md:mb-12"
-          >
-            <div className="inline-flex items-center gap-1.5">
-              <FolderOpen className="w-3.5 h-3.5 md:w-4 md:h-4 text-muted-foreground" />
-              <span className={cn("text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors", getFontClass(issue.publication.TitleEnglish || ""))}>
-                {issue.publication.TitleEnglish}
-              </span>
-            </div>
-          </Link>
-        )}
-
         {/* ZONE 1: Hero - Cover Reveal */}
         <div className="mb-8">
-          {/* Desktop: Two-column layout (40/60 split) */}
-          <div className="hidden md:grid md:grid-cols-5 gap-8 items-start">
-            {/* Left column (40%) - Cover with drop shadow */}
-            <div className="md:col-span-2 flex flex-col items-center">
+          {/* Two-column layout for md and up */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:items-start">
+            {/* Left column (40% on lg) - Cover with drop shadow */}
+            <div className="lg:col-span-2 flex flex-col items-center">
+              {/* Publication Category - Centered above cover */}
+              {issue.publication && (
+                <Link
+                  href={`/issues?pub=${issue.publication.documentId}`}
+                  className="mb-6"
+                >
+                  <div className="flex items-center gap-1.5 justify-center">
+                    <FolderOpen className="w-3.5 h-3.5 md:w-4 md:h-4 text-muted-foreground" />
+                    <span className={cn("text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors", getFontClass(issue.publication.TitleEnglish || ""))}>
+                      {issue.publication.TitleEnglish}
+                    </span>
+                  </div>
+                </Link>
+              )}
+
               {issue.CoverImage && (
-                <div className="w-3/5 mb-6 rounded-lg border border-border overflow-hidden transition-transform duration-300 hover:scale-105" 
+                <div className="w-4/5 md:w-3/5 lg:w-3/5 mb-6 rounded-lg border border-border overflow-hidden transition-transform duration-300 hover:scale-105" 
                      style={{ boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
                   <Image
                     src={getStrapiMediaUrl(issue.CoverImage)}
@@ -217,11 +222,11 @@ function IssueInner() {
               </div>
             </div>
 
-            {/* Right column (60%) - Title, divider, metadata */}
-            <div className="md:col-span-3 flex flex-col">
+            {/* Right column (60% on lg) - Title, divider, metadata */}
+            <div className="lg:col-span-3 flex flex-col lg:mt-24">
               {/* Issue title */}
               <h1 className={cn(
-                "text-4xl md:text-5xl font-black mb-6 leading-tight text-foreground",
+                "text-3xl md:text-4xl lg:text-5xl font-black mb-6 leading-tight text-foreground",
                 getFontClass(issue.Title || "")
               )}>
                 {issue.Title}
@@ -249,65 +254,13 @@ function IssueInner() {
               )}
             </div>
           </div>
-
-          {/* Mobile: Vertical stack */}
-          <div className="md:hidden space-y-4">
-            {/* Mobile cover */}
-            {issue.CoverImage && (
-              <div className="w-4/6 mx-auto rounded-lg border border-border overflow-hidden transition-transform duration-300 hover:scale-105"
-                   style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.12)' }}>
-                <Image
-                  src={getStrapiMediaUrl(issue.CoverImage)}
-                  alt={issue.Title}
-                  width={280}
-                  height={340}
-                  className="w-full h-auto object-cover"
-                  priority
-                />
-              </div>
-            )}
-
-            {/* Mobile title */}
-            <h1 className={cn(
-              "text-3xl font-black text-center text-foreground",
-              getFontClass(issue.Title || "")
-            )}>
-              {issue.Title}
-            </h1>
-
-            {/* Mobile CTA - Prominent above metadata */}
-            <div className="text-center py-3 px-2 rounded mx-auto w-fit"
-                 style={{ 
-                   fontWeight: 600,
-                   letterSpacing: '0.05em'
-                 }}>
-              <p className="text-[0.65rem] text-foreground/70">COLLECT FROM</p>
-              <Link href='https://maps.app.goo.gl/rnMDozdXV11Xpg327' className="text-sm underline hover:no-underline font-black text-foreground" target="_blank" rel="noopener noreferrer">DUFS ROOM</Link>
-            </div>
-
-            {/* Mobile metadata - single column list */}
-            {metadataFields.length > 0 && (
-              <div className="space-y-4 pt-4 border-t border-border">
-                {metadataFields.map((field) => (
-                  <div key={field.label}>
-                    <dt className="font-mono text-xs uppercase tracking-wider text-foreground/90 mb-1">
-                      {field.label}
-                    </dt>
-                    <dd className={cn("font-bold text-foreground", getFontClassMono(field.value), getFontSize(field.value))}>
-                      {field.value}
-                    </dd>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* ZONE 2: Editorial (if present) */}
         {issue.Editorial && (
           <CollapsibleSection title="Editorial">
             <div 
-              className={`prose dark:prose-invert prose-headings:text-foreground prose-p:text-foreground max-w-none px-3 ${getFontSize(issue.TableOfContents)} ${getFontClass(issue.Editorial)}`}
+              className={`prose dark:prose-invert prose-headings:text-foreground prose-p:text-foreground max-w-none px-3 ${gefontSizeSection(issue.Editorial)} ${getFontClass(issue.Editorial)}`}
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(marked.parse(issue.Editorial, { gfm: true, breaks: false, async: false }) as string)
               }}
@@ -319,7 +272,7 @@ function IssueInner() {
         {issue.TableOfContents && (
           <CollapsibleSection title="Contents">
             <div 
-              className={`prose dark:prose-invert prose-headings:text-foreground prose-p:text-foreground max-w-none px-3 ${getFontClass(issue.TableOfContents)} ${getFontSize(issue.TableOfContents)}`}
+              className={`prose dark:prose-invert prose-headings:text-foreground prose-p:text-foreground max-w-none px-3 ${getFontClass(issue.TableOfContents)} ${gefontSizeSection(issue.TableOfContents)}`}
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(marked.parse(issue.TableOfContents, { gfm: true, breaks: false, async: false }) as string)
               }}
