@@ -79,7 +79,7 @@ export default function FilmProgressWheel({ targetId }: FilmProgressWheelProps) 
 
       // Direct DOM: progress arc dashOffset
       if (arcLightRef.current) arcLightRef.current.style.strokeDashoffset = String(L_C * (1 - p));
-      if (arcDarkRef.current)  arcDarkRef.current.style.strokeDashoffset  = String(D_C * (1 - p));
+      if (arcDarkRef.current)  arcDarkRef.current.style.strokeDashoffset  = String(D_ARR - D_C * p);
 
       if (!wasVisible && isVisible) {
         visibleRef.current = true;

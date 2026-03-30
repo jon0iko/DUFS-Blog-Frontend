@@ -50,7 +50,7 @@ export default function PublicationsSection({
   }
 
   return (
-    <section className="relative pt-8 pb-16 md:py-12 px-4 z-20">
+    <section className="relative pt-8 pb-16 md:py-24 px-4 z-20">
       <div className="container mb-10 md:mb-14">
         <div className="flex flex-col items-center gap-2">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight text-foreground text-center uppercase">
