@@ -260,7 +260,7 @@ function IssueInner() {
         {issue.Editorial && (
           <CollapsibleSection title="Editorial">
             <div 
-              className={`prose dark:prose-invert prose-headings:text-foreground prose-p:text-foreground max-w-none px-3 ${gefontSizeSection(issue.Editorial)} ${getFontClass(issue.Editorial)}`}
+              className={`prose dark:prose-invert prose-headings:text-foreground prose-p:text-foreground max-w-none px-3 pt-4 ${gefontSizeSection(issue.Editorial)} ${getFontClass(issue.Editorial)}`}
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(marked.parse(issue.Editorial, { gfm: true, breaks: false, async: false }) as string)
               }}
@@ -272,7 +272,7 @@ function IssueInner() {
         {issue.TableOfContents && (
           <CollapsibleSection title="Contents">
             <div 
-              className={`prose dark:prose-invert prose-headings:text-foreground prose-p:text-foreground max-w-none px-3 ${getFontClass(issue.TableOfContents)} ${gefontSizeSection(issue.TableOfContents)}`}
+              className={`prose dark:prose-invert prose-headings:text-foreground prose-p:text-foreground max-w-none px-3 pt-4 ${getFontClass(issue.TableOfContents)} ${gefontSizeSection(issue.TableOfContents)}`}
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(marked.parse(issue.TableOfContents, { gfm: true, breaks: false, async: false }) as string)
               }}
