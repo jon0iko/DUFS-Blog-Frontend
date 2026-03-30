@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Menu, Moon, Sun, LogIn, UserPlus, LogOut, Palette, Search, X, SquareUserRound, User, AlertTriangle } from "lucide-react";
@@ -107,6 +107,11 @@ export default function Header() {
   const handleLogout = () => {
     logout();
   };
+
+  const handleSignIn = useCallback(() => {
+    const currentPath = window.location.pathname + window.location.search + window.location.hash;
+    window.location.href = `/auth/signin?redirect=${encodeURIComponent(currentPath)}`;
+  }, []);
 
   const handleReportIssue = async () => {
     if (!reportIssueText.trim()) return;
@@ -242,7 +247,7 @@ export default function Header() {
               <>
                 {/* Login Button — hidden on mobile */}
                 <Button
-                  asChild
+                  onClick={handleSignIn}
                   variant="ghost"
                   className={cn(
                     "hidden md:flex items-center gap-2 font-semibold transition-all duration-300 whitespace-nowrap",
@@ -251,10 +256,8 @@ export default function Header() {
                       : "text-white hover:bg-white/20"
                   )}
                 >
-                  <Link href="/auth/signin">
-                    <LogIn className="h-5 w-5 stroke-[2.5]" />
-                    <span className="hidden lg:inline">Log In</span>
-                  </Link>
+                  <LogIn className="h-5 w-5 stroke-[2.5]" />
+                  <span className="hidden lg:inline">Log In</span>
                 </Button>
 
                 {/* Sign Up Button — hidden on mobile */}

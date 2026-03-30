@@ -91,11 +91,9 @@ function resolveSocialLogoUrl(logo: RawSocialLink['Logo']): string | undefined {
  */
 class StrapiAPI {
   private baseURL: string;
-  private apiToken: string;
 
   constructor() {
     this.baseURL = config.strapi.url;
-    this.apiToken = config.strapi.apiToken;
   }
 
   /**
@@ -123,10 +121,6 @@ class StrapiAPI {
     const defaultHeaders: HeadersInit = {
       'Content-Type': 'application/json',
     };
-
-    if (this.apiToken) {
-      defaultHeaders['Authorization'] = `Bearer ${this.apiToken}`;
-    }
 
     const config: RequestInit = {
       headers: {
@@ -892,9 +886,6 @@ class StrapiAPI {
     }
 
     const headers: HeadersInit = {};
-    if (this.apiToken) {
-      headers['Authorization'] = `Bearer ${this.apiToken}`;
-    }
 
     return this.request<{ data: Submission; meta: object }>(config.strapi.endpoints.submissions, {
       method: 'POST',

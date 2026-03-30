@@ -26,11 +26,9 @@ import type {
 
 class ServerStrapiAPI {
   private baseURL: string;
-  private apiToken: string;
 
   constructor() {
     this.baseURL = config.strapi.url;
-    this.apiToken = config.strapi.apiToken;
   }
 
   /**
@@ -46,9 +44,6 @@ class ServerStrapiAPI {
       'Content-Type': 'application/json',
     };
 
-    if (this.apiToken) {
-      headers['Authorization'] = `Bearer ${this.apiToken}`;
-    }
 
     const fetchOptions: RequestInit = {
       ...options,

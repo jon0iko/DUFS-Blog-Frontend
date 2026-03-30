@@ -129,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     logoutApi(); // from @lib/auth, removes cookies and broadcasts
     setUser(null); // Update state for the current tab
-    router.push('/');
+    window.location.reload();
   };
 
   // Refresh user data from server
