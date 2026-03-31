@@ -44,7 +44,6 @@ interface PublishModalProps {
 
 interface FormData {
   title: string;
-  excerpt: string;
   language: "en" | "bn";
   categoryId: number | null;  // Strapi v5 uses numeric ID
   selectedTags: number[];  // Strapi v5 uses numeric IDs
@@ -53,7 +52,6 @@ interface FormData {
 
 interface FormErrors {
   title?: string;
-  excerpt?: string;
   language?: string;
   category?: string;
   image?: string;
@@ -73,7 +71,6 @@ export default function PublishModal({
   // Form state
   const [formData, setFormData] = useState<FormData>({
     title: "",
-    excerpt: "",
     language: "en",
     categoryId: null,
     selectedTags: [],
@@ -261,14 +258,6 @@ export default function PublishModal({
       newErrors.title = "Title must be less than 200 characters";
     }
 
-    if (!formData.excerpt.trim()) {
-      newErrors.excerpt = "Description is required";
-    } else if (formData.excerpt.length < 20) {
-      newErrors.excerpt = "Description must be at least 20 characters";
-    } else if (formData.excerpt.length > 500) {
-      newErrors.excerpt = "Description must be less than 500 characters";
-    }
-
     if (!formData.categoryId || formData.categoryId === null) {
       newErrors.category = "Please select a category";
     }
@@ -364,7 +353,6 @@ export default function PublishModal({
       await submitNewArticleService({
         title: formData.title,
         slug: uniqueSlug,
-        excerpt: formData.excerpt,
         content: contentMarkdown,
         language: formData.language,
         categoryId: formData.categoryId!,  // Already validated as not null
@@ -403,7 +391,6 @@ export default function PublishModal({
     if (isOpen) {
       setFormData({
         title: "",
-        excerpt: "",
         language: "en",
         categoryId: null,
         selectedTags: [],
@@ -593,41 +580,6 @@ export default function PublishModal({
                   )}
                   <span className="text-xs text-muted-foreground">
                     {formData.title.length}/200
-                  </span>
-                </div>
-              </div>
-
-              {/* Description/Excerpt */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Short Description <span className="text-destructive">*</span>
-                </label>
-                <Textarea
-                  value={formData.excerpt}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      excerpt: e.target.value,
-                    }))
-                  }
-                  placeholder="Write a brief description of your article (this will be used as the excerpt)..."
-                  className={`min-h-[100px] resize-none ${
-                    errors.excerpt
-                      ? "border-destructive focus-visible:ring-destructive"
-                      : ""
-                  }`}
-                />
-                <div className="flex justify-between">
-                  {errors.excerpt ? (
-                    <p className="text-sm text-destructive flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {errors.excerpt}
-                    </p>
-                  ) : (
-                    <span />
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    {formData.excerpt.length}/500
                   </span>
                 </div>
               </div>

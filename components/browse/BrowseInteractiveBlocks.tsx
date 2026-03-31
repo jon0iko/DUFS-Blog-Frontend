@@ -182,8 +182,8 @@ export default function BrowseInteractiveBlocks({
                       value={searchDraft}
                       onChange={(e) => setSearchDraft(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="Search articles..."
-                      className="h-12 w-full rounded-[4px] border border-[#BDB2AB] bg-[#C9C0BC] pl-10 pr-28 text-[1.1rem] font-black text-[#29211D] outline-none transition-all placeholder:text-[#29211D]/50 focus:border-[#84786F] dark:border-[#3A3431] dark:bg-[#302A27] dark:text-[#F3E7DD] dark:placeholder:text-[#F3E7DD]/50"
+                      placeholder="article/author/content..."
+                      className="h-12 w-full rounded-[4px] border border-[#BDB2AB] bg-[#C9C0BC] pl-10 pr-28 text-[1.1rem] placeholder:text-base font-black text-[#29211D] outline-none transition-all placeholder:text-[#29211D]/50 focus:border-[#84786F] dark:border-[#3A3431] dark:bg-[#302A27] dark:text-[#F3E7DD] dark:placeholder:text-[#F3E7DD]/50"
                     /> 
                     <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#29211D] dark:text-[#AFA39B]" />
                     

@@ -86,7 +86,7 @@ function IssueInner() {
         month: 'short', 
         day: 'numeric' 
       });
-      fields.push({ label: 'Date', value: date });
+      fields.push({ label: 'Publish Date', value: date });
     }
     if (issue.Editor) fields.push({ label: 'Editor', value: issue.Editor });
     if (issue.CoverDesigner) fields.push({ label: 'Cover Designer', value: issue.CoverDesigner });

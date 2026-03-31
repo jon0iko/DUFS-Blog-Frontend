@@ -596,13 +596,16 @@ export default function AccountProfile() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* User Header - Medium style */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">My Account</h1>
+    <div className="space-y-8">
+      {/* User Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black">My Account</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage your profile</p>
+        </div>
         {authorSlug && (
           <Link href={`/author?slug=${authorSlug}`}>
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <Button variant="outline" className="flex items-center gap-2">
               <Eye className="h-4 w-4" />
               View Posts
             </Button>
@@ -611,177 +614,187 @@ export default function AccountProfile() {
       </div>
       
       {/* Tabs */}
-      <Tabs defaultValue="information" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="information">Information</TabsTrigger>
-          <TabsTrigger value="drafts">Drafts</TabsTrigger>
-          <TabsTrigger value="bookmarks">Bookmarks</TabsTrigger>
+      <Tabs defaultValue="information" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 place-items-center md:place-items-stretch">
+          <TabsTrigger value="information" className='!text-xs md:!text-sm'>Information</TabsTrigger>
+          <TabsTrigger value="drafts" className='!text-xs md:!text-sm'>Drafts</TabsTrigger>
+          <TabsTrigger value="bookmarks" className='!text-xs md:!text-sm'>Bookmarks</TabsTrigger>
         </TabsList>
         
         {/* Success/Error Messages */}
         {(saveSuccess || saveError) && (
           <div className={cn(
-            "mt-4 p-3 rounded-lg flex items-center gap-2 text-sm",
+            "mt-4 p-4 rounded-lg flex items-start gap-3 text-sm animate-in fade-in slide-in-from-top-2 duration-300",
             saveSuccess 
-              ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-              : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+              ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300"
+              : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300"
           )}>
-            {saveSuccess ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
-            {saveSuccess || saveError}
+            {saveSuccess ? <Check className="w-5 h-5 flex-shrink-0 mt-0.5" /> : <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />}
+            <span className="flex-1">{saveSuccess || saveError}</span>
           </div>
         )}
         
         {/* Information Tab */}
-        <TabsContent value="information">
+        <TabsContent value="information" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Account Information</CardTitle>
-              <CardDescription>Manage your account details and preferences</CardDescription>
+              <CardTitle className="text-xl">Account Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-8">
               {/* Profile Picture with Upload */}
-              <div className="flex items-center gap-4">
-                <div className="relative group">
-                  {/* Avatar display */}
-                  <div className="h-20 w-20 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center relative">
-                    {avatarPreview ? (
-                      <Image
-                        src={avatarPreview}
-                        alt="Avatar preview"
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <Image
-                        src={currentAvatarUrl}
-                        alt={user.username}
-                        fill
-                        className="object-cover"
-                      />
-                    )}
+              <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+                <div className="flex flex-col items-center sm:items-start gap-2">
+                  <div className="relative group flex-shrink-0">
+                    {/* Avatar display */}
+                    <div className="h-24 w-24 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center relative border border-primary/20">
+                      {avatarPreview ? (
+                        <Image
+                          src={avatarPreview}
+                          alt="Avatar preview"
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <Image
+                          src={currentAvatarUrl}
+                          alt={user.username}
+                          fill
+                          className="object-cover"
+                        />
+                      )}
+                    </div>
+                    
+                    {/* Camera overlay button - only on image */}
+                    <button
+                      type="button"
+                      onClick={() => avatarInputRef.current?.click()}
+                      disabled={isUploadingAvatar}
+                      className={cn(
+                        "absolute inset-0 rounded-full flex items-center justify-center",
+                        "bg-black/50 opacity-0 sm:group-hover:opacity-100 transition-opacity",
+                        "cursor-pointer",
+                        isUploadingAvatar && "cursor-not-allowed opacity-50"
+                      )}
+                    >
+                      {isUploadingAvatar ? (
+                        <Loader2 className="h-6 w-6 text-white animate-spin" />
+                      ) : (
+                        <Camera className="h-6 w-6 text-white" />
+                      )}
+                    </button>
+                    
+                    {/* Hidden file input */}
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarSelect}
+                      className="hidden"
+                      disabled={isUploadingAvatar}
+                    />
                   </div>
                   
-                  {/* Camera overlay button */}
-                  <button
-                    type="button"
-                    onClick={() => avatarInputRef.current?.click()}
-                    disabled={isUploadingAvatar}
-                    className={cn(
-                      "absolute inset-0 rounded-full flex items-center justify-center",
-                      "bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity",
-                      "cursor-pointer",
-                      isUploadingAvatar && "cursor-not-allowed"
-                    )}
-                  >
-                    {isUploadingAvatar ? (
-                      <Loader2 className="h-6 w-6 text-white animate-spin" />
-                    ) : (
-                      <Camera className="h-6 w-6 text-white" />
-                    )}
-                  </button>
-                  
-                  {/* Hidden file input */}
-                  <input
-                    ref={avatarInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarSelect}
-                    className="hidden"
-                    disabled={isUploadingAvatar}
-                  />
+                  {/* Helper text - visible on all screens */}
+                  <p className="md:hidden text-xs text-muted-foreground text-center sm:text-left">
+                    Click on the image to change
+                  </p>
                 </div>
                 
                 <div className="flex-1">
-                  <p className="font-medium text-lg">{user.username}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Member since {formatDate(user.createdAt)}
-                  </p>
+                  <div>
+                    <p className="font-semibold text-lg">{user.username}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Member since {formatDate(user.createdAt)}
+                    </p>
+                  </div>
                   
                   {/* Avatar action buttons */}
-                  {avatarPreview ? (
-                    <div className="flex gap-2 mt-2">
+                  <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                    {avatarPreview ? (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={handleAvatarUpload}
+                          disabled={isUploadingAvatar}
+                        >
+                          {isUploadingAvatar ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          ) : null}
+                          Save Avatar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={cancelAvatarSelect}
+                          disabled={isUploadingAvatar}
+                        >
+                          Cancel
+                        </Button>
+                      </>
+                    ) : user.Avatar ? (
                       <Button
                         size="sm"
-                        onClick={handleAvatarUpload}
+                        variant="ghost"
+                        onClick={handleRemoveAvatar}
                         disabled={isUploadingAvatar}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       >
                         {isUploadingAvatar ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                        ) : null}
-                        Save
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <CloseIcon className="h-4 w-4 mr-2" />
+                        )}
+                        Remove Photo
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={cancelAvatarSelect}
-                        disabled={isUploadingAvatar}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  ) : user.Avatar ? (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleRemoveAvatar}
-                      disabled={isUploadingAvatar}
-                      className="mt-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      {isUploadingAvatar ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                      ) : (
-                        <CloseIcon className="h-4 w-4 mr-1" />
-                      )}
-                      Remove Photo
-                    </Button>
-                  ) : (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Hover over image to change
-                    </p>
-                  )}
+                    ) : null}
+                  </div>
                 </div>
               </div>
               
-              <Separator />
+              <Separator className="my-6" />
               
               {/* Email (Read-only) */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Mail className="h-4 w-4" />
-                  Email
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  Email Address
+                </label>
+                <div className="pl-6 space-y-1">
+                  <p className="text-base text-foreground font-medium">{user.email}</p>
+                  <p className="text-xs text-muted-foreground">Email cannot be changed for security</p>
                 </div>
-                <p className="text-foreground pl-6">{user.email}</p>
-                <p className="text-xs text-muted-foreground pl-6">Email cannot be changed</p>
               </div>
               
               {/* Username (Editable) */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <AtSign className="h-4 w-4" />
+                  <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <AtSign className="h-4 w-4 text-muted-foreground" />
                     Username
-                  </div>
+                  </label>
                   {!isEditingUsername && (
                     <Button 
                       variant="ghost" 
                       size="sm" 
                       onClick={() => setIsEditingUsername(true)}
+                      className="h-8 px-2 text-xs"
                     >
-                      <Pencil className="h-3 w-3 mr-1" />
+                      <Pencil className="h-3.5 w-3.5 mr-1" />
                       Edit
                     </Button>
                   )}
                 </div>
                 {isEditingUsername ? (
-                  <div className="pl-6 space-y-2">
+                  <div className="pl-6 space-y-3">
                     <Input
                       value={newUsername}
                       onChange={(e) => setNewUsername(e.target.value)}
                       placeholder="Enter username"
                       disabled={isSaving}
+                      className="max-w-sm"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Username must be unique
+                      Username must be unique and between 3-20 characters
                     </p>
                     <div className="flex gap-2">
                       <Button 
@@ -789,7 +802,8 @@ export default function AccountProfile() {
                         onClick={handleSaveUsername}
                         disabled={isSaving}
                       >
-                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                        Save
                       </Button>
                       <Button 
                         size="sm" 
@@ -802,35 +816,39 @@ export default function AccountProfile() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-foreground pl-6">{user.username}</p>
+                  <div className="pl-6">
+                    <p className="text-base text-foreground font-medium">{user.username}</p>
+                  </div>
                 )}
               </div>
               
               {/* Full Name (Editable) */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <AtSign className="h-4 w-4" />
+                  <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <AtSign className="h-4 w-4 text-muted-foreground" />
                     Full Name
-                  </div>
+                  </label>
                   {!isEditingFullName && (
                     <Button 
                       variant="ghost" 
                       size="sm" 
                       onClick={() => setIsEditingFullName(true)}
+                      className="h-8 px-2 text-xs"
                     >
-                      <Pencil className="h-3 w-3 mr-1" />
+                      <Pencil className="h-3.5 w-3.5 mr-1" />
                       Edit
                     </Button>
                   )}
                 </div>
                 {isEditingFullName ? (
-                  <div className="pl-6 space-y-2">
+                  <div className="pl-6 space-y-3">
                     <Input
                       value={newFullName}
                       onChange={(e) => setNewFullName(e.target.value)}
                       placeholder="Enter your full name"
                       disabled={isSaving}
+                      className="max-w-sm"
                     />
                     <div className="flex gap-2">
                       <Button 
@@ -838,7 +856,8 @@ export default function AccountProfile() {
                         onClick={handleSaveFullName}
                         disabled={isSaving}
                       >
-                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                        Save
                       </Button>
                       <Button 
                         size="sm" 
@@ -851,44 +870,57 @@ export default function AccountProfile() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-foreground pl-6">{user.fullName || <span className="text-muted-foreground italic">No full name added</span>}</p>
+                  <div className="pl-6">
+                    <p className="text-base text-foreground font-medium">
+                      {user.fullName || <span className="text-muted-foreground italic">Not provided</span>}
+                    </p>
+                  </div>
                 )}
               </div>
               
               {/* Bio (Editable) */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <FileText className="h-4 w-4" />
+                  <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
                     Bio
-                  </div>
+                  </label>
                   {!isEditingBio && (
                     <Button 
                       variant="ghost" 
                       size="sm" 
                       onClick={() => setIsEditingBio(true)}
+                      className="h-8 px-2 text-xs"
                     >
-                      <Pencil className="h-3 w-3 mr-1" />
+                      <Pencil className="h-3.5 w-3.5 mr-1" />
                       Edit
                     </Button>
                   )}
                 </div>
                 {isEditingBio ? (
-                  <div className="pl-6 space-y-2">
+                  <div className="pl-6 space-y-3">
                     <Textarea
                       value={newBio}
-                      onChange={(e) => setNewBio(e.target.value)}
+                      onChange={(e) => setNewBio(e.target.value.slice(0, 500))}
                       placeholder="Tell us about yourself..."
-                      rows={3}
+                      rows={4}
                       disabled={isSaving}
+                      maxLength={500}
+                      className="max-w-2xl resize-none"
                     />
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground">
+                        {newBio.length} / 500 characters
+                      </p>
+                    </div>
                     <div className="flex gap-2">
                       <Button 
                         size="sm" 
                         onClick={handleSaveBio}
                         disabled={isSaving}
                       >
-                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                        Save
                       </Button>
                       <Button 
                         size="sm" 
@@ -901,37 +933,46 @@ export default function AccountProfile() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-foreground pl-6">
-                    {user.Bio || <span className="text-muted-foreground italic">No bio added</span>}
-                  </p>
+                  <div className="pl-6">
+                    <p className="text-base text-foreground whitespace-pre-wrap">
+                      {user.Bio || <span className="text-muted-foreground italic">Not provided</span>}
+                    </p>
+                  </div>
                 )}
               </div>
               
               {/* Phone Number (Editable) */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Phone className="h-4 w-4" />
+                  <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
                     Phone Number
-                  </div>
+                  </label>
                   {!isEditingPhone && (
                     <Button 
                       variant="ghost" 
                       size="sm" 
                       onClick={() => setIsEditingPhone(true)}
+                      className="h-8 px-2 text-xs"
                     >
-                      <Pencil className="h-3 w-3 mr-1" />
+                      <Pencil className="h-3.5 w-3.5 mr-1" />
                       Edit
                     </Button>
                   )}
                 </div>
                 {isEditingPhone ? (
-                  <div className="pl-6 space-y-2">
-                    <div className="flex gap-2">
+                  <div className="pl-6 space-y-3">
+                    <div className="flex gap-3 max-w-2xl">
                       <select
                         value={newCountry}
                         onChange={(e) => setNewCountry(e.target.value)}
-                        className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className={cn(
+                          "h-10 rounded-md px-3 py-2 text-sm font-medium",
+                          "bg-background border border-input",
+                          "ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                          "transition-colors cursor-pointer",
+                          "min-w-[140px] flex-shrink-0"
+                        )}
                         disabled={isSaving}
                       >
                         {COUNTRIES.map((country) => (
@@ -949,21 +990,24 @@ export default function AccountProfile() {
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Phone number must be valid for the selected country
+                      Enter a valid phone number for {COUNTRIES.find(c => c.code === newCountry)?.name || newCountry}
                     </p>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 pt-2">
                       <Button 
                         size="sm" 
                         onClick={handleSavePhone}
                         disabled={isSaving}
+                        className="font-medium"
                       >
-                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                        Save
                       </Button>
                       <Button 
                         size="sm" 
                         variant="outline" 
                         onClick={cancelEditPhone}
                         disabled={isSaving}
+                        className="font-medium"
                       >
                         Cancel
                       </Button>
@@ -973,77 +1017,83 @@ export default function AccountProfile() {
                   <div className="pl-6">
                     {user.phoneNumber ? (
                       <div className="flex items-center gap-2">
-                        <Globe className="h-4 w-4 text-muted-foreground" />
-                        <span>{COUNTRIES.find(c => c.code === user.Country)?.name || user.Country}</span>
-                        <span>•</span>
-                        <span>{user.phoneNumber}</span>
+                        <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">{COUNTRIES.find(c => c.code === user.Country)?.name || user.Country}</span>
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-base text-foreground font-medium">{user.phoneNumber}</span>
                       </div>
                     ) : (
-                      <span className="text-muted-foreground italic">No phone number added</span>
+                      <span className="text-base text-muted-foreground italic">Not provided</span>
                     )}
                   </div>
                 )}
               </div>
               
               {/* Join Date (Read-only) */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  Joined
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  Member Since
+                </label>
+                <div className="pl-6">
+                  <p className="text-base text-foreground font-medium">{formatDate(user.createdAt)}</p>
                 </div>
-                <p className="text-foreground pl-6">{formatDate(user.createdAt)}</p>
               </div>
               
-              <Separator />
+              <Separator className="my-6" />
               
               {/* Password Change */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Lock className="h-4 w-4" />
+                  <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <Lock className="h-4 w-4 text-muted-foreground" />
                     Password
-                  </div>
+                  </label>
                   {!isChangingPassword && (
                     <Button 
                       variant="ghost" 
                       size="sm" 
                       onClick={() => setIsChangingPassword(true)}
+                      className="h-8 px-2 text-xs"
                     >
-                      <Pencil className="h-3 w-3 mr-1" />
+                      <Pencil className="h-3.5 w-3.5 mr-1" />
                       Change
                     </Button>
                   )}
                 </div>
                 {isChangingPassword ? (
-                  <div className="pl-6 space-y-3">
+                  <div className="pl-6 space-y-4">
                     <div>
-                      <label className="text-xs text-muted-foreground">Current Password</label>
+                      <label className="text-xs font-medium text-foreground">Current Password</label>
                       <Input
                         type="password"
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
                         placeholder="Enter current password"
                         disabled={isSaving}
+                        className="mt-1.5 max-w-sm"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-muted-foreground">New Password</label>
+                      <label className="text-xs font-medium text-foreground">New Password</label>
                       <Input
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="Enter new password"
                         disabled={isSaving}
+                        className="mt-1.5 max-w-sm"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-muted-foreground">Confirm New Password</label>
+                      <label className="text-xs font-medium text-foreground">Confirm New Password</label>
                       <Input
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Confirm new password"
                         disabled={isSaving}
+                        className="mt-1.5 max-w-sm"
                       />
                     </div>
                     <div className="flex gap-2">
@@ -1052,7 +1102,8 @@ export default function AccountProfile() {
                         onClick={handleChangePassword}
                         disabled={isSaving}
                       >
-                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Update Password'}
+                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                        Update Password
                       </Button>
                       <Button 
                         size="sm" 
@@ -1065,162 +1116,160 @@ export default function AccountProfile() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-foreground pl-6">••••••••</p>
-                )}
-              </div>
-              
-              <Separator />
-              
-              {/* Logout & Delete Account */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                <Button 
-                  variant="outline" 
-                  onClick={logout}
-                  className="flex items-center gap-2"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign Out
-                </Button>
-                
-                {!showDeleteConfirm ? (
-                  <Button 
-                    variant="ghost" 
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Account
-                  </Button>
-                ) : (
-                  <div className="flex-1 p-4 border border-destructive/50 rounded-lg bg-destructive/5">
-                    <p className="text-sm text-destructive font-medium mb-2">
-                      Are you sure? This action cannot be undone.
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Type <strong>DELETE</strong> to confirm
-                    </p>
-                    <Input
-                      value={deleteConfirmText}
-                      onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      placeholder="Type DELETE"
-                      className="mb-3"
-                      disabled={isDeleting}
-                    />
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={handleDeleteAccount}
-                        disabled={isDeleting || deleteConfirmText !== 'DELETE'}
-                      >
-                        {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Delete My Account'}
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          setShowDeleteConfirm(false);
-                          setDeleteConfirmText('');
-                        }}
-                        disabled={isDeleting}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
+                  <div className="pl-6">
+                    <p className="text-base text-foreground font-medium">••••••••</p>
                   </div>
                 )}
               </div>
+              
+              <Separator className="my-6" />
+              
+              {/* Sign Out & Delete Account */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-foreground">Account Actions</h3>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={logout}
+                    className="flex items-center gap-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </Button>
+                  
+                  {!showDeleteConfirm ? (
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Account
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+              
+              {showDeleteConfirm && (
+                <div className="p-4 border border-destructive/50 rounded-lg bg-destructive/5 space-y-4">
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold text-destructive">
+                      Delete Account - This action cannot be undone
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      To confirm, type <strong>DELETE</strong> below:
+                    </p>
+                  </div>
+                  <Input
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="Type DELETE"
+                    className="max-w-sm"
+                    disabled={isDeleting}
+                  />
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={handleDeleteAccount}
+                      disabled={isDeleting || deleteConfirmText !== 'DELETE'}
+                    >
+                      {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                      Delete My Account
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setShowDeleteConfirm(false);
+                        setDeleteConfirmText('');
+                      }}
+                      disabled={isDeleting}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
         
         {/* Drafts Tab */}
-        <TabsContent value="drafts">
+        <TabsContent value="drafts" className="mt-6">
           <Card>
-            <CardHeader className="pb-3">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <FileText className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg sm:text-xl">Saved Drafts</CardTitle>
-                    <CardDescription className="text-xs sm:text-sm">
-                      {drafts.length > 0 
-                        ? `${drafts.length} draft${drafts.length > 1 ? 's' : ''} saved`
-                        : 'Your unpublished work'
-                      }
-                    </CardDescription>
-                  </div>
+            <CardHeader className="pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <CardTitle className="text-2xl flex items-center gap-2">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
+                    Saved Drafts
+                  </CardTitle>
+                  <CardDescription className="mt-2">
+                    {drafts.length > 0 
+                      ? `You have ${drafts.length} draft${drafts.length > 1 ? 's' : ''}`
+                      : 'Your unpublished work'
+                    }
+                  </CardDescription>
                 </div>
                 <Button 
-                  variant="outline" 
-                  size="sm"
                   onClick={handleNew}
-                  className="w-full sm:w-auto"
+                  className="flex items-center gap-2 h-10"
                 >
-                  <Edit3 className="h-4 w-4 mr-2" />
+                  <Edit3 className="h-4 w-4" />
                   New Post
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               {isLoadingDrafts ? (
-                <div className="flex items-center justify-center py-8">
+                <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
               ) : drafts.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 dark:bg-brand-black-90 flex items-center justify-center">
+                <div className="text-center py-12">
+                  <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-gray-100 dark:bg-brand-black-90 flex items-center justify-center">
                     <FileText className="w-6 h-6 text-gray-400" />
                   </div>
-                  <p className="text-muted-foreground mb-4">You have no saved drafts yet</p>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => router.push('/editor')}
-                  >
-                    Start Writing
-                  </Button>
+                  <p className="text-foreground font-medium mb-2">No drafts yet</p>
+                  <p className="text-sm text-muted-foreground mb-4">Your unsaved work will appear here</p>
                 </div>
               ) : (
-                <div className="space-y-2.5 sm:space-y-2">
+                <div className="space-y-2">
                   {drafts.map((draft) => (
-                    <div
+                    <button
                       key={draft.documentId}
                       onClick={() => handleOpenDraft(draft)}
                       className={cn(
-                        "group flex items-center justify-between p-3.5 sm:p-4 rounded-xl cursor-pointer",
-                        "bg-gray-50 dark:bg-brand-black-90/50",
-                        "border border-gray-100 dark:border-gray-700/50",
-                        "hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10",
-                        "active:scale-[0.98] transition-all duration-200"
+                        "w-full group flex items-center justify-between p-3 sm:p-4 rounded-lg text-left transition-all",
+                        "bg-white dark:bg-brand-black-90",
+                        "border border-border",
+                        "hover:bg-white/80 dark:hover:bg-brand-black-80",
+                        "active:scale-[0.98]"
                       )}
                     >
-                      <div className="flex-1 min-w-0 pr-2">
-                        <h4 className="font-medium text-sm sm:text-base text-gray-900 dark:text-gray-100 truncate">
-                          {draft.name}
+                      <div className="flex-1 min-w-0 pr-4">
+                        <h4 className="font-semibold text-sm sm:text-base text-foreground truncate group-hover:text-primary transition-colors">
+                          {draft.name || 'Untitled'}
                         </h4>
-                        <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground mt-1.5 sm:mt-1">
+                        <div className="whitespace-nowrap flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground mt-2">
                           <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            <Clock className="w-4 h-4" />
                             {formatRelativeTime(draft.updatedAt)}
                           </span>
                           <span>•</span>
                           <span>{getWordCount(draft.content)} words</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={(e) => handleDeleteDraft(draft, e)}
                           disabled={deletingId === draft.documentId}
-                          className={cn(
-                            "sm:opacity-0 group-hover:opacity-100 transition-opacity",
-                            "text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20",
-                            "h-9 w-9 p-0 sm:h-8 sm:w-8"
-                          )}
+                          className="h-9 w-9 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                         >
                           {deletingId === draft.documentId ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -1228,9 +1277,9 @@ export default function AccountProfile() {
                             <Trash2 className="w-4 h-4" />
                           )}
                         </Button>
-                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-primary transition-colors" />
+                        <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-primary transition-colors" />
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
@@ -1239,59 +1288,61 @@ export default function AccountProfile() {
         </TabsContent>
         
         {/* Bookmarks Tab */}
-        <TabsContent value="bookmarks">
+        <TabsContent value="bookmarks" className="mt-6">
           <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-500/10">
-                  <Bookmark className="h-5 w-5 text-amber-500" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg sm:text-xl">Bookmarked Articles</CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">
-                    {bookmarks.length > 0 
-                      ? `${bookmarks.length} article${bookmarks.length > 1 ? 's' : ''} saved`
-                      : 'Articles you want to read later'
-                    }
-                  </CardDescription>
-                </div>
+            <CardHeader className="pb-4">
+              <div>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-amber-500/10">
+                    <Bookmark className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  Bookmarked Articles
+                </CardTitle>
+                <CardDescription className="mt-2">
+                  {bookmarks.length > 0 
+                    ? `You have ${bookmarks.length} bookmarked article${bookmarks.length > 1 ? 's' : ''}`
+                    : 'Articles you want to read later'
+                  }
+                </CardDescription>
               </div>
             </CardHeader>
             <CardContent>
               {isLoadingBookmarks ? (
-                <div className="flex items-center justify-center py-8">
+                <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
                 </div>
               ) : bookmarks.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 dark:bg-brand-black-90 flex items-center justify-center">
+                <div className="text-center py-12">
+                  <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-gray-100 dark:bg-brand-black-90 flex items-center justify-center">
                     <Bookmark className="w-6 h-6 text-gray-400" />
                   </div>
-                  <p className="text-muted-foreground mb-4">You haven&apos;t bookmarked any articles yet</p>
+                  <p className="text-foreground font-medium mb-2">No bookmarks yet</p>
+                  <p className="text-sm text-muted-foreground mb-4">Bookmark articles to save them for later</p>
                   <Button 
-                    variant="outline" 
-                    size="sm"
                     onClick={() => router.push('/browse')}
+                    variant="outline"
+                    className="flex-inline items-center gap-2"
                   >
+                    <Bookmark className="h-4 w-4" />
                     Browse Articles
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-2.5 sm:space-y-3">
+                <div className="space-y-3">
                   {bookmarks.map((bookmark) => (
                     <Link
                       key={bookmark.bookmarkDocumentId}
                       href={`/read-article?slug=${bookmark.slug}`}
                       className={cn(
-                        "group flex gap-3 sm:gap-4 p-3 sm:p-3.5 rounded-xl",
-                        "bg-gray-50 dark:bg-brand-black-90/50",
-                        "border border-gray-100 dark:border-gray-700/50",
-                        "hover:border-amber-500/30 hover:bg-amber-50/50 dark:hover:bg-amber-900/10",
-                        "active:scale-[0.98] transition-all duration-200"
+                        "group flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg transition-all",
+                        "bg-white dark:bg-brand-black-90",
+                        "border border-border",
+                        "hover:bg-white/80 dark:hover:bg-brand-black-80",
+                        "active:scale-[0.98]"
                       )}
                     >
                       {/* Article Thumbnail */}
-                      <div className="flex-shrink-0 w-20 h-16 sm:w-24 sm:h-18 rounded-lg overflow-hidden relative bg-gray-100 dark:bg-gray-700">
+                      <div className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden relative bg-gray-200 dark:bg-gray-700">
                         <Image
                           src={bookmark.featuredImage 
                             ? (bookmark.featuredImage.startsWith('http') 
@@ -1306,47 +1357,41 @@ export default function AccountProfile() {
                       </div>
                       
                       {/* Article Info */}
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 flex flex-col justify-center">
                         <h4 className={cn(
-                          "font-medium text-sm sm:text-base text-gray-900 dark:text-gray-100 line-clamp-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors leading-snug",
+                          "font-semibold text-sm sm:text-base text-foreground line-clamp-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors",
                           getFontClass(bookmark.title)
                         )}>
                           {bookmark.title}
                         </h4>
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-1.5 sm:mt-2">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-2">
                           {bookmark.authorName && (
-                            <span className={cn("truncate max-w-[120px] sm:max-w-none", getFontClass(bookmark.authorName))}>{bookmark.authorName}</span>
+                            <span className={cn("truncate text-xs sm:text-xs", getFontClass(bookmark.authorName))}>{bookmark.authorName}</span>
                           )}
                           {bookmark.authorName && bookmark.category && (
                             <span>•</span>
                           )}
                           {bookmark.category && (
-                            <span className={cn("text-amber-600 dark:text-amber-400 truncate max-w-[100px] sm:max-w-none", getFontClass(bookmark.category))}>{bookmark.category}</span>
+                            <span className={cn("text-amber-600 dark:text-amber-400", getFontClass(bookmark.category))}>{bookmark.category}</span>
                           )}
                         </div>
                       </div>
                       
-                      {/* Actions */}
-                      <div className="flex items-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleRemoveBookmark(bookmark.bookmarkDocumentId, e)}
-                          disabled={removingBookmarkId === bookmark.bookmarkDocumentId}
-                          className={cn(
-                            "sm:opacity-0 group-hover:opacity-100 transition-opacity",
-                            "text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20",
-                            "h-9 w-9 p-0 sm:h-8 sm:w-8"
-                          )}
-                          title="Remove bookmark"
-                        >
-                          {removingBookmarkId === bookmark.bookmarkDocumentId ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
+                      {/* Delete Button */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => handleRemoveBookmark(bookmark.bookmarkDocumentId, e)}
+                        disabled={removingBookmarkId === bookmark.bookmarkDocumentId}
+                        className="h-9 w-9 p-0 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        title="Remove bookmark"
+                      >
+                        {removingBookmarkId === bookmark.bookmarkDocumentId ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </Button>
                     </Link>
                   ))}
                 </div>

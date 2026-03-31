@@ -47,13 +47,16 @@ export default function ArticleHero({
               )}
             >
               {article.category.Name}
+              {article.category.nameEn && (
+                <span className="font-montserrat text-muted-foreground text-xs"> {"("}{article.category.nameEn}{")"}</span>
+              )}
             </span>
           </Link>
         )}
 
         <h1
           className={cn(
-            "text-3xl font-bold leading-snug text-foreground mb-4",
+            "text-4xl font-bold leading-snug text-foreground mb-4",
             getFontClass(article.title),
           )}
         >
@@ -63,7 +66,7 @@ export default function ArticleHero({
         {article.author && (
           <Link
             href={`/author?slug=${article.author.slug}`}
-            className="flex items-center gap-2.5 mb-3"
+            className="flex items-center gap-2.5 mb-4"
           >
             <div className="relative w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-border">
               <Image
@@ -84,7 +87,7 @@ export default function ArticleHero({
         )}
 
         {!article.author && authorName && (
-          <div className="flex items-center gap-2.5 mb-3">
+          <div className="flex items-center gap-2.5 mb-4">
             <span
               className={cn(
                 "text-sm font-semibold text-foreground",
@@ -97,22 +100,15 @@ export default function ArticleHero({
         )}
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground pb-4 mb-3">
-          {shortPublishedDate && (
+          {(article.BlogDate || article.publishedAt) && shortPublishedDate && (
             <div className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5" />
               <span>{shortPublishedDate}</span>
             </div>
           )}
-          {article.readTime && (
-            <>
-              <span className="text-muted-foreground/40">•</span>
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" />
-                <span>{article.readTime} Min Read</span>
-              </div>
-            </>
+          {(article.BlogDate || article.publishedAt) && (
+            <span className="text-muted-foreground/40">•</span>
           )}
-          <span className="text-muted-foreground/40">•</span>
           <div className="flex items-center gap-1.5">
             <Eye className="w-3.5 h-3.5" />
             <span>{viewCount.toLocaleString()} views</span>
@@ -156,16 +152,6 @@ export default function ArticleHero({
         <div className="absolute inset-0 flex items-end">
           <div className="container max-w-7xl mx-auto px-4 pb-16">
             <div className="max-w-5xl">
-              {article.category && (
-                <Badge className="md:hidden mb-4 text-sm px-4 py-1 bg-white text-black cursor-pointer hover:bg-black hover:text-white">
-                  <Link href={`/browse/?category=${article.category.Slug}`}>
-                    <span className={getFontClass(article.category.Name)}>
-                      {article.category.Name}
-                    </span>
-                  </Link>
-                </Badge>
-              )}
-
               <h1
                 className={cn(
                   "text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white mb-6 leading-tight",
@@ -219,15 +205,10 @@ export default function ArticleHero({
                   </div>
                 )}
 
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>{publishedDate}</span>
-                </div>
-
-                {article.readTime && (
+                {(article.BlogDate || article.publishedAt) && (
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    <span>{article.readTime} min read</span>
+                    <Calendar className="w-4 h-4" />
+                    <span>{publishedDate}</span>
                   </div>
                 )}
 

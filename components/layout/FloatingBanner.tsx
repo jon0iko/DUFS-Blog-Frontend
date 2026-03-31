@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import { strapiAPI } from '@/lib/api';
+import { getFontClass, getfontsizeBN } from '@/lib/fonts';
 
 interface BannerData {
   id: number;
@@ -30,10 +31,28 @@ const FloatingBanner = () => {
         if (data) {
           setBannerData(data);
 
-          const dismissed = localStorage.getItem('bannerDismissed');
-          const isExpired = new Date() > new Date(data.EndDate!);
+          const dismissedUntilValue = localStorage.getItem('bannerDismissedUntil');
 
-          if (data.Active && !isExpired && !dismissed) {
+          if (!dismissedUntilValue) {
+            localStorage.setItem('bannerDismissedUntil', '0');
+          }
+
+          const now = Date.now();
+
+          let isDismissed = false;
+          if (dismissedUntilValue) {
+            const expiry = parseInt(dismissedUntilValue, 10);
+            if(expiry > now) {
+              isDismissed = true;
+            }
+          }
+          const isExpired = data.EndDate ? new Date() > new Date(data.EndDate) : false;
+
+          console.log("Is Expired:", isExpired);
+          console.log("Is Dismissed:", isDismissed);
+
+
+          if (data.Active && !isExpired && !isDismissed) {
             setIsVisible(true);
           }
         }
@@ -49,12 +68,10 @@ const FloatingBanner = () => {
 
   const handleDismiss = () => {
     setIsVisible(false);
-    localStorage.setItem('bannerDismissed', 'true');
-
-    // Reset dismissal after 12 hours
-    setTimeout(() => {
-      localStorage.removeItem('bannerDismissed');
-    }, 12 * 60 * 60 * 1000);
+    
+    // Set expiry to 12 hours from now
+    const expiry = Date.now() + 12 * 60 * 60 * 1000;
+    localStorage.setItem('bannerDismissedUntil', expiry.toString());
   };
 
   if (isLoading || !isVisible || !bannerData) {
@@ -65,7 +82,7 @@ const FloatingBanner = () => {
     <AnimatePresence>
       {isVisible && (
         <motion.div 
-          className="fixed z-50 md:right-6 md:bottom-6 md:max-w-sm w-full md:w-auto bottom-0 right-0 md:p-0 transition-all duration-300 ease-in-out"
+          className="fixed z-50 md:right-6 md:bottom-6 md:max-w-lg md:min-w-[350px] bottom-0 right-0 md:p-0 transition-all duration-300 ease-in-out"
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
@@ -89,7 +106,7 @@ const FloatingBanner = () => {
 
               <CardHeader className="p-4 pb-2 pt-3">
                 <div className="flex justify-between items-start">
-                  <CardDescription className="text-xs font-medium text-foreground animate-pulse">
+                  <CardDescription className={`${getfontsizeBN(bannerData.headline, 'text-xs')} font-medium text-foreground animate-pulse ${getFontClass(bannerData.headline)}`}>
                     {bannerData.headline}
                   </CardDescription>
                   <Button 
@@ -102,12 +119,12 @@ const FloatingBanner = () => {
                     <span className="sr-only">Dismiss</span>
                   </Button>
                 </div>
-                <CardTitle className="text-base mt-2 font-bold">
+                <CardTitle className={`${getfontsizeBN(bannerData.postTitle, 'text-base')} mt-2 font-bold ${getFontClass(bannerData.postTitle)}`}>
                   {bannerData.postTitle}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-0 pb-2">
-                <p className="text-xs text-muted-foreground">
+                <p className={`${getfontsizeBN(bannerData.subtitle, 'text-xs')} text-foreground/90 ${getFontClass(bannerData.subtitle)}`}>
                   {bannerData.subtitle}
                 </p>
               </CardContent>
@@ -128,7 +145,7 @@ const FloatingBanner = () => {
                     }}
                     className="flex items-center"
                   >
-                    Read
+                    <span className={getFontClass("Read")}>Read</span>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 font-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>

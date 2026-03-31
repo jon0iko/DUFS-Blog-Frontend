@@ -12,13 +12,13 @@ export interface UserArticle {
   documentId: string;
   title: string;
   slug: string;
-  excerpt: string;
   featuredImage?: string;
   category?: string;
   viewCount: number;
   likes: number;
   commentCount: number;
   publishedAt: string;
+  BlogDate?: string; // Admin-controlled publish date
   storyState: string;
   language: 'en' | 'bn' | 'both';
 }
@@ -84,9 +84,6 @@ const ArticleRow: FC<{ article: UserArticle; onDelete?: (documentId: string) => 
               >
                 {article.title}
               </Link>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                {article.excerpt}
-              </p>
             </div>
 
             {/* Actions Menu */}
@@ -140,10 +137,12 @@ const ArticleRow: FC<{ article: UserArticle; onDelete?: (documentId: string) => 
                 {article.category}
               </span>
             )}
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              <span>{formatDate(article.publishedAt)}</span>
-            </div>
+            {(article.BlogDate || article.publishedAt) && (
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                <span>{formatDate(article.BlogDate || article.publishedAt)}</span>
+              </div>
+            )}
             <div className="flex items-center gap-1">
               <Eye className="w-4 h-4" />
               <span>{article.viewCount}</span>

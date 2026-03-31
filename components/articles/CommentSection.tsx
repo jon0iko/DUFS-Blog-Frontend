@@ -22,6 +22,7 @@ import { formatRelativeTimeCompact } from '@/lib/date-utils';
 import { getUserAvatarUrl, UserData } from '@/lib/auth';
 import Image from 'next/image';
 import Link from 'next/link';
+import { getFontClass, getfontsizeBN } from '@/lib/fonts';
 
 interface CommentSectionProps {
   articleId: number;
@@ -286,7 +287,8 @@ function CommentItem({
           </div>
 
           {/* Body */}
-          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap break-words">
+         
+          <p className={`${getFontClass(comment.Content)} ${getfontsizeBN(comment.Content, 'text-sm')} text-foreground/90 leading-relaxed whitespace-pre-wrap break-words pt-1`}>
             {comment.Content}
           </p>
 

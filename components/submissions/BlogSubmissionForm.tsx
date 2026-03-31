@@ -15,7 +15,6 @@ export default function BlogSubmissionForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    excerpt: '',
     content: '',
     category: '',
     tags: '',
@@ -31,7 +30,6 @@ export default function BlogSubmissionForm() {
       const formDataToSend = new FormData();
       formDataToSend.append('data', JSON.stringify({
         title: formData.title,
-        excerpt: formData.excerpt,
         content: formData.content,
         category: formData.category,
         tags: formData.tags.split(',').map(tag => tag.trim()),
@@ -86,16 +84,6 @@ export default function BlogSubmissionForm() {
             <Input
               value={formData.title}
               onChange={(e) => setFormData({...formData, title: e.target.value})}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Excerpt</label>
-            <Textarea
-              value={formData.excerpt}
-              onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
-              maxLength={200}
               required
             />
           </div>

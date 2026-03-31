@@ -63,7 +63,6 @@ export default function AuthorClient({ author, articles }: Props) {
                     <Link href={`/articles/${article.slug}`} className={font + ' text-xl font-semibold mb-2 block hover:text-blue-600'}>
                       {article.title}
                     </Link>
-                    {article.excerpt && <p className="text-gray-600 text-sm line-clamp-2">{article.excerpt}</p>}
                   </div>
                 </div>
               );

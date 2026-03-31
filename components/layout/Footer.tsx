@@ -166,7 +166,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-12 pt-8 border-t border-border dark:border-brand-white">
+        <div className="mt-12 pt-8 border-t border-dashed border-border dark:border-brand-white">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-background dark:text-foreground">
               © {new Date().getFullYear()} Dhaka University Film Society. All
@@ -175,13 +175,13 @@ export default function Footer() {
             <div className="flex items-center gap-6 text-sm text-background dark:text-foreground">
               <Link
                 href="#"
-                className="hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
+                className="whitespace-nowrap hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
               >
                 Privacy Policy
               </Link>
               <Link
                 href="/terms-and-conditions"
-                className="hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
+                className="whitespace-nowrap hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
               >
                 Terms of Publication
               </Link>

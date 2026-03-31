@@ -110,33 +110,25 @@ export interface Article {
   id: number;
   documentId: string; // Strapi v5 uses documentId as the unique identifier
   title: string;
-  titleBn?: string;
   slug: string;
-  excerpt: string;
-  excerptBn?: string;
   content: string; // Rich text content
-  contentBn?: string;
   language: 'en' | 'bn' | 'both';
   featuredImage?: StrapiMedia;
-  gallery?: StrapiMedia[];
   author?: Author; // Populated relation
   publication_author_name?: string; // Author name for publication pieces
   publication_issue?: Publication_Issue; // Populated relation for articles in issues
   category?: Category; // Populated relation
   tags?: Tag[]; // Populated relation
+  comments?: Comment[]; // Populated relation - array of comments on this article
   storyState: 'published' | 'draft' | 'archived'; 
-  isFeatured: boolean;
-  isEditorsPick: boolean;
-  isHero: boolean;
+  InFeatured: boolean;
+  InSlider: boolean;
   DisableComments?: boolean;
   publishedAt?: string;
-  readTime?: number;
+  BlogDate?: string; // Admin-controlled publish date for articles
+  SubmitDate?: string; // Date when article was submitted (set on first submission)
   viewCount: number;
   likes: number;
-  metaTitle?: string;
-  metaDescription?: string;
-  metaKeywords?: string[];
-  socialImage?: StrapiMedia;
   createdAt: string;
   updatedAt: string;
   locale?: string;
@@ -269,7 +261,6 @@ export interface Submission {
   id: number;
   documentId: string;
   title: string;
-  excerpt: string;
   content: string;
   language: 'en' | 'bn' | 'both';
   category?: Category;
@@ -280,6 +271,8 @@ export interface Submission {
   reviewNotes?: string;
   submittedAt: string;
   reviewedAt?: string;
+  BlogDate?: string; // Admin-controlled publish date for articles
+  SubmitDate?: string; // Date when article was submitted (set on first submission)
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
@@ -345,7 +338,6 @@ export interface LegacyArticle {
   title: string;
   isBengali: boolean;
   slug: string;
-  excerpt: string;
   content?: string;
   imageSrc: string;
   category: string;
@@ -354,11 +346,9 @@ export interface LegacyArticle {
     avatar?: string;
   };
   publishedAt: string;
-  readTime?: number;
   viewCount?: number;
   tags?: string[];
-  isFeatured?: boolean;
-  isEditorsPick?: boolean;
+  InFeatured?: boolean;
 }
 
 export interface NavItem {

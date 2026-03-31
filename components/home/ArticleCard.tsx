@@ -18,6 +18,7 @@ interface ArticleCardData {
     slug?: string;
   };
   publishedAt: string;
+  BlogDate?: string; // Optional: if set, used instead of publishedAt
   language: "en" | "bn" | "both";
 }
 
@@ -34,7 +35,6 @@ export default function ArticleCard({
 }: ArticleCardProps) {
   const titleFontClass = getFontClass(article.title);
   const categoryFontClass = getFontClass(article.category);
-  console.log("the category font for this article ",article.title, "is ", categoryFontClass);
   const authorfontclass = getFontClass(article.author.name);
   let isauthornamebn, iscategorynamebn;
   if (authorfontclass == 'font-kalpurush') {
@@ -136,8 +136,12 @@ export default function ArticleCard({
               {article.author.name}
             </span>
           )}
-          <span className="mx-2">•</span>
-          <time dateTime={article.publishedAt} className="text-sm">{article.publishedAt}</time>
+          {(article.BlogDate || article.publishedAt) && (
+            <>
+              <span className="mx-2">•</span>
+              <time dateTime={article.BlogDate || article.publishedAt} className="text-sm">{article.BlogDate || article.publishedAt}</time>
+            </>
+          )}
         </div>
       </div>
     </article>

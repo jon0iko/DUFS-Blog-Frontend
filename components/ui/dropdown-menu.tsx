@@ -153,11 +153,11 @@ const DropdownMenu = ({ children, trigger, align = "left" }: DropdownMenuProps) 
   };
 
   return (
-    <div className="relative inline-block" ref={dropdownRef}>
+    <div className="relative inline-flex items-center" ref={dropdownRef}>
       <div 
         onClick={toggleDropdown}
         onKeyDown={handleKeyDown}
-        className="inline-block"
+        className="inline-flex items-center leading-none"
         role="button"
         tabIndex={0}
         aria-expanded={isOpen}

@@ -101,14 +101,14 @@ export default function ArticleAuthorSection({
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">
           Written By
         </p>
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
           <Link
             href={`/author?slug=${author.slug}`}
             className="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0 border-2 border-border block"
           >
             <Image
               src={authorAvatar || "/images/avatarPlaceholder.png"}
-              alt={displayName}
+              alt={displayName!}
               fill
               className="object-cover"
             />
@@ -118,7 +118,7 @@ export default function ArticleAuthorSection({
               <h3
                 className={cn(
                   "text-lg font-bold text-foreground",
-                  getFontClass(displayName),
+                  getFontClass(displayName!),
                 )}
               >
                 {displayName}
@@ -127,9 +127,9 @@ export default function ArticleAuthorSection({
             {author.Bio && (
               <p
                 className={cn(
-                  "text-foreground/75 font-bold line-clamp-3",
+                  "text-foreground/75 line-clamp-3",
                   getFontClass(author.Bio),
-                  isbioinbangla ? "text-base" : "text-base"
+                  isbioinbangla ? "text-base" : "text-sm"
                 )}
               >
                 {author.Bio}
@@ -156,7 +156,7 @@ export default function ArticleAuthorSection({
           >
             <Image
               src={authorAvatar || "/images/avatarPlaceholder.png"}
-              alt={displayName}
+              alt={displayName!}
               fill
               className="object-cover"
             />
@@ -169,7 +169,7 @@ export default function ArticleAuthorSection({
               <h3
                 className={cn(
                   "text-xl font-bold text-foreground hover:text-primary transition-colors",
-                  getFontClass(displayName),
+                  getFontClass(displayName!),
                 )}
               >
                 {displayName}
@@ -178,9 +178,9 @@ export default function ArticleAuthorSection({
             {author.Bio && (
               <p
                 className={cn(
-                  "text-foreground/75 font-bold line-clamp-3 ",
+                  "text-foreground/75 line-clamp-3 ",
                   getFontClass(author.Bio),
-                  isbioinbangla ? "text-lg " : "text-lg"
+                  isbioinbangla ? "text-lg " : "text-base"
                 )}
               >
                 {author.Bio}

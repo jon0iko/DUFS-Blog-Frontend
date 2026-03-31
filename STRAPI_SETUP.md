@@ -126,8 +126,8 @@ All entities are single‑language per entry. Where relevant add `language` (Enu
   - `socialImage` (Media, Single)
   - `gallery` (Media, Multiple)
   - `isFeatured` (Boolean, default false)
-  - `isEditorsPick` (Boolean, default false)
-  - `isHero` (Boolean, default false)
+  - `InFeatured` (Boolean, default false)
+  - `InSlider` (Boolean, default false)
   - `readTime` (Number)
   - `viewCount` (Number, default 0)
   - `likes` (Number, default 0)
@@ -317,7 +317,7 @@ For authenticated users (if you allow submissions):
 4. Authors
    - Create at least one active Author with avatar.
 5. One Hero Article
-   - Create a published Article with `isHero=true`, `isFeatured=true` (optional), `category`, `author`, image, and `language`.
+   - Create a published Article with `InSlider=true`, `isFeatured=true` (optional), `category`, `author`, image, and `language`.
 6. Navigation Items
    - Add items like Home (`/`), Browse (`/browse`), Submit (`/submit`), About (`/about`).
 7. Banner (optional)
@@ -346,7 +346,7 @@ GET /api/articles?filters[slug][$eq]=your-slug&populate=featuredImage&populate=g
 
 - Hero article
 ```
-GET /api/articles?filters[isHero][$eq]=true&filters[status][$eq]=published&populate=featuredImage&populate=author&populate=category
+GET /api/articles?filters[InSlider][$eq]=true&filters[status][$eq]=published&populate=featuredImage&populate=author&populate=category
 ```
 
 - Page by slug (e.g., home)

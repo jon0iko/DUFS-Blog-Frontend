@@ -29,8 +29,8 @@ All content types have been created with the following structure:
 - `gallery` (media, multiple, optional)
 - `language` (enum: 'en', 'bn', 'both')
 - `isFeatured` (boolean)
-- `isEditorsPick` (boolean)
-- `isHero` (boolean)
+- `InFeatured` (boolean)
+- `InSlider` (boolean)
 - `viewCount` (integer)
 - `likes` (integer)
 - `readTime` (integer)
@@ -121,9 +121,9 @@ All content types have been created with the following structure:
 ### Updated Components
 
 #### Home Page
-- **HeroSection.tsx** - Fetches hero article (isHero = true)
+- **HeroSection.tsx** - Fetches hero article (InSlider = true)
 - **FeaturedArticles.tsx** - Fetches featured articles (isFeatured = true)
-- **EditorChoice.tsx** - Fetches editors' choice articles (isEditorsPick = true)
+- **EditorChoice.tsx** - Fetches editors' choice articles (InFeatured = true)
 - **ArticleCard.tsx** - Updated to work with new data format
 
 #### Article Pages

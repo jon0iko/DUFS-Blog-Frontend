@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { gsap } from '@/lib/gsap'
 import { PenTool, Upload, Eye, Heart, MessageSquare, Paperclip, Trash2, Search, X, ChevronDown } from 'lucide-react'
 import LoadingScreen from '@/components/common/LoadingScreen'
-import { getUserArticles, getUserArticleStats, strapiAPI } from '@/lib/api'
+import { getUserArticlesWithComments, getUserArticleStats, strapiAPI } from '@/lib/api'
 import { getStrapiMediaUrl } from '@/lib/strapi-media'
 import { UserArticle } from '@/components/dashboard/UserArticlesList'
 import { formatDate } from '@/lib/utils'
@@ -34,7 +34,7 @@ const SubmitPage = () => {
   const [totalArticles, setTotalArticles] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [sortBy, setSortBy] = useState('publishedAt:desc');
+  const [sortBy, setSortBy] = useState('BlogDate:desc');
   const ITEMS_PER_PAGE = 8;
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -71,36 +71,36 @@ const SubmitPage = () => {
       try {
         setIsLoading(true);
         const [articlesData, userStats] = await Promise.all([
-          getUserArticles(user.id, currentPage, ITEMS_PER_PAGE, debouncedSearch, sortBy),
+          getUserArticlesWithComments(user.id, currentPage, ITEMS_PER_PAGE, sortBy),
           getUserArticleStats(user.id),
         ]);
         
-        const articleCommentCounts = await Promise.all(
-          articlesData.articles.map(article => 
-            strapiAPI.getCommentCountForArticle(article.documentId).catch(() => 0)
-          )
-        );
+        // Count comments from populated comments array (no API calls needed!)
+        const transformedArticles: UserArticle[] = articlesData.articles.map((article) => {
+          const commentCount = article.comments ? article.comments.length : 0;
+          return {
+            id: article.id,
+            documentId: article.documentId,
+            title: article.title,
+            slug: article.slug,
+            featuredImage: article.featuredImage ? getStrapiMediaUrl(article.featuredImage.url) : undefined,
+            category: article.category?.Name || article.category?.nameEn,
+            viewCount: article.viewCount || 0,
+            likes: article.likes || 0,
+            commentCount,
+            publishedAt: article.publishedAt || article.createdAt,
+            storyState: 'published',
+            language: article.language || 'en',
+          };
+        });
         
-        const transformedArticles: UserArticle[] = articlesData.articles.map((article, index) => ({
-          id: article.id,
-          documentId: article.documentId,
-          title: article.title,
-          slug: article.slug,
-          excerpt: article.excerpt || '',
-          featuredImage: article.featuredImage ? getStrapiMediaUrl(article.featuredImage.url) : undefined,
-          category: article.category?.Name || article.category?.nameEn,
-          viewCount: article.viewCount || 0,
-          likes: article.likes || 0,
-          commentCount: articleCommentCounts[index] || 0,
-          publishedAt: article.publishedAt || article.createdAt,
-          storyState: 'published',
-          language: article.language || 'en',
-        }));
+        // Calculate total comments from all articles
+        const totalComments = transformedArticles.reduce((sum, article) => sum + article.commentCount, 0);
         
         setArticles(transformedArticles);
         setStats({
           ...userStats,
-          totalComments: articleCommentCounts.reduce((sum, count) => sum + count, 0)
+          totalComments
         });
         setTotalPages(articlesData.pageCount);
         setTotalArticles(articlesData.total);
@@ -327,8 +327,8 @@ const SubmitPage = () => {
                   onChange={(e) => setSortBy(e.target.value)}
                   className="w-full appearance-none bg-[#F9F7F1]/50 dark:bg-[#1C1B1A]/50 border-2 border-foreground/10 focus:border-foreground/30 rounded-sm py-2.5 pl-4 pr-10 outline-none transition-all text-xs font-bold uppercase tracking-tight cursor-pointer"
                 >
-                  <option value="publishedAt:desc">Newest First</option>
-                  <option value="publishedAt:asc">Oldest First</option>
+                  <option value="BlogDate:desc">Newest First</option>
+                  <option value="BlogDate:asc">Oldest First</option>
                   <option value="viewCount:desc">Most Viewed</option>
                   <option value="likes:desc">Most Liked</option>
                 </select>
@@ -354,7 +354,7 @@ const SubmitPage = () => {
                 return (
                   <div key={article.documentId} className="group relative flex flex-col sm:flex-row gap-4 p-4 md:p-5 bg-[#FAFAF8] dark:bg-[#181817] shadow-sm border border-neutral-200 dark:border-neutral-800/80 transition-all duration-300 hover:shadow-md" style={{ transform: `rotate(${rotation})` }}>
                     <div className="absolute -top-2 right-4 text-neutral-400 opacity-40 group-hover:opacity-100 transition-opacity">
-                      <Paperclip className="w-5 h-5" />
+                      <Paperclip className="w-6 h-6" />
                     </div>
 
                     <Link 
@@ -387,7 +387,6 @@ const SubmitPage = () => {
                       </div>
                       
                       <p className="text-muted-foreground text-xs md:text-sm line-clamp-1 mt-1 mb-3">
-                        {article.excerpt}
                       </p>
 
                       <div className="flex flex-wrap items-center gap-3 text-[10px] md:text-xs font-bold">

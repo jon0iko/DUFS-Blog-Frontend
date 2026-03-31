@@ -7,7 +7,7 @@ import { Menu, Moon, Sun, LogIn, UserPlus, LogOut, Palette, Search, X, SquareUse
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import Sidebar from "./Sidebar";
-import SearchBar from "./SearchBar";
+import HeaderSearchInput from "./HeaderSearchInput";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import Avatar from "@/components/ui/avatar";
@@ -150,12 +150,12 @@ export default function Header() {
           {/* Mobile inline search takeover */}
           {isSearchOpen && (
             <div className="flex md:hidden items-center gap-2 w-full">
-              <SearchBar
+              <HeaderSearchInput
                 className="flex-1"
                 inputClassName={cn(
                   isScrolledPastHero
-                    ? "bg-background border-input text-foreground placeholder:text-muted-foreground"
-                    : "bg-white/15 backdrop-blur-md border-white/30 text-white placeholder:text-white/80"
+                    ? "bg-background text-foreground placeholder:text-muted-foreground"
+                    : "bg-white/15 backdrop-blur-md text-white placeholder:text-white/80"
                 )}
                 isOverlay={!isScrolledPastHero}
                 autoFocus
@@ -217,7 +217,7 @@ export default function Header() {
           {/* Right Zone: Search + Auth Actions — hidden on mobile when search is open */}
           <div className={cn("flex items-center gap-2 md:gap-3 flex-1 justify-end md:max-w-3xl", isSearchOpen && "hidden md:flex")}>
             {/* Desktop Search Bar — hidden on mobile */}
-            <SearchBar
+            <HeaderSearchInput
               className="hidden md:block w-full max-w-md transition-all duration-300"
               inputClassName={cn(
                 isScrolledPastHero 
@@ -303,7 +303,7 @@ export default function Header() {
                       initials={user?.username?.charAt(0).toUpperCase() || "U"}
                       size="sm"
                       className={cn(
-                        "cursor-pointer transition-all duration-300 ring-2 md:w-10 md:h-10 md:text-sm",
+                        "cursor-pointer border border-foreground/50 hover:border-foreground transition-all duration-300 md:w-10 md:h-10 md:text-sm",
                         isScrolledPastHero
                           ? "ring-gray-200 dark:ring-gray-700 hover:ring-primary dark:hover:ring-primary"
                           : "ring-white/40 hover:ring-white/60"
@@ -317,9 +317,9 @@ export default function Header() {
                       window.location.href = "/account";
                     }}
                   >
-                    <div className="flex gap-1 items-center ">
-                    <User className="h-4 w-4 stroke-2"/>
-                    Profile
+                    <div className="flex items-center ">
+                    <User className="h-4 w-4 stroke-2 mr-2"/>
+                    <span className="font-bold">Profile</span>
                     </div>
                   </DropdownMenuItem>
                   
@@ -339,9 +339,9 @@ export default function Header() {
                     >
                       <div className="flex items-center">
                         <Palette className="mr-2 h-4 w-4 stroke-2" />
-                        Theme Settings
+                        <span className="font-bold">Theme Settings</span>
                       </div>
-                      <span className="ml-2 text-xs">›</span>
+                      <span className="ml-2 text-xs font-bold">›</span>
                     </DropdownMenuItem>
                     
                     {isThemeMenuOpen && (
@@ -404,7 +404,7 @@ export default function Header() {
                     className="text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20"
                   >
                     <AlertTriangle className="mr-2 h-4 w-4 inline stroke-2" />
-                    Report Issue
+                    <span className="font-bold">Report Issue</span>
                   </DropdownMenuItem>
 
                   <div className="border-t border-border my-1"></div>
@@ -413,7 +413,7 @@ export default function Header() {
                     className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                   >
                     <LogOut className="mr-2 h-4 w-4 inline stroke-2" />
-                    Logout
+                    <span className="font-bold">Logout</span>
                   </DropdownMenuItem>
                 </DropdownMenu>
               </>

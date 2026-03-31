@@ -29,7 +29,6 @@ export default function ArticlesList({
   const [totalPages, setTotalPages] = useState(1)
   const [totalArticles, setTotalArticles] = useState(0)
   const paginationRef = useRef<HTMLDivElement>(null)
-  const paginationTopBeforeChangeRef = useRef<number | null>(null)
   
   useEffect(() => {
     const fetchArticles = async () => {
@@ -54,12 +53,10 @@ export default function ArticlesList({
             category?: string;
             language?: 'en' | 'bn' | 'both';
             sort?: string;
-            storyState?: string;
           } = {
             page: currentPage,
             pageSize: ARTICLES_PER_PAGE,
-            sort: sortBy === 'recent' ? 'publishedAt:desc' : sortBy === 'oldest' ? 'publishedAt:asc' : 'viewCount:desc',
-            storyState: 'published'
+            sort: sortBy === 'recent' ? 'BlogDate:desc' : sortBy === 'oldest' ? 'BlogDate:asc' : 'viewCount:desc',
           }
           
           if (category && category !== 'all') {
@@ -70,7 +67,7 @@ export default function ArticlesList({
             filters.language = language === 'bn' ? 'bn' : 'en'
           }
           
-          response = await strapiAPI.getArticles(filters)
+          response = await strapiAPI.getArticlesMinimal(filters)
         }
         
         const fetchedArticles = response.data || []
@@ -103,35 +100,11 @@ export default function ArticlesList({
   const goToPage = useCallback(
     (page: number) => {
       if (page >= 1 && page <= totalPages) {
-        if (paginationRef.current) {
-          paginationTopBeforeChangeRef.current =
-            paginationRef.current.getBoundingClientRect().top
-        }
         setCurrentPage(page)
       }
     },
     [totalPages],
   )
-
-  // Keep pagination controls in the same viewport position between page changes.
-  useEffect(() => {
-    if (isLoading) {
-      return
-    }
-
-    if (paginationTopBeforeChangeRef.current === null || !paginationRef.current) {
-      return
-    }
-
-    const nextTop = paginationRef.current.getBoundingClientRect().top
-    const delta = nextTop - paginationTopBeforeChangeRef.current
-
-    if (Math.abs(delta) > 1) {
-      window.scrollBy({ top: delta, behavior: 'auto' })
-    }
-
-    paginationTopBeforeChangeRef.current = null
-  }, [isLoading, currentPage, articles.length])
   
   // Generate page numbers to display - memoized for performance
   const getPageNumbers = useCallback((): (number | string)[] => {
@@ -213,7 +186,7 @@ export default function ArticlesList({
             )}
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 transition-opacity duration-300" style={{ opacity: isLoading ? 0.5 : 1 }}>
             {validArticles.map(({ raw, data }) => (
               <ArticleCard 
                 key={raw.documentId} 

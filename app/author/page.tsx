@@ -227,7 +227,9 @@ function AuthorPageInner() {
           <>
             {/* Articles Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {articles.map((article) => (
+              {articles.map((article) => {
+                const dateSource = article.BlogDate || article.publishedAt
+                return (
                 <ArticleCard
                   key={article.documentId}
                   article={{
@@ -247,11 +249,12 @@ function AuthorPageInner() {
                         : undefined,
                       slug: author.slug,
                     },
-                    publishedAt: formatDate(article.publishedAt),
+                    publishedAt: formatDate(dateSource),
                     language: 'both' as const,
                   }}
                 />
-              ))}
+                )
+              })}
             </div>
 
             {/* Pagination */}

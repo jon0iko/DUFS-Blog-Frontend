@@ -3,7 +3,6 @@ import { config } from '@/lib/config';
 interface ArticleSubmissionData {
   title: string;
   slug: string;
-  excerpt: string;
   content: string;
   language: 'en' | 'bn';
   categoryId: string;
@@ -16,7 +15,6 @@ export async function submitNewArticle(data: ArticleSubmissionData) {
   const {
     title,
     slug,
-    excerpt,
     content,
     language,
     categoryId,
@@ -33,12 +31,10 @@ export async function submitNewArticle(data: ArticleSubmissionData) {
     const articleData: Record<string, unknown> = {
       title,
       slug,
-      excerpt,
-      content,
+        content,
       language,
-      isFeatured: false,
-      isEditorsPick: false,
-      isHero: false,
+      InFeatured: false,
+      InSlider: false,
       viewCount: 0,
       likes: 0,
     };

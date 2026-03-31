@@ -16,6 +16,7 @@ import { useArticleData } from "@/hooks/useArticleData";
 import { useViewCount } from "@/hooks/useViewCount";
 import { useArticleInteractions } from "@/hooks/useArticleInteractions";
 import { useMobileBarVisibility } from "@/hooks/useMobileBarVisibility";
+import { useResponsiveFontSize } from "@/hooks/useResponsiveFontSize";
 
 // Sub-components
 import ArticleHTMLContent from "./ArticleHTMLContent";
@@ -28,6 +29,7 @@ import ArticleSidebarActions from "./ArticleSidebarActions";
 import ArticleRightSidebar from "./ArticleRightSidebar";
 import ArticleMobileActionsBar from "./ArticleMobileActionsBar";
 import ArticleAuthorSection from "./ArticleAuthorSection";
+import BackToTopButton from "@/components/home/BackToTopButton";
 
 gsap.registerPlugin(ScrollToPlugin);
 
@@ -43,7 +45,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
   const toast = useToast();
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const [fontSize, setFontSize] = useState<FontSize>("large");
+  const [fontSize, setFontSize] = useResponsiveFontSize();
   const [isSepiaMode, setIsSepiaMode] = useState(false);
 
   const { article, relatedArticles, loading, error } = useArticleData(slug);
@@ -115,14 +117,17 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
   const hasAuthorProfile = !!article.author;
   const displayAuthorName = hasAuthorProfile ? article.author?.Name : article.publication_author_name;
 
-  const publishedDate = article.publishedAt
-    ? new Date(article.publishedAt).toLocaleDateString("en-US", {
+  // Use BlogDate if available (admin-controlled), otherwise use publishedAt as fallback
+  const dateSource = article.BlogDate || article.publishedAt;
+
+  const publishedDate = dateSource
+    ? new Date(dateSource).toLocaleDateString("en-US", {
         year: "numeric", month: "long", day: "numeric",
       })
     : "";
 
-  const shortPublishedDate = article.publishedAt
-    ? new Date(article.publishedAt).toLocaleDateString("en-US", {
+  const shortPublishedDate = dateSource
+    ? new Date(dateSource).toLocaleDateString("en-US", {
         year: "numeric", month: "short", day: "numeric",
       })
     : "";
@@ -246,6 +251,10 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
           isSepiaMode={isSepiaMode}
           onSepiaChange={setIsSepiaMode}
         />
+
+        <div className="lg:hidden">
+          <BackToTopButton />
+        </div>
       </article>
     </div>
   );

@@ -142,9 +142,9 @@ After deploying:
 
 The frontend calls these endpoints:
 - `GET /api/articles` - All articles with filters
-- `GET /api/articles?filters[isHero]=true` - Hero article
+- `GET /api/articles?filters[InSlider]=true` - Hero article
 - `GET /api/articles?filters[isFeatured]=true` - Featured articles
-- `GET /api/articles?filters[isEditorsPick]=true` - Editor's choice
+- `GET /api/articles?filters[InFeatured]=true` - Editor's choice
 - `GET /api/authors` - All authors
 - `GET /api/categories` - All categories
 - `GET /api/navigation-items` - Navigation menu

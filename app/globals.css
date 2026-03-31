@@ -148,6 +148,21 @@
   color: hsl(25 20% 42%) !important;
 }
 
+/* Italic and emphasis text in sepia mode should match paragraph color */
+.sepia-article em,
+.sepia-article i,
+.sepia-article strong,
+.sepia-article b {
+  color: hsl(25 30% 18%) !important;
+}
+
+.dark .sepia-article em,
+.dark .sepia-article i,
+.dark .sepia-article strong,
+.dark .sepia-article b {
+  color: hsl(25 30% 18%) !important;
+}
+
 /* Force article content text to black in sepia mode,
    overriding hardcoded Tailwind gray classes */
 .sepia-article .article-content p,
@@ -163,7 +178,7 @@
 
 .sepia-article .article-content .caption-text,
 .dark .sepia-article .article-content .caption-text {
-  color: #6f5b44 !important;
+  color: #3d2f1f !important;
 }
 
 /* Keep quotation icon tone consistent in sepia regardless of global dark mode. */
@@ -196,6 +211,15 @@
 .dark .sepia-article .article-content strong,
 .dark .sepia-article .article-content b {
   color: #0d0804 !important;
+}
+
+/* Progress wheel in sepia mode */
+.sepia-article svg circle.stroke-border {
+  stroke: #000000 !important;
+}
+
+.dark .sepia-article svg circle.stroke-border {
+  stroke: #000000 !important;
 }
 
 /* ── Infinite Marquee (CSS fallback — primary driven by GSAP TextReelClient) */
@@ -323,25 +347,25 @@
   .dufs-article-render {
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
-    @apply font-zillaslab text-gray-800 dark:text-gray-200 max-w-none;
+    @apply font-zillaslab text-black dark:text-white max-w-none;
   }
 
   .dufs-article-render p {
-    @apply mb-8 text-gray-700 dark:text-gray-300 tracking-wide;
+    @apply mb-2 text-black dark:text-white tracking-wide;
   }
 
   .dufs-article-render h1, 
   .dufs-article-render h2, 
   .dufs-article-render h3 {
-    @apply font-bold tracking-wide text-gray-900 dark:text-gray-100;
+    @apply font-bold tracking-wide text-black dark:text-white;
   }
 
   .dufs-article-render strong, .dufs-article-render b {
-    @apply font-bold text-gray-900 dark:text-gray-100;
+    @apply font-bold text-black dark:text-white;
   }
 
   .dufs-article-render em, .dufs-article-render i {
-    @apply italic text-gray-700 dark:text-gray-300;
+    @apply italic text-black dark:text-white;
   }
 
   .dufs-article-render a {
@@ -349,11 +373,31 @@
   }
 
   .dufs-article-render code {
-    @apply bg-gray-100 dark:bg-brand-black-90 text-pink-600 dark:text-pink-400 px-2 py-1 rounded font-mono;
+    display: inline-block;
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.05);
+    color: hsl(var(--accent-foreground));
+    border-radius: 4px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .dark .dufs-article-render code {
+    background-color: rgba(255, 255, 255, 0.06);
+  }
+
+  /* Code styling in sepia mode */
+  .sepia-article .dufs-article-render code {
+    @apply bg-[#ebe0d1];
+  }
+
+  .dark .sepia-article .dufs-article-render code {
+    @apply bg-[#ebe0d1];
   }
 
   .dufs-article-render ul, .dufs-article-render ol {
-    @apply my-7 ml-6 space-y-3 text-gray-700 dark:text-gray-300 list-outside;
+    @apply my-7 ml-6 space-y-3 text-black dark:text-white list-outside;
   }
 
   .dufs-article-render ul { @apply list-disc; }
@@ -364,7 +408,7 @@
   }
 
   .dufs-article-render hr {
-    @apply my-10 border-t border-gray-300 dark:border-gray-600;
+    @apply my-10 border-t border-border;
   }
 
   .dufs-article-render figure[data-image-caption] {
@@ -372,11 +416,11 @@
   }
 
   .dufs-article-render figcaption {
-    @apply mt-2 text-center italic text-gray-600 dark:text-gray-400;
+    @apply mt-2 text-center italic text-black/90 dark:text-white/90;
   }
 
   .dufs-article-render blockquote {
-    @apply flex-1 flex items-center italic leading-[1.55] text-gray-600 dark:text-gray-300 my-0;
+    @apply flex-1 flex items-center font-bold italic leading-[1.55] text-black dark:text-white my-0;
   }
 
   .dufs-article-render .quote-icon {
@@ -388,37 +432,37 @@
   /* Small - Optimized for compact reading without strain */
   .dufs-article-render[data-size="small"] p,
   .dufs-article-render[data-size="small"] li { @apply text-base md:text-[1.125rem] leading-[1.75]; }
-  .dufs-article-render[data-size="small"] h1 { @apply text-3xl md:text-4xl mb-8; }
-  .dufs-article-render[data-size="small"] h2 { @apply text-2xl md:text-3xl mb-5; }
-  .dufs-article-render[data-size="small"] h3 { @apply text-xl md:text-2xl mb-4; }
-  .dufs-article-render[data-size="small"] blockquote { @apply text-xl md:text-2xl; }
+  .dufs-article-render[data-size="small"] h1 { @apply text-3xl md:text-4xl; }
+  .dufs-article-render[data-size="small"] h2 { @apply text-2xl md:text-3xl; }
+  .dufs-article-render[data-size="small"] h3 { @apply text-xl md:text-2xl; }
+  .dufs-article-render[data-size="small"] blockquote { @apply text-lg md:text-xl; }
   .dufs-article-render[data-size="small"] figcaption { @apply text-sm md:text-base; }
-  .dufs-article-render[data-size="small"] code { @apply text-xs md:text-sm; }
+  .dufs-article-render[data-size="small"] code { @apply text-sm md:text-base font-bold; }
 
   /* Medium - Balanced cinematic reading experience */
   .dufs-article-render[data-size="medium"] p,
   .dufs-article-render[data-size="medium"] li { @apply text-lg md:text-[1.25rem] leading-[1.8]; }
-  .dufs-article-render[data-size="medium"] h1 { @apply text-4xl md:text-5xl mb-8; }
-  .dufs-article-render[data-size="medium"] h2 { @apply text-3xl md:text-4xl mb-5; }
-  .dufs-article-render[data-size="medium"] h3 { @apply text-2xl md:text-3xl mb-4; }
-  .dufs-article-render[data-size="medium"] blockquote { @apply text-2xl md:text-3xl; }
+  .dufs-article-render[data-size="medium"] h1 { @apply text-4xl md:text-5xl; }
+  .dufs-article-render[data-size="medium"] h2 { @apply text-3xl md:text-4xl; }
+  .dufs-article-render[data-size="medium"] h3 { @apply text-2xl md:text-3xl; }
+  .dufs-article-render[data-size="medium"] blockquote { @apply text-xl md:text-2xl; }
   .dufs-article-render[data-size="medium"] figcaption { @apply text-base md:text-lg; }
-  .dufs-article-render[data-size="medium"] code { @apply text-sm md:text-base; }
+  .dufs-article-render[data-size="medium"] code { @apply text-base md:text-lg font-bold; }
 
   /* Large - Enhanced for high readability and visual impact */
   .dufs-article-render[data-size="large"] p,
   .dufs-article-render[data-size="large"] li { @apply text-xl md:text-[1.5rem] leading-[1.85]; }
-  .dufs-article-render[data-size="large"] h1 { @apply text-5xl md:text-6xl mb-8; }
-  .dufs-article-render[data-size="large"] h2 { @apply text-4xl md:text-5xl mb-5; }
-  .dufs-article-render[data-size="large"] h3 { @apply text-3xl md:text-4xl mb-4; }
-  .dufs-article-render[data-size="large"] blockquote { @apply text-3xl md:text-4xl; }
+  .dufs-article-render[data-size="large"] h1 { @apply text-5xl md:text-6xl mb-1; }
+  .dufs-article-render[data-size="large"] h2 { @apply text-4xl md:text-5xl mb-1; }
+  .dufs-article-render[data-size="large"] h3 { @apply text-3xl md:text-4xl mb-1; }
+  .dufs-article-render[data-size="large"] blockquote { @apply text-2xl md:text-3xl; }
   .dufs-article-render[data-size="large"] figcaption { @apply text-lg md:text-xl; }
-  .dufs-article-render[data-size="large"] code { @apply text-base md:text-lg; }
+  .dufs-article-render[data-size="large"] code { @apply text-lg md:text-xl font-bold; }
 
   /* Bengali support */
   .dufs-article-render .font-kalpurush {
     /* Increase size slightly for Bengali optically */
-    font-size: 1.05em; 
+    font-size: 1.08em; 
     line-height: 1.8;
   }
 

@@ -103,7 +103,6 @@ export function generateMetadata({
 export function generateArticleMetadata(article: Article): Metadata {
   const siteUrl = config.site.url;
   
-  // Strapi v5: Direct field access, article.excerpt doesn't exist in current schema
   const title = article.title;
   const description = article.content.substring(0, 160) + '...'; // Use content preview as description
   

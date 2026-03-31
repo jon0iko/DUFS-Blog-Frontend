@@ -56,6 +56,10 @@ export default function BrowseContentSection({
 
   // Ref for scrolling to articles grid
   const articlesGridRef = useRef<HTMLDivElement>(null);
+  // Ref for scrolling to pagination
+  const paginationRef = useRef<HTMLDivElement>(null);
+  // Ref to track if we should scroll after page change loads
+  const shouldScrollRef = useRef<boolean>(false);
   // Ref for detecting when section is revealed
   const headerRef = useRef<HTMLDivElement>(null);
   const hasTriggeredRef = useRef(false);
@@ -67,35 +71,71 @@ export default function BrowseContentSection({
   useEffect(() => {
     const sortCategoriesByLatestArticle = async () => {
       try {
-        // Fetch all published articles without pagination
-        const response = await strapiAPI.getArticles({
+        // Fetch all published articles without pagination (minimal data for performance)
+        const response = await strapiAPI.getArticlesMinimal({
           pageSize: 1000,
-          sort: "publishedAt:desc",
+          sort: 'BlogDate:desc',
         });
         const allArticles = response.data || [];
-        console.log("Fetched all articles for category sorting:", allArticles);
+        console.log('Fetched all articles for category sorting:', allArticles);
 
-        // Create a map of category slug to latest published date
+        // Create a map of category documentId to latest published date
         const categoryLatestDates = new Map<string, Date>();
 
         allArticles.forEach((article) => {
-          if (article.category && article.publishedAt) {
-            const categorySlug = article.category.Slug || "";
-            const publishedDate = new Date(article.publishedAt);
+          if (article.category) {
+            // Use BlogDate if available, otherwise use publishedAt
+            const dateString = article.BlogDate || article.publishedAt;
+            if (dateString) {
+              // Use documentId as primary key since it's always populated in Strapi v5
+              const categoryId = article.category.documentId || article.category.Slug || '';
+              const publishedDate = new Date(dateString);
 
-            const currentLatest = categoryLatestDates.get(categorySlug);
-            if (!currentLatest || publishedDate > currentLatest) {
-              categoryLatestDates.set(categorySlug, publishedDate);
+              console.log(
+                `Article: ${article.title}, Category: ${article.category.nameBn || article.category.Name}, ID: ${categoryId}, Date: ${dateString}`
+              );
+
+              const currentLatest = categoryLatestDates.get(categoryId);
+              if (!currentLatest || publishedDate > currentLatest) {
+                categoryLatestDates.set(categoryId, publishedDate);
+              }
             }
           }
         });
 
+        console.log('Category Latest Dates Map:', categoryLatestDates);
+
         // Sort categories by latest published date (descending)
-        const sortedCategories = [...categories].sort((a, b) => {
-          const dateA = categoryLatestDates.get(a.Slug || "") || new Date(0);
-          const dateB = categoryLatestDates.get(b.Slug || "") || new Date(0);
-          return dateB.getTime() - dateA.getTime();
+        // Extract original indices to use as tiebreaker
+        const categoriesWithIndices = categories.map((cat, idx) => ({ cat, originalIdx: idx }));
+        
+        const sortedWithIndices = categoriesWithIndices.sort((a, b) => {
+          const categoryIdA = a.cat.documentId || a.cat.Slug || '';
+          const categoryIdB = b.cat.documentId || b.cat.Slug || '';
+
+          const dateA = categoryLatestDates.get(categoryIdA) || new Date(0);
+          const dateB = categoryLatestDates.get(categoryIdB) || new Date(0);
+
+          const dateComparison = dateB.getTime() - dateA.getTime();
+          
+          // If dates are the same, keep original order (stable sort)
+          if (dateComparison === 0) {
+            return a.originalIdx - b.originalIdx;
+          }
+
+          console.log(
+            `Comparing ${a.cat.nameBn || a.cat.Name} (${dateA.toISOString()}) vs ${b.cat.nameBn || b.cat.Name} (${dateB.toISOString()}) = ${dateComparison}`
+          );
+
+          return dateComparison;
         });
+
+        const sortedCategories = sortedWithIndices.map(item => item.cat);
+
+        console.log(
+          'Sorted categories:',
+          sortedCategories.map((c) => c.nameBn || c.Name)
+        );
 
         setCategories(sortedCategories);
       } catch (error) {
@@ -117,18 +157,16 @@ export default function BrowseContentSection({
           pageSize?: number;
           category?: string;
           sort?: string;
-          storyState?: string;
           language?: "en" | "bn" | "both";
         } = {
           page: currentPage,
           pageSize: ARTICLES_PER_PAGE,
           sort:
             sortBy === "newest"
-              ? "publishedAt:desc"
+              ? "BlogDate:desc"
               : sortBy === "oldest"
-                ? "publishedAt:asc"
+                ? "BlogDate:asc"
                 : "viewCount:desc",
-          storyState: "published",
         };
 
         if (activeCategory && activeCategory !== "all") {
@@ -139,7 +177,7 @@ export default function BrowseContentSection({
           filters.language = languageFilter;
         }
 
-        const response = await strapiAPI.getArticles(filters);
+        const response = await strapiAPI.getArticlesMinimal(filters);
         const fetchedArticles = response.data || [];
 
         // Get pagination info from meta
@@ -198,7 +236,35 @@ export default function BrowseContentSection({
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
+    shouldScrollRef.current = false; // Don't scroll on filter resets
   }, [activeCategory, sortBy, languageFilter]);
+
+  // Scroll to pagination when page changes and articles are loaded
+  useEffect(() => {
+    if (!isLoading && shouldScrollRef.current && paginationRef.current) {
+      // Reset the flag first
+      shouldScrollRef.current = false;
+      
+      // Use requestAnimationFrame twice to ensure layout is complete
+      // First frame: paint articles
+      // Second frame: calculate pagination position
+      let frame1: number, frame2: number | undefined;
+      frame1 = requestAnimationFrame(() => {
+        frame2 = requestAnimationFrame(() => {
+          paginationRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+        });
+      });
+      
+      // Cleanup any pending animation frames
+      return () => {
+        cancelAnimationFrame(frame1);
+        if (frame2) cancelAnimationFrame(frame2);
+      };
+    }
+  }, [isLoading]);
 
   // Close filter dropdown when clicking outside & handle dynamic positioning
   useEffect(() => {
@@ -262,6 +328,7 @@ export default function BrowseContentSection({
   const goToPage = useCallback(
     (page: number) => {
       if (page >= 1 && page <= totalPages) {
+        shouldScrollRef.current = true; // Flag that we should scroll after this page loads
         setCurrentPage(page);
       }
     },
@@ -334,7 +401,7 @@ export default function BrowseContentSection({
         >
           <div className="flex flex-col md:flex-row md:items-end gap-4 flex-1">
             <div>
-              <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-4 text-foreground">
+              <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-4 text-foreground select-none">
                 In F
                 <svg
                   key={spinTrigger}
@@ -670,7 +737,7 @@ export default function BrowseContentSection({
 
         {/* Pagination */}
         {!isLoading && totalPages > 1 && (
-          <div className="mt-12 flex flex-col items-center gap-6">
+          <div ref={paginationRef} className="mt-12 flex flex-col items-center gap-6">
             {/* Pagination Controls */}
             <div className="flex items-center gap-1 md:gap-2">
               {/* Previous Button */}

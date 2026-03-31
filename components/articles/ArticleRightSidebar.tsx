@@ -30,7 +30,10 @@ export default function ArticleRightSidebar({ article }: ArticleRightSidebarProp
                   getFontClass(article.category.Name),
                 )}
               >
-                {article.category.Name}
+                {article.category.nameBn}
+                {article.category.nameEn && (
+                <span className="font-montserrat text-xs"> {" / "}{article.category.nameEn}</span>
+              )}
               </div>
             </Link>
             <p className="text-xs text-muted-foreground mt-2 text-center">

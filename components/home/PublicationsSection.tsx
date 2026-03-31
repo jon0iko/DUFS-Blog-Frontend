@@ -345,7 +345,7 @@ function PublicationCard({ publication: pub }: { publication: Publication }) {
                 ref={buttonRef}
                 className="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none group-hover:pointer-events-auto"
               >
-                <span className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold shadow-lg transition-colors active:scale-[0.98] bg-white text-black opacity-0 group-hover:opacity-100 delay-[50ms] ease-out hover:bg-white/90">
+                <span className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold shadow-lg transition-colors active:scale-[0.98] bg-white text-black opacity-0 group-hover:opacity-100 delay-75 ease-out hover:bg-white/90">
                   Read Publication
                   <ArrowRight
                     size={16}

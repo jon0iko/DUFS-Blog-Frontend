@@ -3,7 +3,6 @@ import { normalizeMarkdownForStorage } from './markdown';
 interface ArticleSubmissionData {
   title: string;
   slug: string;
-  excerpt: string;
   content: string;
   language: 'en' | 'bn';
   categoryId: number;  // Strapi v5 uses numeric ID for relations
@@ -27,7 +26,6 @@ export async function submitNewArticleService(data: ArticleSubmissionData) {
   const {
     title,
     slug,
-    excerpt,
     content,
     language,
     categoryId,
@@ -45,14 +43,14 @@ export async function submitNewArticleService(data: ArticleSubmissionData) {
     const articleData: Record<string, unknown> = {
       title,
       slug,
-      excerpt,
-      content: normalizeMarkdownForStorage(content),
+        content: normalizeMarkdownForStorage(content),
       language,
-      isFeatured: false,
-      isEditorsPick: false,
-      isHero: false,
+      InFeatured: false,
+      InSlider: false,
       viewCount: 0,
       likes: 0,
+      BlogDate: null, // Will be set by admin later
+      SubmitDate: new Date().toISOString(), // Current date/time when submitted
     };
 
     // Add category relation (manyToOne) - Strapi v5 REST API uses numeric ID directly

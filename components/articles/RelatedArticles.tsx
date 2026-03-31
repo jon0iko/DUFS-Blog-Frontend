@@ -46,8 +46,8 @@ export default function RelatedArticles({ articles }: RelatedArticlesProps) {
                 : `${config.strapi.url}${article.featuredImage.url}`)
             : '/images/hero.jpg';
 
-          const publishedDate = article.publishedAt
-            ? new Date(article.publishedAt).toLocaleDateString('en-US', {
+          const publishedDate = (article.BlogDate || article.publishedAt)
+            ? new Date(article.BlogDate || article.publishedAt).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric'
@@ -91,13 +91,6 @@ export default function RelatedArticles({ articles }: RelatedArticlesProps) {
                 )}
 
                 {/* Featured Badge */}
-                {article.isFeatured && (
-                  <div className="absolute top-3 right-3 z-10">
-                    <span className="inline-block text-xs font-bold px-2.5 py-1 bg-primary text-primary-foreground rounded-full uppercase tracking-widest">
-                      Featured
-                    </span>
-                  </div>
-                )}
               </div>
 
               {/* Content Container */}
@@ -119,21 +112,14 @@ export default function RelatedArticles({ articles }: RelatedArticlesProps) {
 
                 {/* Metadata Row - Compact and informative */}
                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-3 pb-3 border-b border-border/40">
-                  {/* Published Date */}
-                  <time dateTime={article.publishedAt} className="whitespace-nowrap">
-                    {publishedDate}
-                  </time>
-                  
-                  {/* Divider */}
-                  <span className="text-border/60">•</span>
-                  
-                  {/* Read Time */}
-                  {article.readTime && (
+                  {/* Published Date - Only show if BlogDate is set */}
+                  {(article.BlogDate || article.publishedAt) && (
                     <>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-muted-foreground/60" />
-                        <span>{article.readTime} min</span>
-                      </div>
+                      <time dateTime={article.BlogDate || article.publishedAt} className="whitespace-nowrap">
+                        {publishedDate}
+                      </time>
+                      
+                      {/* Divider */}
                       <span className="text-border/60">•</span>
                     </>
                   )}

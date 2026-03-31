@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Search, X, Loader2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { strapiAPI } from "@/lib/api";
 import { Article } from "@/types";
 import { getArticleData } from "@/lib/strapi-helpers";
@@ -19,25 +18,21 @@ interface SearchResult {
   category: string;
 }
 
-interface SearchBarProps {
-  className?: string;
-  inputClassName?: string;
-  placeholder?: string;
+interface HeaderSearchInputProps {
   onClose?: () => void;
   autoFocus?: boolean;
-  isMobile?: boolean;
+  inputClassName?: string;
   isOverlay?: boolean;
+  className?: string;
 }
 
-export default function SearchBar({
-  className,
-  inputClassName,
-  placeholder = "Search...",
+export default function HeaderSearchInput({
   onClose,
   autoFocus = false,
-  isMobile = false,
+  inputClassName,
   isOverlay = false,
-}: SearchBarProps) {
+  className,
+}: HeaderSearchInputProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +61,6 @@ export default function SearchBar({
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-      // Cleanup: cancel pending requests on unmount
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
@@ -84,7 +78,6 @@ export default function SearchBar({
       return;
     }
 
-    // Cancel previous request if still pending
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -114,7 +107,6 @@ export default function SearchBar({
       setIsOpen(searchResults.length > 0 || searchQuery.trim().length >= 2);
       setSelectedIndex(-1);
     } catch (error) {
-      // Ignore abort errors (user typed a new character before previous request completed)
       if (error instanceof Error && error.name === 'AbortError') {
         return;
       }
@@ -130,12 +122,10 @@ export default function SearchBar({
     const value = e.target.value;
     setQuery(value);
 
-    // Clear previous timeout
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
 
-    // Debounce search with 500ms delay (responsive but reduces API load)
     debounceRef.current = setTimeout(() => {
       performSearch(value);
     }, 1000);
@@ -165,7 +155,6 @@ export default function SearchBar({
       case "Escape":
         setIsOpen(false);
         setQuery("");
-        // Cancel pending requests
         if (debounceRef.current) {
           clearTimeout(debounceRef.current);
         }
@@ -179,7 +168,6 @@ export default function SearchBar({
 
   // Clear search
   const handleClear = () => {
-    // Cancel any pending search
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
@@ -189,7 +177,6 @@ export default function SearchBar({
     setQuery("");
     setResults([]);
     setIsOpen(false);
-    // Refocus input after clearing, but wait for the state to update
     setTimeout(() => {
       inputRef.current?.focus();
     }, 50);
@@ -209,18 +196,17 @@ export default function SearchBar({
           "absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 stroke-[2] pointer-events-none z-10",
           isOverlay ? "text-white/70" : "text-muted-foreground"
         )} />
-        <Input
+        <input
           ref={inputRef}
           type="text"
           value={query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => query.trim().length >= 2 && setIsOpen(true)}
-          placeholder={placeholder}
+          placeholder="Search..."
           className={cn(
-            "h-10 w-full pl-10 pr-10 font-medium transition-all focus:!outline-none focus:!ring-0 !border-foreground/50 focus:!border-border/60",
+            "h-10 w-full pl-10 pr-10 font-medium transition-all outline-none focus:outline-none focus:ring-0 border border-foreground/50 focus:border-border/60 bg-transparent",
             isOpen ? "rounded-t-md rounded-b-none" : "rounded-md",
-            isOverlay ? "!border-white/20" : "",
             inputClassName
           )}
         />
@@ -244,16 +230,12 @@ export default function SearchBar({
 
       {/* Search Results Dropdown */}
       {isOpen && (
-        <div
-          className={cn(
-            "absolute top-full left-0 right-0 border border-t-0 rounded-b-lg shadow-lg z-50",
-            isMobile ? "max-h-[60vh]" : "max-h-[400px]",
-            isOverlay ? "border-white/20 bg-white/10 backdrop-blur-md" : "border-border bg-background"
-          )}
-        >
+        <div className={cn(
+          "absolute top-full left-0 right-0 border border-t-0 rounded-b-lg shadow-lg z-50 max-h-[400px]",
+          isOverlay ? "border-white/20 bg-white/10 backdrop-blur-md" : "border-border bg-background"
+        )}>
           {results.length > 0 ? (
             <div className="overflow-y-auto max-h-[inherit] rounded-b-lg">
-              
               {results.map((result, index) => {
                 const titleFontClass = getFontClass(result.title);
                 const isSelected = selectedIndex === index;

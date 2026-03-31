@@ -2,10 +2,23 @@
 
 import React from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowLeft, Home } from 'lucide-react';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const reason = searchParams.get('reason');
+  const isSessionEnded = reason === 'session-ended';
+
+  const handleNavigate = () => {
+    if (isSessionEnded) {
+      router.push('/');
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4 py-12 overflow-hidden">
       {/* Full-bleed background image — desktop */}
@@ -30,14 +43,23 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       {/* Dark overlay for readability */}
       <div className="absolute inset-0 bg-black/70" />
 
-      {/* Top-left back button */}
-      <Link
-        href="/"
+      {/* Top-left back/home button */}
+      <button
+        onClick={handleNavigate}
         className="absolute top-4 left-4 z-20 md:top-5 md:left-5 flex items-center gap-1.5 text-white/70 hover:text-white transition-colors duration-200 group"
       >
-        <ArrowLeft className="w-4 h-4 md:w-4 md:h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
-        <span className="text-xs md:text-sm font-medium uppercase tracking-widest">Home</span>
-      </Link>
+        {isSessionEnded ? (
+          <>
+          <ArrowLeft className="w-4 h-4 md:w-4 md:h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+            <span className="text-xs md:text-sm font-medium uppercase tracking-widest">Home</span>
+          </>
+        ) : (
+          <>
+            <ArrowLeft className="w-4 h-4 md:w-4 md:h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+            <span className="text-xs md:text-sm font-medium uppercase tracking-widest">Back</span>
+          </>
+        )}
+      </button>
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-md">

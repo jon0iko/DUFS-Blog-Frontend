@@ -24,6 +24,7 @@ export const isMixedBengaliEnglishText = (text: string): boolean => {
   return hasBengali && hasEnglish
 }
 
+
 /**
  * Detect if text is Bengali-only (no English letters)
  */
@@ -31,6 +32,36 @@ export const isPureBengaliText = (text: string): boolean => {
   if (!text) return false
   return isBengaliText(text) && !/[A-Za-z]/.test(text)
 }
+
+export const getfontsizeBN = (text: string, classname: string) => {
+  if (isPureBengaliText(text)) {
+    if (classname === "text-base") {
+      return "text-lg";
+    }
+    else if (classname === "text-xs") {
+      return "text-sm";
+    }
+    else if (classname === "text-sm") {
+      return "text-base";
+    }
+    else if (classname === "text-xl") {
+      return "text-2xl";
+    }
+    else if (classname === "text-2xl") {
+      return "text-3xl";
+    }
+    else if (classname === "text-3xl") {
+      return "text-4xl";
+    }
+    else {
+      return classname;
+    }
+  }
+  else {
+    return classname;
+  }
+}
+
 
 /**
  * Get appropriate font class for text

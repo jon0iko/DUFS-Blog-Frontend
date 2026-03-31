@@ -35,7 +35,6 @@ export const featuredArticles: Article[] = [
     title: 'The Traveler and the World: Miguel Gomes\'s "Grand Tour"',
     isBengali: false,
     slug: 'traveler-world-miguel-gomes-grand-tour',
-    excerpt: 'The celebrated travelogue dresses the present up as the past, evoking the unreality of a fading colonial world.',
     content: `
       <p>Miguel Gomes's <em>Grand Tour</em> begins with a dreamy scene: a man in a white suit sits on a ship departing from Asia, writing a letter to his sister about the sights he has seen.</p>
       
@@ -68,17 +67,14 @@ export const featuredArticles: Article[] = [
       avatar: 'https://via.placeholder.com/80?text=RR',
     },
     publishedAt: '27 MAR 2025',
-    readTime: 8,
     viewCount: 1243,
     tags: ['cinema', 'film-review', 'colonialism', 'miguel-gomes'],
-    isFeatured: true,
   },
   {
     id: '2',
     title: 'Rushes | Hamdan Ballal Attacked, Miami Beach Mayor Relents, White Roadshow Bankrupt',
     isBengali: false,
     slug: 'rushes-hamdan-ballal-miami-beach',
-    excerpt: 'The latest essential film news, articles, sounds, videos, and more from the film world.',
     imageSrc: '/images/hero.jpg',
     category: 'reviews',
     author: {
@@ -91,7 +87,6 @@ export const featuredArticles: Article[] = [
     title: 'Sympathy for the Robot',
     isBengali: false,
     slug: 'sympathy-for-the-robot',
-    excerpt: 'Rashidat Newsome designed an artificial intelligence to help humans decolonize their minds. What could go wrong?',
     imageSrc: '/images/hero.jpg',
     category: 'interviews',
     author: {
@@ -104,7 +99,6 @@ export const featuredArticles: Article[] = [
     title: 'In the Hot Seat: On the 4D Experience',
     isBengali: false,
     slug: 'hot-seat-4d-experience',
-    excerpt: 'The promise of a new sensory cinema calls upon almost every trick from over a half-century of big-screen novelties.',
     imageSrc: '/images/hero.jpg',
     category: 'reviews',
     author: {
@@ -120,7 +114,6 @@ export const editorsChoiceArticles: Article[] = [
     title: 'সবুজ পেশার দেশ: ভিয়েতনাম',
     isBengali: true,
     slug: 'vietnam-green-profession',
-    excerpt: 'ভিয়েতনামের চলচ্চিত্র শিল্পে পরিবেশবান্ধব অনুশীলনের একটি বিস্তারিত অন্বেষণ।',
     content: `
       <p>ভিয়েতনাম এর চলচ্চিত্র শিল্প সম্প্রতি বিশ্বের অন্যতম দ্রুত বর্ধনশীল একটি শিল্প হয়ে উঠেছে। তবে এই অগ্রগতির সাথে সাথে তারা পরিবেশগত দায়িত্বও গুরুত্বের সাথে বিবেচনা করছে।</p>
       
@@ -151,17 +144,15 @@ export const editorsChoiceArticles: Article[] = [
       avatar: 'https://via.placeholder.com/80?text=TS',
     },
     publishedAt: 'NOVEMBER 24, 2023',
-    readTime: 6,
     viewCount: 892,
     tags: ['ভিয়েতনাম', 'পরিবেশ', 'চলচ্চিত্র', 'সবুজ-উদ্যোগ'],
-    isEditorsPick: true,
+    InFeatured: true,
   },
   {
     id: '6',
     title: '"ভাষা তো সত্যজিৎ রায়ের নাম জানতেন"—সত্যজিৎ রায়',
     isBengali: true,
     slug: 'satyajit-ray-language',
-    excerpt: 'Exploring the linguistic contributions of Satyajit Ray to cinema.',
     imageSrc: '/images/hero.jpg',
     category: 'আলাপ-সালাপ',
     author: {
@@ -174,7 +165,6 @@ export const editorsChoiceArticles: Article[] = [
     title: 'বাংলাদেশে ওটিটি প্ল্যাটফর্ম: বাস্তবতার আলোকে নিরীক্ষা',
     isBengali: true,
     slug: 'bangladesh-ott-platforms',
-    excerpt: 'An examination of OTT platforms in Bangladesh and their impact on local cinema.',
     imageSrc: '/images/hero.jpg',
     category: 'বিবিধ',
     author: {
@@ -187,7 +177,6 @@ export const editorsChoiceArticles: Article[] = [
     title: 'আনুপ রাজ্জাক: টিপিকাল এর যুবকের বাংলা জয়',
     isBengali: true,
     slug: 'anup-razzak-bengali-triumph',
-    excerpt: 'A profile of Anup Razzak and his contribution to Bengali cinema.',
     imageSrc: '/images/hero.jpg',
     category: 'চিত্রনাট্য',
     author: {
@@ -202,7 +191,6 @@ export const heroArticle: Article = {
   title: 'থ্রো আওয়ে ইয়োর বুকস: কৈশোর ও আধুনিকতার দ্বন্দ্ব',
   isBengali: true,
   slug: 'traveler-and-world-main',
-  excerpt: '',
   imageSrc: '/images/hero.jpg',
   category: 'Feature',
   author: {

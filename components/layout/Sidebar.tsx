@@ -134,72 +134,6 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
           </Button>
         </div>
 
-        {/* User Authentication Section */}
-        {isAuthenticated ? (
-          // Auth state: User card
-          <div className="mb-5 rounded-2xl border border-border/60 bg-gradient-to-br from-muted/70 via-muted/40 to-background/80 p-4 shadow-[0_8px_30px_-18px_rgba(0,0,0,0.75)] backdrop-blur-sm">
-            
-
-            <div className="mb-4 flex items-center gap-3">
-              <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-brand-accent/70 ring-2 ring-background/80">
-                <Image
-                  src={getUserAvatarUrl(user)}
-                  alt={user?.username || 'User'}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-base font-semibold leading-none text-foreground">
-                  {user?.username}
-                </p>
-                <p className="mt-1 truncate text-xs text-muted-foreground">{user?.email}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2.5">
-              <Link href="/account" className="flex-1" onClick={closeSidebar}>
-                <Button
-                  variant="outline"
-                  className="h-9 w-full justify-center border-border/70 bg-background/80 font-medium hover:bg-background"
-                  size="sm"
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  Profile
-                </Button>
-              </Link>
-              
-              <Button 
-                variant="ghost" 
-                className="h-9 flex-1 justify-center border border-transparent font-medium text-red-600 hover:border-red-200 hover:bg-red-50/80 dark:text-red-400 dark:hover:border-red-900/40 dark:hover:bg-red-900/20" 
-                size="sm"
-                onClick={() => { logout(); closeSidebar(); }}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Log Out
-              </Button>
-            </div>
-          </div>
-        ) : (
-          // Non-auth state: CTA card
-          <div className="mb-6 rounded-lg border border-border p-4">
-            <p className="text-sm font-semibold text-foreground mb-1">New here?</p>
-            <p className="text-xs text-muted-foreground mb-3">Join the DUFS community</p>
-            <div className="flex flex-col gap-2">
-              <Link href="/auth/signin" onClick={closeSidebar} className="w-full">
-                <Button variant="outline" className="w-full justify-center">
-                  <LogIn className="mr-0 h-4 w-4" /> Sign In
-                </Button>
-              </Link>
-              <Link href="/auth/signup" onClick={closeSidebar} className="w-full">
-                <Button variant="default" className="w-full justify-center">
-                  <UserPlus className="mr-0 h-4 w-4" /> Create Account
-                </Button>
-              </Link>
-            </div>
-          </div>
-        )}
-
         <div className='md:hidden mt-0 mb-8 flex-shrink-0'>
           <ThemePill />
         </div>
@@ -229,6 +163,71 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
             ))}
           </ul>
         </nav>
+
+        {/* User Authentication Section */}
+        {isAuthenticated ? (
+          <div className="mt-5 rounded-xl border border-border/70 bg-muted/40 p-3">
+            <div className="flex items-center gap-2.5">
+              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-border">
+                <Image
+                  src={getUserAvatarUrl(user)}
+                  alt={user?.username || 'User'}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold leading-tight text-foreground">
+                  {user?.username}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+              </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Link href="/account" className="w-full" onClick={closeSidebar}>
+                <Button
+                  variant="outline"
+                  className="h-8 w-full justify-center text-xs font-medium"
+                  size="sm"
+                >
+                  <User className="mr-1.5 h-3.5 w-3.5" />
+                  Profile
+                </Button>
+              </Link>
+
+              <Button
+                variant="ghost"
+                className="h-8 w-full justify-center text-xs font-medium text-red-600 hover:bg-red-50/80 dark:text-red-400 dark:hover:bg-red-900/20"
+                size="sm"
+                onClick={() => { logout(); closeSidebar(); }}
+              >
+                <LogOut className="mr-1.5 h-3.5 w-3.5" />
+                Log Out
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-5 rounded-xl border border-border/70 bg-muted/40 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-foreground/90">New here?</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">Join the DUFS community</p>
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Link href="/auth/signin" onClick={closeSidebar} className="w-full">
+                <Button variant="outline" size="sm" className="h-8 w-full justify-center text-xs">
+                  <LogIn className="mr-1.5 h-3.5 w-3.5" />
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/auth/signup" onClick={closeSidebar} className="w-full">
+                <Button variant="default" size="sm" className="h-8 w-full justify-center text-xs">
+                  <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Bottom Section */}
         <div className="mt-6 flex-shrink-0 space-y-6">

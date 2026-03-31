@@ -174,7 +174,6 @@ export function getArticleData(article: Article | null | undefined) {
     documentId: article.documentId,
     title: article.title,
     slug: article.slug || '',
-    excerpt: article.excerpt || '',
     content: article.content || '',
     image: getArticleImage(article),
     category: getCategoryName(article.category),
@@ -184,14 +183,13 @@ export function getArticleData(article: Article | null | undefined) {
       slug: getAuthorSlug(article.author),
     },
     publishedAt: formatPublishDate(article.publishedAt),
+    BlogDate: article.BlogDate ? formatPublishDate(article.BlogDate) : undefined,
     language: article.language || 'en',
-    readTime: article.readTime || estimateReadingTime(article.content),
     viewCount: article.viewCount || 0,
     likes: article.likes || 0,
     tags: article.tags?.map(tag => tag.name) || [],
-    isFeatured: article.isFeatured || false,
-    isEditorsPick: article.isEditorsPick || false,
-    isHero: article.isHero || false,
+    InFeatured: article.InFeatured || false,
+    InSlider: article.InSlider || false,
   };
 }
 
@@ -208,7 +206,6 @@ export function getArticleDataEnglishcategory(article: Article | null | undefine
     documentId: article.documentId,
     title: article.title,
     slug: article.slug || '',
-    excerpt: article.excerpt || '',
     content: article.content || '',
     image: getArticleImage(article),
     category: getCategoryNameEn(article.category),
@@ -218,14 +215,13 @@ export function getArticleDataEnglishcategory(article: Article | null | undefine
       slug: getAuthorSlug(article.author),
     },
     publishedAt: formatPublishDate(article.publishedAt),
+    BlogDate: article.BlogDate ? formatPublishDate(article.BlogDate) : undefined,
     language: article.language || 'en',
-    readTime: article.readTime || estimateReadingTime(article.content),
     viewCount: article.viewCount || 0,
     likes: article.likes || 0,
     tags: article.tags?.map(tag => tag.name) || [],
-    isFeatured: article.isFeatured || false,
-    isEditorsPick: article.isEditorsPick || false,
-    isHero: article.isHero || false,
+    InFeatured: article.InFeatured || false,
+    InSlider: article.InSlider || false,
   };
 }
 
@@ -254,23 +250,19 @@ export function buildQueryString(params: Record<string, string | string[] | numb
  * Note: Backend uses capital letters in some fields (Slug vs slug)
  */
 export function createStrapiFilters(filters: {
-  isFeatured?: boolean;
-  isEditorsPick?: boolean;
-  isHero?: boolean;
+  InFeatured?: boolean;
+  InSlider?: boolean;
   language?: string;
   category?: string;
   tag?: string;
 }): Record<string, string> {
   const strapiFilters: Record<string, string> = {};
 
-  if (filters.isFeatured !== undefined) {
-    strapiFilters['filters[isFeatured][$eq]'] = filters.isFeatured ? 'true' : 'false';
+  if (filters.InFeatured !== undefined) {
+    strapiFilters['filters[InFeatured][$eq]'] = filters.InFeatured ? 'true' : 'false';
   }
-  if (filters.isEditorsPick !== undefined) {
-    strapiFilters['filters[isEditorsPick][$eq]'] = filters.isEditorsPick ? 'true' : 'false';
-  }
-  if (filters.isHero !== undefined) {
-    strapiFilters['filters[isHero][$eq]'] = filters.isHero ? 'true' : 'false';
+  if (filters.InSlider !== undefined) {
+    strapiFilters['filters[InSlider][$eq]'] = filters.InSlider ? 'true' : 'false';
   }
   if (filters.language) {
     strapiFilters['filters[language][$eq]'] = filters.language;

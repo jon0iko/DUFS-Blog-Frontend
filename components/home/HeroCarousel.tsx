@@ -327,9 +327,6 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
   const titleFontClass = currentArticle?.title
     ? getFontClassAlteHaasGrotesk(currentArticle.title)
     : "font-altehaasgrotesk";
-  const excerptFontClass = currentArticle?.excerpt
-    ? getFontClass(currentArticle.excerpt)
-    : "font-roboto";
   const authorFontClass = currentArticle?.author?.name
     ? getFontClass(currentArticle.author.name)
     : "font-roboto";
@@ -428,13 +425,13 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
                             </span>
                           </>
                         )}
-                        {currentArticle?.publishedAt && (
+                        {(currentArticle?.BlogDate || currentArticle?.publishedAt) && (
                           <>
                             <span className="text-white/60 text-xs md:text-base">
                               •
                             </span>
                             <span className="text-white/80 text-xs md:text-sm drop-shadow-md font-bold">
-                              {formatPublishDate(currentArticle.publishedAt)}
+                              {formatPublishDate(currentArticle.BlogDate || currentArticle.publishedAt)}
                             </span>
                           </>
                         )}
