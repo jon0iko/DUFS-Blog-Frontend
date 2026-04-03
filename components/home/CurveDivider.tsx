@@ -15,7 +15,7 @@ export default function CurveDivider() {
         >
           <path
             d="M970.5 23.2567C1506.49 23.2567 1941 175.244 1941 362.744V0.000159557L6.29425e-05 0.000159557V362.744C6.29425e-05 175.244 434.509 23.2567 970.5 23.2567Z"
-            className="fill-[#E0D5D0] dark:fill-[#E0D5D0] transition-colors duration-300"
+            className="fill-brand-accent dark:fill-brand-accent transition-colors duration-300"
           />
         </svg>
       </div>
@@ -32,7 +32,7 @@ export default function CurveDivider() {
         >
           <path
             d="M970.5 23.2567C1506.49 23.2567 1941 175.244 1941 362.744V0.000159557L6.29425e-05 0.000159557V362.744C6.29425e-05 175.244 434.509 23.2567 970.5 23.2567Z"
-            className="fill-[#E0D5D0] dark:fill-[#E0D5D0] transition-colors duration-300"
+            className="fill-brand-accent dark:fill-brand-accent transition-colors duration-300"
           />
         </svg>
       </div>

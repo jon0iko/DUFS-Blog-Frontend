@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await loginApi(data);
       setUser(response.user);
       const redirectUrl = searchParams.get('redirect') || '/';
-      router.push(redirectUrl);
+      router.replace(redirectUrl);
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await registerApi(data);
       setUser(response.user);
       const redirectUrl = searchParams.get('redirect') || '/';
-      router.push(redirectUrl);
+      router.replace(redirectUrl);
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);

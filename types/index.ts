@@ -315,6 +315,17 @@ export interface Draft {
   updatedAt: string;
 }
 
+export interface textReelContent {
+  id: number;
+  documentId: string;
+  Content: string;
+  Show: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type TextReelContentResponse = StrapiResponse<textReelContent>;
+
 // Draft response from API
 export type DraftResponse = StrapiResponse<Draft[]>;
 
@@ -332,24 +343,6 @@ export type SocialLinkResponse = StrapiResponse<SocialLink[]>;
 export type SiteConfigResponse = StrapiResponse<SiteConfig>;
 export type TermsAndConditionsResponse = StrapiResponse<TermsAndConditions>;
 
-// Legacy types for backward compatibility (will be gradually replaced)
-export interface LegacyArticle {
-  id: string;
-  title: string;
-  isBengali: boolean;
-  slug: string;
-  content?: string;
-  imageSrc: string;
-  category: string;
-  author: {
-    name: string;
-    avatar?: string;
-  };
-  publishedAt: string;
-  viewCount?: number;
-  tags?: string[];
-  InFeatured?: boolean;
-}
 
 export interface NavItem {
   title: string;

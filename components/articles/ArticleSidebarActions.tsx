@@ -59,12 +59,12 @@ export default function ArticleSidebarActions({
   onDiscuss,
   onSepiaChange,
 }: ArticleSidebarActionsProps) {
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
 
-  // Displayed theme: sepia overrides the global theme locally
+  // Displayed theme: sepia overrides, otherwise show resolved theme (actual dark/light instead of "system")
   const displayedTheme: ThemeOption = isSepiaMode
     ? "sepia"
-    : ((theme as ThemeOption) ?? "system");
+    : ((resolvedTheme as ThemeOption) ?? "light");
 
   const cyclefontSize = () => {
     const idx = FONT_SIZE_CYCLE.indexOf(fontSize);
@@ -161,7 +161,7 @@ export default function ArticleSidebarActions({
       {/* Share */}
       <ShareMenu align="right">
         <button
-          className="flex items-center justify-center w-10 h-10 rounded-xl text-muted-foreground hover:text-foreground transition-all"
+          className="flex items-center justify-center w-10 h-10 z-[100] rounded-xl text-muted-foreground hover:text-foreground transition-all"
           title="Share article"
         >
           <Share2 className="w-5 h-5" />

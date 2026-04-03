@@ -36,9 +36,6 @@ export function getArticleImage(article: Article): string {
   if (article.featuredImage) {
     return getStrapiMediaUrl(article.featuredImage);
   }
-  if (article.gallery && article.gallery.length > 0) {
-    return getStrapiMediaUrl(article.gallery[0]);
-  }
   return '/images/placeholder.jpg';
 }
 
@@ -163,6 +160,8 @@ export function getAuthorSlug(author?: Author): string | undefined {
  * Returns null if article is invalid (for proper error handling)
  */
 export function getArticleData(article: Article | null | undefined) {
+  console.log('getArticleData called with article:', article);
+
   // Validate article structure - return null for proper error handling
   if (!article || !article.title) {
     console.error('Invalid or missing article data');
@@ -190,6 +189,7 @@ export function getArticleData(article: Article | null | undefined) {
     tags: article.tags?.map(tag => tag.name) || [],
     InFeatured: article.InFeatured || false,
     InSlider: article.InSlider || false,
+    publication_issue: article.publication_issue ? { Title: article.publication_issue.Title, documentId: article.publication_issue.documentId } : undefined,
   };
 }
 
@@ -222,6 +222,7 @@ export function getArticleDataEnglishcategory(article: Article | null | undefine
     tags: article.tags?.map(tag => tag.name) || [],
     InFeatured: article.InFeatured || false,
     InSlider: article.InSlider || false,
+    publication_issue: article.publication_issue ? { Title: article.publication_issue.Title, documentId: article.publication_issue.documentId } : undefined,
   };
 }
 

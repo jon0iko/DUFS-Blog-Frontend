@@ -6,7 +6,7 @@ import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap
 
 const StyledBlockquoteView = () => {
   return (
-    <NodeViewWrapper className="dufs-editor-blockquote not-prose my-10">
+    <NodeViewWrapper className="dufs-editor-blockquote not-prose my-4">
       <div className="flex items-center gap-4 md:gap-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -42,6 +42,46 @@ const StyledBlockquoteView = () => {
 const StyledBlockquote = Blockquote.extend({
   addNodeView() {
     return ReactNodeViewRenderer(StyledBlockquoteView);
+  },
+
+  addKeyboardShortcuts() {
+    return {
+      'Mod-Enter': ({ editor }) => {
+        if (!editor.isActive('blockquote')) return false
+
+        // Exit blockquote and create a new paragraph below
+        return editor
+          .chain()
+          .command(({ tr, dispatch }) => {
+            const { $from } = tr.selection
+            
+            // Find the blockquote parent
+            let blockquoteDepth = 0
+            for (let d = $from.depth; d > 0; d--) {
+              if ($from.node(d).type.name === 'blockquote') {
+                blockquoteDepth = d
+                break
+              }
+            }
+
+            if (blockquoteDepth === 0) return false
+
+            // Get position after blockquote
+            const blockquoteNode = $from.node(blockquoteDepth)
+            const blockquotePos = $from.before(blockquoteDepth)
+            const posAfter = blockquotePos + blockquoteNode.nodeSize
+
+            // Insert new paragraph and move cursor there
+            const paragraph = editor.state.schema.nodes.paragraph.create()
+            tr.insert(posAfter, paragraph)
+            tr.setSelection(tr.selection.constructor.near(tr.doc.resolve(posAfter + 1)))
+
+            if (dispatch) dispatch(tr)
+            return true
+          })
+          .run()
+      },
+    }
   },
 });
 

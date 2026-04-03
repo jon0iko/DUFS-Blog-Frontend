@@ -116,3 +116,18 @@ export function formatArticleDate(dateString?: string, locale: string = 'en-US')
     })
     .toUpperCase();
 }
+
+/**
+ * Get current date and time in UTC+6 timezone
+ * Returns ISO string combined with UTC+6 time for Strapi
+ */
+export function getCurrentDateTimeUTC6(): string {
+  // Create date in UTC+6 (Bangladesh time)
+  const now = new Date();
+  const utc6Offset = 6 * 60; // UTC+6 is 360 minutes ahead of UTC
+  const localOffset = now.getTimezoneOffset(); // User's local offset in minutes
+  const diff = utc6Offset + localOffset; // Total adjustment needed
+  const utc6Date = new Date(now.getTime() + diff * 60 * 1000);
+  
+  return utc6Date.toISOString();
+}

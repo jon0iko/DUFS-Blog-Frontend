@@ -1,18 +1,33 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import PublicationsSection from '../../components/home/PublicationsSection';
-import { serverStrapiAPI } from '@/lib/server-api';
+import { strapiAPI } from '@/lib/api';
 import type { Publication } from '@/types';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 
-export default async function PublicationsPage() {
-  let publications: Publication[] = [];
+export default function PublicationsPage() {
+  const [publications, setPublications] = useState<Publication[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  try {
-    const response = await serverStrapiAPI.getPublications();
-    publications = response.data.filter((item) => !item.Hide);
-  } catch (error) {
-    console.error('Failed to load publications page data:', error);
-  }
+  useEffect(() => {
+    const fetchPublications = async () => {
+      try {
+        setLoading(true);
+        const response = await strapiAPI.getPublications();
+        const filtered = (response.data || []).filter((item: any) => !item.Hide);
+        setPublications(filtered);
+      } catch (error) {
+        console.error('Failed to load publications page data:', error);
+        setPublications([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPublications();
+  }, []);
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -36,7 +51,11 @@ export default async function PublicationsPage() {
             <ChevronLeft className="w-4 h-4" /> Back to Home
           </Link>
         </div>
-        <PublicationsSection publications={publications} />
+        {loading ? (
+          <div className="py-12 text-center">Loading publications...</div>
+        ) : (
+          <PublicationsSection publications={publications} />
+        )}
       </div>
     </div>
   );

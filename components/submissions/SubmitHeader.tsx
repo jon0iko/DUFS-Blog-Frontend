@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Save, MoreVertical, FileText, Edit3, FilePlus, Sun, Moon, Check, MessageSquareWarning, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -36,6 +37,7 @@ export default function SubmitHeader({
   const router = useRouter()
   const { theme, setTheme } = useTheme()
   const toast = useToast()
+  const { user } = useAuth()
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false)
   const [issueDescription, setIssueDescription] = useState('')
   const [isSubmittingIssue, setIsSubmittingIssue] = useState(false)
@@ -72,6 +74,7 @@ export default function SubmitHeader({
       await strapiAPI.createUserRequestReport({
         section: 'EditorIssue',
         description: trimmedDescription,
+        userId: user?.id,
       })
       toast.success('Issue reported successfully. Thank you for the feedback.', 'Report Submitted')
       closeIssueDialog()

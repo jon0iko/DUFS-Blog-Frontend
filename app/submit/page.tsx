@@ -59,7 +59,7 @@ const SubmitPage = () => {
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/auth/signin?redirect=/submit');
+      router.replace('/auth/signin?redirect=/submit');
     }
   }, [authLoading, isAuthenticated, router]);
 
@@ -123,7 +123,8 @@ const SubmitPage = () => {
     try {
       await strapiAPI.createUserRequestReport({
         section: 'ArticleDeletion',
-        description: `Article: ${articleToDelete.title} (Slug: ${articleToDelete.slug}) | Reason: ${deleteReason}`,
+        description: `Article: ${articleToDelete.title} | Reason: ${deleteReason}`,
+        userId: user?.id,
       });
       toast.success('Your deletion request has been submitted to the editors.');
       setIsDeleteModalOpen(false);
@@ -232,7 +233,7 @@ const SubmitPage = () => {
         </div>
 
         {/* Hero Title - Alte Haas Grotesk */}
-        <h1 className="font-zillaslab font-bold text-4xl leading-none tracking-[0.02em] text-foreground md:text-6xl" aria-label="Writers' Room">
+        <h1 className="font-altehaasgrotesk text-3xl leading-none tracking-[0.02em] text-foreground md:text-6xl" aria-label="Writers' Room">
           <span ref={typedTextRef} aria-hidden className="whitespace-pre" />
           <span ref={caretRef} aria-hidden className="inline-block select-none font-sans font-thin ml-0.5">|</span>
         </h1>
@@ -347,7 +348,7 @@ const SubmitPage = () => {
               <Link href="/editor" className="text-sm font-bold hover:underline mt-2 inline-block">Start writing</Link>
             </div>
           ) : (
-            <div className="space-y-6 md:space-y-8">
+            <div className="space-y-6 md:space-y-0 md:grid md:grid-cols-2 md:gap-6 lg:gap-8">
               {articles.map((article, idx) => {
                 const rotation = (idx % 2 === 0) ? '-0.5deg' : '0.5deg';
                 const titleFontClass = getFontClass(article.title);

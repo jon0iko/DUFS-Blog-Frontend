@@ -6,7 +6,6 @@ import { Search, ChevronDown, X, SlidersHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Category } from "@/types";
 import { cn } from "@/lib/utils";
-import { getFontClass } from "@/lib/fonts";
 import ArticlesList from "./ArticlesList";
 import CategoryDropdown from "./CategoryDropdown";
 
@@ -41,10 +40,14 @@ export default function BrowseInteractiveBlocks({
       { value: "all", label: "All Categories" },
       ...categories.map((category) => ({
         value: category.Slug || "",
-        label: `${category.nameBn || category.Name} (${category.nameEn || category.Name})`,
+        label: language === 'en' 
+          ? (category.nameEn || category.Name)
+          : language === 'bn'
+          ? (category.nameBn || category.Name)
+          : `${category.nameBn || category.Name} (${category.nameEn || category.Name})`,
       })),
     ],
-    [categories]
+    [categories, language]
   );
 
   useEffect(() => {
@@ -109,7 +112,7 @@ export default function BrowseInteractiveBlocks({
 
         {/* Content Container - Adjusted padding for better vertical centering on the curve */}
         <div className="container relative z-20 mx-auto px-4 pb-14 pt-10 lg:px-6 lg:pb-16 lg:pt-12">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-center lg:gap-8">
+          <div className="flex flex-col gap-6 big:flex-row big:items-center big:justify-center big:gap-8">
             
             {/* 1. Category Dropdown */}
             <CategoryDropdown
@@ -128,11 +131,11 @@ export default function BrowseInteractiveBlocks({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
                     transition={{ duration: 0.15 }}
-                    className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-center lg:gap-6"
+                    className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-center big:gap-6"
                   >
                     {/* Language Filter */}
                     <div className="flex items-center gap-3">
-                      <span className="whitespace-nowrap text-[1rem] lg:text-[1.1rem] font-black text-[#211A17]">
+                      <span className="whitespace-nowrap text-[1rem] big:text-[1.1rem] font-black text-[#211A17]">
                         Language:
                       </span>
                       <div className="relative flex-grow sm:w-32 sm:flex-grow-0">
@@ -151,7 +154,7 @@ export default function BrowseInteractiveBlocks({
 
                     {/* Sort Filter */}
                     <div className="flex items-center gap-3">
-                      <span className="whitespace-nowrap text-[1rem] lg:text-[1.1rem] font-black text-[#211A17]">
+                      <span className="whitespace-nowrap text-[1rem] big:text-[1.1rem] font-black text-[#211A17]">
                         Sort By:
                       </span>
                       <div className="relative flex-grow sm:w-44 sm:flex-grow-0">
@@ -213,32 +216,32 @@ export default function BrowseInteractiveBlocks({
             </div>
 
             {/* 3. Toggle Buttons (Filter & Search) */}
-            <div className="flex w-full rounded-[8px] border border-[#A79A92] bg-[#CFC6C1] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_2px_4px_rgba(41,33,29,0.2)] dark:border-[#3A3431] dark:bg-[#2A2522] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_2px_6px_rgba(0,0,0,0.45)] lg:w-auto">
+            <div className="flex w-full rounded-[8px] border border-[#A79A92] bg-[#CFC6C1] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_2px_4px_rgba(41,33,29,0.2)] dark:border-[#3A3431] dark:bg-[#2A2522] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_2px_6px_rgba(0,0,0,0.45)] big:w-auto">
               <button
                 onClick={() => setIsSearchMode(false)}
                 className={cn(
-                  "h-10 flex-1 rounded-[6px] border px-4 text-[0.9rem] lg:px-8 lg:text-[1.1rem] font-black uppercase tracking-wider transition-all duration-150",
+                  "h-10 flex-1 rounded-[6px] border px-4 text-[0.9rem] big:px-8 big:text-[1.1rem] font-black uppercase tracking-wider transition-all duration-150",
                   !isSearchMode 
                     ? "border-[#5E5752] bg-[#6A635E] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_2px_3px_rgba(41,33,29,0.35)]"
                     : "border-transparent bg-transparent text-[#29211D] hover:border-[#A79A92] hover:bg-[#C2B8B1]  dark:text-[#E8DDD4] dark:hover:border-[#4C433E] dark:hover:bg-[#3A3431]"
                 )}
               >
                 <span className="flex items-center justify-center gap-2">
-                   <SlidersHorizontal className="h-4 w-4 lg:hidden" />
+                   <SlidersHorizontal className="h-4 w-4 big:hidden" />
                    Filter
                 </span>
               </button>
               <button
                 onClick={() => setIsSearchMode(true)}
                 className={cn(
-                  "h-10 flex-1 rounded-[6px] border px-4 text-[0.9rem] lg:px-8 lg:text-[1.1rem] font-black uppercase tracking-wider transition-all duration-150",
+                  "h-10 flex-1 rounded-[6px] border px-4 text-[0.9rem] big:px-8 big:text-[1.1rem] font-black uppercase tracking-wider transition-all duration-150",
                   isSearchMode 
                     ? "border-[#5E5752] bg-[#6A635E] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_2px_3px_rgba(41,33,29,0.35)]"
                     : "border-transparent bg-transparent text-[#29211D] hover:border-[#A79A92] hover:bg-[#C2B8B1]  dark:text-[#E8DDD4] dark:hover:border-[#4C433E] dark:hover:bg-[#3A3431]"
                 )}
               >
                 <span className="flex items-center justify-center gap-2">
-                   <Search className="h-4 w-4 lg:hidden" />
+                   <Search className="h-4 w-4 big:hidden" />
                    Search
                 </span>
               </button>

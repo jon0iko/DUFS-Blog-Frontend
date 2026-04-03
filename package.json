@@ -28,6 +28,7 @@
     "@react-oauth/google": "^0.12.1",
     "@tiptap/cli": "^3.3.9",
     "@tiptap/core": "^3.10.7",
+    "@tiptap/extension-code-block": "^3.22.0",
     "@tiptap/extension-code-block-lowlight": "^3.10.7",
     "@tiptap/extension-color": "^3.10.7",
     "@tiptap/extension-highlight": "^3.10.7",

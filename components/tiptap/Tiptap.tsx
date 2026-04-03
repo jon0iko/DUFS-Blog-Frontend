@@ -25,6 +25,13 @@ import { getToken } from '@/lib/auth'
 // Re-export types for consumers
 export type { TiptapRef, TiptapProps } from './types'
 
+interface EditorImage {
+  file: File
+  tempUrl: string
+  caption: string
+  alt: string
+}
+
 const Tiptap = forwardRef<TiptapRef, TiptapProps>(({ 
   initialContent = '', 
   onContentChange, 
@@ -35,6 +42,7 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
   const toast = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [editorImages, setEditorImages] = useState<EditorImage[]>([])
   const lastContentRef = useRef<string>(initialContent)
   const isInitializedRef = useRef(false)
 
@@ -69,14 +77,10 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
       throw new Error(validation.error || 'Invalid image file')
     }
 
-    const token = getToken()
-    if (!token) {
-      throw new Error('You must be signed in to upload images.')
-    }
-
     const localPreviewUrl = URL.createObjectURL(file)
 
     try {
+      // Just insert the image with blob URL - don't upload yet
       editorInstance.chain().focus().insertContent({
         type: 'imageWithCaption',
         attrs: {
@@ -86,32 +90,18 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
         },
       }).run()
 
-      const uploadedImage = await uploadImageToStrapi(file, token)
-      const imageUrl = getStrapiMediaUrl(uploadedImage.url)
-
-      const { doc } = editorInstance.state
-      let imagePos: number | null = null
-
-      doc.descendants((node, pos) => {
-        if (node.type.name === 'imageWithCaption' && node.attrs.src === localPreviewUrl) {
-          imagePos = pos
-          return false
-        }
-        return true
-      })
-
-      if (imagePos !== null) {
-        editorInstance.chain()
-          .setNodeSelection(imagePos)
-          .updateAttributes('imageWithCaption', { src: imageUrl })
-          .run()
-      }
+      // Store the file for later upload on publish
+      setEditorImages(prev => [...prev, { 
+        file, 
+        tempUrl: localPreviewUrl, 
+        caption: '',
+        alt: file.name 
+      }])
     } catch (error) {
       removeImageNodeBySrc(editorInstance, localPreviewUrl)
+      URL.revokeObjectURL(localPreviewUrl)
       throw error
     }
-
-    URL.revokeObjectURL(localPreviewUrl)
   }, [removeImageNodeBySrc])
 
   const uploadImages = useCallback(async (files: File[], editorInstance: Editor) => {
@@ -124,7 +114,7 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
       try {
         await uploadAndInsertImage(file, editorInstance)
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to upload image'
+        const message = error instanceof Error ? error.message : 'Failed to add image'
         failures.push(`${file.name}: ${message}`)
       }
     }
@@ -134,7 +124,7 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
       const suffix = failures.length > 2 ? ` (+${failures.length - 2} more)` : ''
       toast.error(`${shownFailures}${suffix}`, 'Image Upload Failed')
     } else if (files.length > 1) {
-      toast.success(`${files.length} images uploaded successfully`)
+      toast.success(`${files.length} images added to your article`)
     }
 
     setIsUploading(false)
@@ -268,7 +258,60 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
     focus: () => {
       editor?.commands.focus()
     },
-  }), [editor, getEditorMarkdown])
+    uploadPendingImages: async () => {
+      if (!editor || editor.isDestroyed || !editorImages.length) return
+      
+      setIsUploading(true)
+      const token = getToken()
+      
+      if (!token) {
+        toast.error('You must be signed in to upload images.')
+        setIsUploading(false)
+        return
+      }
+
+      try {
+        for (const pendingImage of editorImages) {
+          try {
+            const uploadedImage = await uploadImageToStrapi(pendingImage.file, token)
+            const realUrl = getStrapiMediaUrl(uploadedImage.url)
+
+            const { doc } = editor.state
+            let imagePos: number | null = null
+
+            doc.descendants((node, pos) => {
+              if (node.type.name === 'imageWithCaption' && node.attrs.src === pendingImage.tempUrl) {
+                imagePos = pos
+                return false
+              }
+              return true
+            })
+
+            if (imagePos !== null) {
+              editor.chain()
+                .setNodeSelection(imagePos)
+                .updateAttributes('imageWithCaption', { src: realUrl })
+                .run()
+            }
+
+            URL.revokeObjectURL(pendingImage.tempUrl)
+          } catch (error) {
+            console.error(`Failed to upload image ${pendingImage.file.name}:`, error)
+            throw error
+          }
+        }
+
+        setEditorImages([])
+        toast.success('All images uploaded successfully!')
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to upload images'
+        toast.error(message)
+        throw error
+      } finally {
+        setIsUploading(false)
+      }
+    },
+  }), [editor, getEditorMarkdown, editorImages, toast])
 
   const handleImageUpload = useCallback(() => {
     fileInputRef.current?.click()
@@ -317,7 +360,7 @@ const Tiptap = forwardRef<TiptapRef, TiptapProps>(({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                <span>Uploading image...</span>
+                <span>Adding image to editor...</span>
               </div>
             </div>
           )}

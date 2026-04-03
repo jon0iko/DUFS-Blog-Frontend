@@ -10,12 +10,21 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   const searchParams = useSearchParams();
   const reason = searchParams.get('reason');
   const isSessionEnded = reason === 'session-ended';
+  const redirectUrl = searchParams.get('redirect');
 
   const handleNavigate = () => {
     if (isSessionEnded) {
       router.push('/');
     } else {
+      // Always try to go back in browser history when canceling login
       router.back();
+      
+      // Fallback after a short delay if history is empty
+      setTimeout(() => {
+        if (window.history.length <= 1) {
+          router.push('/');
+        }
+      }, 100);
     }
   };
 

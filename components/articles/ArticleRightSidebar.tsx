@@ -1,17 +1,20 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { FolderOpen, Tag } from "lucide-react";
 import { Article } from "@/types";
 import { getFontClass } from "@/lib/fonts";
+import { getStrapiMediaUrl } from "@/lib/strapi-helpers";
 import { cn } from "@/lib/utils";
 
 interface ArticleRightSidebarProps {
   article: Article;
+  publicationIssue?: Article["publication_issue"];
 }
 
-export default function ArticleRightSidebar({ article }: ArticleRightSidebarProps) {
+export default function ArticleRightSidebar({ article, publicationIssue }: ArticleRightSidebarProps) {
   return (
     <aside className="hidden xl:block self-start sticky top-24">
       <div className="space-y-4">
@@ -40,6 +43,43 @@ export default function ArticleRightSidebar({ article }: ArticleRightSidebarProp
               Click to explore more
             </p>
           </div>
+        )}
+
+        {/* Publication issue */}
+        {publicationIssue && (
+          <Link
+            href={`/issue?id=${publicationIssue.documentId}`}
+            className="block group"
+          >
+            <div className="border border-border rounded-lg overflow-hidden hover:border-foreground transition-colors">
+              <div className="flex gap-3">
+                {publicationIssue.CoverImage && (
+                  <div className="relative w-20 h-28 flex-shrink-0 bg-muted">
+                    <Image
+                      src={getStrapiMediaUrl(publicationIssue.CoverImage)}
+                      alt={publicationIssue.Title}
+                      fill
+                      className="object-contain object-center opacity-95 group-hover:opacity-100 transition-opacity p-1.5"
+                    />
+                  </div>
+                )}
+
+                <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
+                    Published In
+                  </p>
+                  <h4
+                    className={cn(
+                      "font-semibold pl-1 text-foreground text-sm group-hover:text-primary transition-colors line-clamp-3",
+                      getFontClass(publicationIssue.Title),
+                    )}
+                  >
+                    {publicationIssue.Title}
+                  </h4>
+                </div>
+              </div>
+            </div>
+          </Link>
         )}
 
         {/* Tags */}

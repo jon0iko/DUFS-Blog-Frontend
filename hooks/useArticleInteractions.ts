@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { strapiAPI } from "@/lib/api";
 import { Article } from "@/types";
 import { useToast } from "@/components/ui/toast";
@@ -36,6 +36,7 @@ export function useArticleInteractions({
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [bookmarkDocumentId, setBookmarkDocumentId] = useState<string | null>(null);
   const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
+  const bookmarkPendingRef = useRef(false);
 
   // Sync initial likes count from article
   useEffect(() => {
@@ -118,27 +119,44 @@ export function useArticleInteractions({
       toast.info("Sign in to save articles");
       return;
     }
-    if (!article?.id || isBookmarkLoading) return;
+    if (!article?.id) return;
 
+    // Prevent duplicate requests using ref
+    if (bookmarkPendingRef.current) return;
+    bookmarkPendingRef.current = true;
     setIsBookmarkLoading(true);
+
     try {
-      if (isBookmarked && bookmarkDocumentId) {
+      // Capture current state values at the time of execution
+      const shouldRemove = isBookmarked && bookmarkDocumentId;
+
+      if (shouldRemove) {
+        // Remove bookmark
         const success = await strapiAPI.removeBookmark(bookmarkDocumentId);
         if (success) {
           setIsBookmarked(false);
           setBookmarkDocumentId(null);
+          toast.info("Bookmark removed");
+        } else {
+          toast.error("Failed to remove bookmark");
         }
       } else {
-        const result = await strapiAPI.bookmarkArticle(userId, article.id);
+        // Add bookmark
+        const result = await strapiAPI.bookmarkArticle(userId, article.documentId);
         if (result.success) {
           setIsBookmarked(true);
           if (result.bookmarkId) setBookmarkDocumentId(result.bookmarkId);
+          toast.info("Article bookmarked");
+        } else {
+          toast.error("Failed to bookmark article");
         }
       }
     } catch (err) {
       console.error("Error handling bookmark:", err);
+      toast.error("Error updating bookmark");
     } finally {
       setIsBookmarkLoading(false);
+      bookmarkPendingRef.current = false;
     }
   }, [
     isAuthenticated,
@@ -146,7 +164,6 @@ export function useArticleInteractions({
     article?.id,
     isBookmarked,
     bookmarkDocumentId,
-    isBookmarkLoading,
     toast,
   ]);
 

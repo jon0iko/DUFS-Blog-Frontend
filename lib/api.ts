@@ -191,6 +191,12 @@ class StrapiAPI {
         throw new Error(`API Error: ${response.status} ${response.statusText}`);
       }
 
+      // Handle empty responses (e.g., 204 No Content or DELETE with no body)
+      const contentType = response.headers.get('content-type');
+      if (!contentType || response.status === 204) {
+        return undefined as T;
+      }
+
       const data = await response.json();
       return data;
     } catch (error) {
@@ -204,6 +210,57 @@ class StrapiAPI {
    * Get articles with filters and pagination
    * Strapi v5 API: GET /api/articles
    */
+  // async getArticles(params?: {
+  //   page?: number;
+  //   pageSize?: number;
+  //   category?: string;
+  //   tag?: string;
+  //   language?: 'en' | 'bn' | 'both';
+  //   featured?: boolean;
+  //   editorsPick?: boolean;
+  //   sort?: string;
+  //   populate?: string[];
+  // }): Promise<ArticleResponse> {
+  //   const searchParams = new URLSearchParams();
+    
+  //   // Strapi v5: status=published is required to get published content (draft/publish system)
+  //   searchParams.append('status', 'published');
+    
+  //   // Pagination
+  //   if (params?.page) searchParams.append('pagination[page]', params.page.toString());
+  //   if (params?.pageSize) searchParams.append('pagination[pageSize]', params.pageSize.toString());
+    
+  //   // Filters - Strapi v5 uses filters[field][$operator]=value
+  //   if (params?.category) {
+  //     searchParams.append('filters[category][Slug][$eq]', params.category);
+  //   }
+  //   if (params?.tag) {
+  //     searchParams.append('filters[tags][slug][$in]', params.tag);
+  //   }
+  //   if (params?.language) {
+  //     searchParams.append('filters[language][$eq]', params.language);
+  //   }
+  //   if (params?.editorsPick) {
+  //     searchParams.append('filters[InFeatured][$eq]', 'true');
+  //   }
+    
+  //   // Sorting
+  //   const sort = params?.sort || 'BlogDate:desc';
+  //   searchParams.append('sort', sort);
+    
+  //   // Populate - default fields to populate
+  //   const populate = params?.populate || ['featuredImage', 'author', 'category', 'tags', 'publication_issue'];
+  //   populate.forEach((field, index) => {
+  //     searchParams.append(`populate[${index}]`, field);
+  //   });
+
+  //   console.log(`${config.strapi.endpoints.articles}?${searchParams.toString()}`)
+
+  //   return this.request<ArticleResponse>(
+  //     `${config.strapi.endpoints.articles}?${searchParams.toString()}`
+  //   );
+  // }
+
   async getArticles(params?: {
     page?: number;
     pageSize?: number;
@@ -216,15 +273,15 @@ class StrapiAPI {
     populate?: string[];
   }): Promise<ArticleResponse> {
     const searchParams = new URLSearchParams();
-    
-    // Strapi v5: status=published is required to get published content (draft/publish system)
+   
+    // Strapi v5: status=published is required to get published content
     searchParams.append('status', 'published');
-    
+   
     // Pagination
     if (params?.page) searchParams.append('pagination[page]', params.page.toString());
     if (params?.pageSize) searchParams.append('pagination[pageSize]', params.pageSize.toString());
-    
-    // Filters - Strapi v5 uses filters[field][$operator]=value
+   
+    // Filters
     if (params?.category) {
       searchParams.append('filters[category][Slug][$eq]', params.category);
     }
@@ -237,23 +294,57 @@ class StrapiAPI {
     if (params?.editorsPick) {
       searchParams.append('filters[InFeatured][$eq]', 'true');
     }
-    
+   
     // Sorting
     const sort = params?.sort || 'BlogDate:desc';
     searchParams.append('sort', sort);
-    
-    // Populate - default fields to populate
-    const populate = params?.populate || ['featuredImage', 'author', 'category', 'tags', 'publication_issue'];
-    populate.forEach((field, index) => {
-      searchParams.append(`populate[${index}]`, field);
-    });
 
-    console.log(`${config.strapi.endpoints.articles}?${searchParams.toString()}`)
+    // --- NEW: Top-Level Fields Selection ---
+    // Grabbing the bare minimum needed for an article card/list view
+    const defaultFields = ['title', 'slug', 'BlogDate', 'language', 'createdAt', 'updatedAt', 'publishedAt'];
+    defaultFields.forEach((field, index) => {
+      searchParams.append(`fields[${index}]`, field);
+    });
+   
+    // --- NEW: Optimized Population ---
+    if (params?.populate) {
+      // If a custom populate array is passed, use it (escape hatch if a specific view needs more data)
+      params.populate.forEach((field, index) => {
+        searchParams.append(`populate[${index}]`, field);
+      });
+    } else {
+      // Highly optimized default population mapping
+      
+      // 1. Featured Image
+      searchParams.append('populate[featuredImage][fields][0]', 'url');
+      searchParams.append('populate[featuredImage][fields][1]', 'alternativeText');
+      
+      // 2. Author & Avatar (Secure & Minimal)
+      searchParams.append('populate[author][fields][0]', 'Name');
+      searchParams.append('populate[author][fields][1]', 'slug');
+      searchParams.append('populate[author][populate][users_permissions_user][fields][0]', 'id'); // Blocks sensitive data
+      searchParams.append('populate[author][populate][users_permissions_user][populate][Avatar][fields][0]', 'url');
+      
+      // 3. Category
+      searchParams.append('populate[category][fields][0]', 'Name');
+      searchParams.append('populate[category][fields][1]', 'Slug');
+      searchParams.append('populate[category][fields][2]', 'nameEn');
+      searchParams.append('populate[category][fields][3]', 'nameBn');
+      
+      // 4. Tags
+      searchParams.append('populate[tags][fields][0]', 'name');
+      searchParams.append('populate[tags][fields][1]', 'slug');
+      
+      // 5. Publication Issue
+      searchParams.append('populate[publication_issue][fields][0]', 'id'); 
+    }
+
+    // console.log(`${config.strapi.endpoints.articles}?${searchParams.toString()}`)
 
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
     );
-  }
+}
 
   /**
    * Get articles with MINIMAL data for card displays
@@ -299,15 +390,17 @@ class StrapiAPI {
     searchParams.append('sort', sort);
     
     // Fields - only minimal fields for card display
-    const fields = ['id', 'title', 'slug', 'language', 'BlogDate', 'publishedAt', 'viewCount', 'likes'];
+    const fields = ['id', 'title', 'slug', 'language', 'BlogDate', 'publishedAt', 'viewCount', 'likes', 'publication_author_name'];
     fields.forEach((field, index) => {
       searchParams.append(`fields[${index}]`, field);
     });
     
-    // Populate only essentials: featured image, category, author (no nested avatars)
-    searchParams.append('populate[0]', 'featuredImage');
-    searchParams.append('populate[1]', 'category');
-    searchParams.append('populate[2]', 'author');
+    // Populate only essentials: featured image, category, author, publication_issue
+    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[category]', 'true');
+    searchParams.append('populate[author][fields][0]', 'Name');
+    searchParams.append('populate[author][fields][1]', 'slug');
+    searchParams.append('populate[publication_issue][fields][0]', 'Title');
 
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
@@ -319,40 +412,84 @@ class StrapiAPI {
    * Strapi v5: Filter by slug to get the document
    */
   async getArticleBySlug(slug: string): Promise<Article | null> {
-    const searchParams = new URLSearchParams();
-    searchParams.append('filters[slug][$eq]', slug);
-    searchParams.append('status', 'published'); // Strapi v5 draft/publish system
-    
-    // Populate all necessary fields for article detail page
-    searchParams.append('populate[featuredImage]', 'true');
-    searchParams.append('populate[category]', 'true');
-    searchParams.append('populate[tags]', 'true');
-    searchParams.append('populate[publication_issue][populate]', 'CoverImage');
-    // Deep-populate author.users_permissions_user so Avatar is included
-    searchParams.append('populate[author][populate][users_permissions_user][populate]', '*');
+      const query = new URLSearchParams({
+        'filters[slug][$eq]': slug,
+        'status': 'published',
+        
+        // 1. Core Article Fields
+        'fields[0]': 'title',
+        'fields[1]': 'content',
+        'fields[2]': 'publishedAt',
+        'fields[3]': 'publication_author_name',
+        'fields[4]': 'DisableComments',
+        'fields[5]': 'slug',
+        'fields[6]': 'BlogDate',
+        'fields[7]': 'viewCount',
+        'fields[8]': 'likes',
+        'fields[9]': 'language',
 
-    const response = await this.request<ArticleResponse>(
-      `${config.strapi.endpoints.articles}?${searchParams.toString()}`
-    );
+        'populate[featuredImage][fields][0]': 'url',
 
-    // Return first article or null
-    return response.data.length > 0 ? response.data[0] : null;
-  }
+        // 3. Category
+        'populate[category][fields][0]': 'Name',
+        'populate[category][fields][1]': 'Slug',
+        'populate[category][fields][2]': 'nameEn',
+        'populate[category][fields][3]': 'nameBn',
+
+        // 4. Tags
+        'populate[tags][fields][0]': 'name',
+
+        // 5. Publication Issue Cover Image
+        'populate[publication_issue][populate][CoverImage][fields][0]': 'url',
+
+        // 6. Author Profile & Deep-Nested Avatar URL
+        'populate[author][fields][0]': 'Name',
+        'populate[author][fields][1]': 'slug',
+        'populate[author][populate][users_permissions_user][fields][0]': 'username',
+        'populate[author][populate][users_permissions_user][populate][Avatar][fields][0]': 'url'
+      }).toString();
+
+      const response = await this.request<ArticleResponse>(
+        `${config.strapi.endpoints.articles}?${query}`
+      );
+
+      return response.data.length > 0 ? response.data[0] : null;
+    }
 
   /**
    * Get a single article by documentId
    * Strapi v5: GET /api/articles/:documentId
    */
+  /**
+   * Get a single article by documentId
+   * Strapi v5: GET /api/articles/:documentId
+   * Note: This is an orphaned method. Use getArticleBySlug instead for active usage.
+   */
   async getArticleByDocumentId(documentId: string): Promise<Article> {
     const searchParams = new URLSearchParams();
     searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     
-    searchParams.append('populate[featuredImage]', 'true');
-    searchParams.append('populate[category]', 'true');
-    searchParams.append('populate[tags]', 'true');
-    searchParams.append('populate[publication_issue][populate]', 'CoverImage');
-    // Deep-populate author.users_permissions_user so Avatar is included
-    searchParams.append('populate[author][populate][users_permissions_user][populate]', '*');
+    // Core article fields
+    searchParams.append('fields[0]', 'title');
+    searchParams.append('fields[1]', 'content');
+    searchParams.append('fields[2]', 'slug');
+    searchParams.append('fields[3]', 'BlogDate');
+    searchParams.append('fields[4]', 'publishedAt');
+    searchParams.append('fields[5]', 'viewCount');
+    searchParams.append('fields[6]', 'likes');
+    searchParams.append('fields[7]', 'language');
+    
+    // Minimal populate - only essentials for article display
+    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[category][fields][0]', 'Name');
+    searchParams.append('populate[category][fields][1]', 'Slug');
+    searchParams.append('populate[tags][fields][0]', 'name');
+    searchParams.append('populate[publication_issue][populate][CoverImage][fields][0]', 'url');
+    // Author with only avatar url (no full wildcard)
+    searchParams.append('populate[author][fields][0]', 'Name');
+    searchParams.append('populate[author][fields][1]', 'slug');
+    searchParams.append('populate[author][populate][users_permissions_user][fields][0]', 'id');
+    searchParams.append('populate[author][populate][users_permissions_user][populate][Avatar][fields][0]', 'url');
 
     const response = await this.request<{ data: Article; meta: object }>(
       `${config.strapi.endpoints.articles}/${documentId}?${searchParams.toString()}`
@@ -382,16 +519,116 @@ class StrapiAPI {
     searchParams.append('filters[InSlider][$eq]', 'true');
     searchParams.append('status', 'published'); // Strapi v5 draft/publish system
     
-    const populate = ['featuredImage', 'author', 'category'];
-    populate.forEach((field, index) => {
-      searchParams.append(`populate[${index}]`, field);
-    });
+    // Minimal fields for hero display
+    searchParams.append('fields[0]', 'title');
+    searchParams.append('fields[1]', 'slug');
+    searchParams.append('fields[2]', 'BlogDate');
+    searchParams.append('fields[3]', 'publishedAt');
+    
+    // Populate only essentials: featured image and author with avatar
+    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[author][fields][0]', 'Name');
+    searchParams.append('populate[author][fields][1]', 'slug');
+    searchParams.append('populate[author][populate][users_permissions_user][fields][0]', 'id');
+    searchParams.append('populate[author][populate][users_permissions_user][populate][Avatar][fields][0]', 'url');
 
     const response = await this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
     );
 
     return response.data.length > 0 ? response.data[0] : null;
+  }
+
+  /**
+   * Get all hero articles (InSlider = true) for carousel
+   * Optimized: Only fetches author.Name and author.users_permissions_user.Avatar.url
+   * Restricts fields to prevent exposing personal user information (email, phone, bio, etc.)
+   */
+  async getHeroArticles(): Promise<ArticleResponse> {
+      const searchParams = new URLSearchParams();
+      searchParams.append('filters[InSlider][$eq]', 'true');
+      searchParams.append('status', 'published');
+      searchParams.append('sort', 'updatedAt:desc');
+
+      searchParams.append('fields[0]', 'title');
+      searchParams.append('fields[1]', 'BlogDate');
+      searchParams.append('fields[2]', 'createdAt');
+      searchParams.append('fields[3]', 'updatedAt');
+      searchParams.append('fields[4]', 'publishedAt');
+      searchParams.append('fields[5]', 'slug');
+      
+      // Populate featuredImage - only url field
+      searchParams.append('populate[featuredImage][fields][0]', 'url');
+      
+      // Populate author - only Name field
+      searchParams.append('populate[author][fields][0]', 'Name');
+
+      searchParams.append('populate[author][populate][users_permissions_user][fields][0]', 'id');
+      
+      // Populate Avatar relation and only get url field
+      searchParams.append('populate[author][populate][users_permissions_user][populate][Avatar][fields][0]', 'url');
+
+      return this.request<ArticleResponse>(
+        `${config.strapi.endpoints.articles}?${searchParams.toString()}`
+      );
+  }
+
+  /**
+   * Get featured articles (different from editors choice)
+   */
+  async getFeaturedArticles(limit: number = 12): Promise<ArticleResponse> {
+    return this.getArticles({
+      pageSize: limit,
+      sort: 'BlogDate:desc',
+      populate: ['featuredImage', 'author', 'category', 'tags', 'publication_issue']
+    });
+  }
+
+  /**
+   * Get text reel content for homepage marquee
+   */
+  async getTextReelContent(): Promise<string> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[Show][$eq]', 'true');
+    const response = await this.request<any>(
+      `${config.strapi.endpoints.textReel}?${searchParams.toString()}`
+    );
+    return response.data?.Content ?? '';
+  }
+
+  /**
+   * Get all publications
+   */
+  async getPublications(includeHidden: boolean = false): Promise<any> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('populate[Image][fields][0]', 'url');
+    
+    if (!includeHidden) {
+      searchParams.append('filters[Hide][$eq]', 'false');
+    }
+
+    return this.request<any>(
+      `${config.strapi.endpoints.publications}?${searchParams.toString()}`
+    );
+  }
+
+  /**
+   * Get publications shown on home page
+   */
+  async getHomePublications(limit: number = 2): Promise<Publication[]> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[Hide][$eq]', 'false');
+    searchParams.append('filters[ShowInHome][$eq]', 'true');
+    searchParams.append('sort', 'updatedAt:desc');
+    searchParams.append('pagination[pageSize]', limit.toString());
+    // Only fetch Image.url field (not entire Image object)
+    searchParams.append('populate[Image][fields][0]', 'url');
+
+    const response = await this.request<any>(
+      `${config.strapi.endpoints.publications}?${searchParams.toString()}`
+    );
+
+    return response.data || [];
   }
 
   /**
@@ -418,11 +655,16 @@ class StrapiAPI {
     // Sort by most recent
     searchParams.append('sort', 'BlogDate:desc');
     
-    // Populate fields
-    const populate = ['featuredImage', 'author', 'category', 'tags'];
-    populate.forEach((field, index) => {
-      searchParams.append(`populate[${index}]`, field);
+    // Minimal fields for card display
+    const fields = ['id', 'title', 'slug', 'language', 'BlogDate', 'publishedAt', 'viewCount', 'likes'];
+    fields.forEach((field, index) => {
+      searchParams.append(`fields[${index}]`, field);
     });
+    
+    // Populate only essentials: featured image and category
+    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[category][fields][0]', 'Name');
+    searchParams.append('populate[category][fields][1]', 'Slug');
 
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
@@ -460,10 +702,10 @@ class StrapiAPI {
       searchParams.append(`fields[${index}]`, field);
     });
     
-    // Populate only essentials for card display
-    searchParams.append('populate[0]', 'featuredImage');
-    searchParams.append('populate[1]', 'category');
-    searchParams.append('populate[2]', 'author');
+    // Populate only essentials for card display (minimal fields only)
+    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[category][fields][0]', 'Name');
+    // author and publication_issue are not displayed in cards, so don't populate
 
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
@@ -512,11 +754,13 @@ class StrapiAPI {
       searchParams.append(`fields[${index}]`, field);
     });
     
-    // Populate fields needed for scoring algorithm
-    searchParams.append('populate[0]', 'featuredImage');
-    searchParams.append('populate[1]', 'author');
-    searchParams.append('populate[2]', 'category');
-    searchParams.append('populate[3]', 'tags'); // Needed for tag overlap scoring
+    // Populate fields needed for scoring algorithm - only specific fields for minimal payload
+    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[author][fields][0]', 'Name');
+    searchParams.append('populate[author][fields][1]', 'slug');
+    searchParams.append('populate[category][fields][0]', 'Name');
+    searchParams.append('populate[category][fields][1]', 'Slug');
+    searchParams.append('populate[tags][fields][0]', 'name'); // Needed for tag overlap scoring
 
     const response = await this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
@@ -582,11 +826,16 @@ class StrapiAPI {
     // Sort by most recent
     searchParams.append('sort', 'BlogDate:desc');
     
-    // Populate necessary fields
-    const populate = ['featuredImage', 'author', 'category', 'tags', 'publication_issue'];
-    populate.forEach((field, index) => {
-      searchParams.append(`populate[${index}]`, field);
+    // Minimal fields for card display
+    const fields = ['id', 'title', 'slug', 'language', 'BlogDate', 'publishedAt', 'viewCount', 'likes'];
+    fields.forEach((field, index) => {
+      searchParams.append(`fields[${index}]`, field);
     });
+    
+    // Populate only essentials: featured image and category
+    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[category][fields][0]', 'Name');
+    searchParams.append('populate[category][fields][1]', 'Slug');
 
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
@@ -618,10 +867,16 @@ class StrapiAPI {
 
   /**
    * Get all authors
+   * Note: This is an orphaned method. Not currently used in the application.
+   * Optimized: Only fetches necessary author fields with minimal population
    */
   async getAuthors(): Promise<AuthorResponse> {
     const searchParams = new URLSearchParams();
-    searchParams.append('populate[0]', 'Avatar');
+    // Only necessary author fields
+    searchParams.append('fields[0]', 'Name');
+    searchParams.append('fields[1]', 'slug');
+    searchParams.append('fields[2]', 'Bio');
+    searchParams.append('fields[3]', 'createdAt');
     
     return this.request<AuthorResponse>(
       `${config.strapi.endpoints.authors}?${searchParams.toString()}`
@@ -634,8 +889,14 @@ class StrapiAPI {
   async getAuthorBySlug(slug: string): Promise<Author | null> {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[slug][$eq]', slug);
-    searchParams.append('populate[0]', 'Avatar');
-    searchParams.append('populate[users_permissions_user][populate][0]', 'Avatar');
+    // Only fetch necessary author fields
+    searchParams.append('fields[0]', 'slug');
+    searchParams.append('fields[1]', 'Name');
+    searchParams.append('fields[2]', 'Bio');
+    searchParams.append('fields[3]', 'createdAt');
+    // Only Avatar url from user relation
+    searchParams.append('populate[users_permissions_user][fields][0]', 'id');
+    searchParams.append('populate[users_permissions_user][populate][Avatar][fields][0]', 'url');
     
     const response = await this.request<AuthorResponse>(
       `${config.strapi.endpoints.authors}?${searchParams.toString()}`
@@ -646,6 +907,7 @@ class StrapiAPI {
 
   /**
    * Get articles by a specific author (by documentId)
+   * Optimized: Only fetches minimal fields needed for article card display
    */
   async getAuthorArticles(authorDocumentId: string, page: number = 1, pageSize: number = 12): Promise<ArticleResponse> {
     const searchParams = new URLSearchParams();
@@ -663,11 +925,16 @@ class StrapiAPI {
     // Sort
     searchParams.append('sort', 'BlogDate:desc');
     
-    // Populate
-    const populate = ['featuredImage', 'author', 'category', 'tags'];
-    populate.forEach((field, index) => {
-      searchParams.append(`populate[${index}]`, field);
+    // Minimal fields for card display
+    const fields = ['id', 'title', 'slug', 'BlogDate', 'publishedAt', 'viewCount', 'likes'];
+    fields.forEach((field, index) => {
+      searchParams.append(`fields[${index}]`, field);
     });
+    
+    // Populate only essentials: featured image and category (for display)
+    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[category][fields][0]', 'Name');
+    searchParams.append('populate[category][fields][1]', 'nameEn');
 
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
@@ -901,8 +1168,7 @@ class StrapiAPI {
     try {
       const response = await this.request<{ data: TermsAndConditions; meta: object }>(
         '/api/terms-and-condition'
-      );
-      
+      );      
       return response.data || null;
     } catch (error) {
       console.warn('Terms and conditions not available:', error);
@@ -999,30 +1265,25 @@ class StrapiAPI {
     // Sort by relevance (most recent first as fallback)
     searchParams.append('sort', 'BlogDate:desc');
 
-    // Populate necessary fields
-    const populate = ['featuredImage', 'author', 'category', 'tags'];
-    populate.forEach((field, index) => {
-      searchParams.append(`populate[${index}]`, field);
-    });
+    // Populate only necessary fields for search result cards
+      searchParams.append('fields[0]', 'title');
+      searchParams.append('fields[1]', 'BlogDate');
+      searchParams.append('fields[2]', 'createdAt');
+      searchParams.append('fields[3]', 'updatedAt');
+      searchParams.append('fields[4]', 'publishedAt');
+      searchParams.append('fields[5]', 'slug');
+    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[author][fields][0]', 'Name');
+    searchParams.append('populate[author][fields][1]', 'slug');
+    searchParams.append('populate[category][fields][0]', 'Name');
+    searchParams.append('populate[category][fields][1]', 'Slug');
+    searchParams.append('populate[tags][fields][0]', 'name');
 
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
     );
   }
 
-  /**
-   * @deprecated Use searchArticles instead
-   */
-  async searchContent(query: string, filters?: {
-    contentType?: 'articles' | 'authors';
-    category?: string;
-    language?: 'en' | 'bn' | 'both';
-  }): Promise<ArticleResponse> {
-    return this.searchArticles(query, {
-      category: filters?.category,
-      language: filters?.language,
-    });
-  }
 
   // ============================================
   // ANALYTICS METHODS
@@ -1064,13 +1325,20 @@ class StrapiAPI {
       // Sort by date (newest first)
       searchParams.append('sort', 'CommentDateTime:desc');
       
-      // Populate user with all fields including avatar
-      searchParams.append('populate[users_permissions_user][populate]', '*');
-      // Populate replies and their users with avatars
-      searchParams.append('populate[replies][populate][users_permissions_user][populate]', '*');
+      // Populate user with only necessary fields
+      searchParams.append('populate[users_permissions_user][fields][0]', 'id');
+      searchParams.append('populate[users_permissions_user][fields][1]', 'username');
+      searchParams.append('populate[users_permissions_user][populate][Avatar][fields][0]', 'url');
+      // Populate replies with only necessary fields
+      searchParams.append('populate[replies][fields][0]', 'id');
+      searchParams.append('populate[replies][fields][1]', 'Content');
+      searchParams.append('populate[replies][fields][2]', 'CommentDateTime');
+      searchParams.append('populate[replies][fields][3]', 'likeCount');
+      searchParams.append('populate[replies][populate][users_permissions_user][fields][0]', 'id');
+      searchParams.append('populate[replies][populate][users_permissions_user][fields][1]', 'username');
+      searchParams.append('populate[replies][populate][users_permissions_user][populate][Avatar][fields][0]', 'url');
 
       const response = await this.request<{ data: Comment[]; meta: object }>(
-
         `/api/comments?${searchParams.toString()}`
       );
 
@@ -1326,7 +1594,7 @@ class StrapiAPI {
   /**
    * Create a bookmark for an article
    */
-  async bookmarkArticle(userId: number, articleId: number): Promise<{ success: boolean; bookmarkId?: string }> {
+  async bookmarkArticle(userId: number, articleId: string): Promise<{ success: boolean; bookmarkId?: string }> {
     try {
       const response = await this.userRequest<{ data: { id: number; documentId: string } }>(
         '/api/bookmarks',
@@ -1486,10 +1754,18 @@ class StrapiAPI {
       // Sort by date (newest first)
       searchParams.append('sort', 'CommentDateTime:desc');
       
-      // Populate user with all fields including avatar
-      searchParams.append('populate[users_permissions_user][populate]', '*');
-      // Populate replies and their users with avatars
-      searchParams.append('populate[replies][populate][users_permissions_user][populate]', '*');
+      // Populate user with only necessary fields
+      searchParams.append('populate[users_permissions_user][fields][0]', 'id');
+      searchParams.append('populate[users_permissions_user][fields][1]', 'username');
+      searchParams.append('populate[users_permissions_user][populate][Avatar][fields][0]', 'url');
+      // Populate replies with only necessary fields
+      searchParams.append('populate[replies][fields][0]', 'id');
+      searchParams.append('populate[replies][fields][1]', 'Content');
+      searchParams.append('populate[replies][fields][2]', 'CommentDateTime');
+      searchParams.append('populate[replies][fields][3]', 'likeCount');
+      searchParams.append('populate[replies][populate][users_permissions_user][fields][0]', 'id');
+      searchParams.append('populate[replies][populate][users_permissions_user][fields][1]', 'username');
+      searchParams.append('populate[replies][populate][users_permissions_user][populate][Avatar][fields][0]', 'url');
 
       const response = await this.request<{ 
         data: Comment[]; 
@@ -1516,12 +1792,16 @@ class StrapiAPI {
 
   /**
    * Get all drafts for the current user
+   * Optimized: Only fetch necessary draft fields (no user relation needed)
    */
   async getDraftsForUser(userId: number): Promise<Draft[]> {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[users_permissions_user][id][$eq]', userId.toString());
     searchParams.append('sort', 'updatedAt:desc');
-    searchParams.append('populate[0]', 'users_permissions_user');
+    // Only fetch draft fields, no need to populate user relation
+    searchParams.append('fields[0]', 'name');
+    searchParams.append('fields[1]', 'content');
+    searchParams.append('fields[2]', 'updatedAt');
 
     const response = await this.request<DraftResponse>(
       `/api/drafts?${searchParams.toString()}`
@@ -1601,17 +1881,25 @@ class StrapiAPI {
   async createUserRequestReport(data: {
     section: string;
     description: string;
+    userId?: number; // Optional user ID for authenticated requests
   }): Promise<{ data: { id: number; documentId: string } }> {
+    const payload: Record<string, unknown> = {
+      Section: data.section,
+      Description: data.description,
+      Resolved: false,
+    };
+
+    // Add user relation if userId is provided
+    if (data.userId) {
+      payload.user = { connect: [data.userId] };
+    }
+
     return this.userRequest<{ data: { id: number; documentId: string } }>(
       '/api/user-request-reports',
       {
         method: 'POST',
         body: JSON.stringify({
-          data: {
-            Section: data.section,
-            Description: data.description,
-            Resolved: false,
-          },
+          data: payload,
         }),
       }
     );
@@ -1625,7 +1913,7 @@ class StrapiAPI {
    */
   async getPublicationByDocumentId(documentId: string): Promise<Publication | null> {
     const searchParams = new URLSearchParams();
-    searchParams.append('populate[Image]', 'true');
+    searchParams.append('populate[Image][fields][0]', 'url');
     
     const response = await this.request<{ data: Publication; meta: object }>(
       `/api/publications/${documentId}?${searchParams.toString()}`
@@ -1636,13 +1924,17 @@ class StrapiAPI {
 
   /**
    * Get all issues for a specific publication
+   * Optimized: Only fetch necessary issue fields (CoverImage.url only, no publication)
    */
   async getIssuesByPublication(publicationDocumentId: string): Promise<IssueResponse> {
     const searchParams = new URLSearchParams();
     searchParams.append('filters[publication][documentId][$eq]', publicationDocumentId);
     searchParams.append('sort', 'PublishedDate:desc');
-    searchParams.append('populate[0]', 'CoverImage');
-    searchParams.append('populate[1]', 'publication');
+    // Fetch only necessary fields
+    searchParams.append('fields[0]', 'Title');
+    searchParams.append('fields[1]', 'PublishedDate');
+    // Populate only CoverImage url (not the full publication)
+    searchParams.append('populate[CoverImage][fields][0]', 'url');
 
     return this.request<IssueResponse>(
       `/api/publication-issues?${searchParams.toString()}`
@@ -1732,6 +2024,23 @@ export const transformStrapiArticleToLegacy = (strapiArticle: Article) => {
 };
 
 /**
+ * Apply date-aware sorting for user article lists.
+ * For newest/oldest, sort by BlogDate first, then fallback to publishedAt.
+ */
+function appendUserArticleSort(searchParams: URLSearchParams, sort: string): void {
+  const [sortField, sortDirection = 'desc'] = sort.split(':');
+
+  if (sortField === 'BlogDate' || sortField === 'publishedAt') {
+    searchParams.append('sort[0]', `BlogDate:${sortDirection}`);
+    searchParams.append('sort[1]', `publishedAt:${sortDirection}`);
+    searchParams.append('sort[2]', `createdAt:${sortDirection}`);
+    return;
+  }
+
+  searchParams.append('sort', sort);
+}
+
+/**
  * Get articles by user ID (through author relation)
  * First finds the author associated with the user, then gets their articles
  */
@@ -1768,20 +2077,20 @@ export async function getUserArticles(
       articlesSearchParams.append('filters[$or][1][content][$containsi]', searchQuery);
     }
     
-    articlesSearchParams.append('sort', sort.replace('publishedAt', 'BlogDate'));
+    appendUserArticleSort(articlesSearchParams, sort);
     articlesSearchParams.append('pagination[page]', page.toString());
     articlesSearchParams.append('pagination[pageSize]', pageSize.toString());
     
-    // Minimal fields for card display (only what ArticleCard components need)
+    // Minimal article fields
     const fields = ['id', 'title', 'slug', 'language', 'BlogDate', 'publishedAt', 'viewCount', 'likes', 'createdAt'];
     fields.forEach((field, index) => {
       articlesSearchParams.append(`fields[${index}]`, field);
     });
     
-    // Populate only essentials: featured image, category, author (no nested avatars)
-    articlesSearchParams.append('populate[0]', 'featuredImage');
-    articlesSearchParams.append('populate[1]', 'category');
-    articlesSearchParams.append('populate[2]', 'author');
+    // Populate only essentials: featured image, category only (no author, no tags)
+    articlesSearchParams.append('populate[featuredImage][fields][0]', 'url');
+    articlesSearchParams.append('populate[category][fields][0]', 'Name');
+    articlesSearchParams.append('populate[category][fields][1]', 'nameEn');
     
     const articlesResponse = await strapiAPI.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${articlesSearchParams.toString()}`
@@ -1827,7 +2136,7 @@ export async function getUserArticlesWithComments(
     // Get articles by this author WITH comments populated (minimal fields only)
     const articlesSearchParams = new URLSearchParams();
     articlesSearchParams.append('filters[author][documentId][$eq]', author.documentId);
-    articlesSearchParams.append('sort', sort.replace('publishedAt', 'BlogDate'));
+    appendUserArticleSort(articlesSearchParams, sort);
     articlesSearchParams.append('pagination[page]', page.toString());
     articlesSearchParams.append('pagination[pageSize]', pageSize.toString());
     
@@ -1837,11 +2146,12 @@ export async function getUserArticlesWithComments(
       articlesSearchParams.append(`fields[${index}]`, field);
     });
     
-    // Populate essentials + comments
-    articlesSearchParams.append('populate[0]', 'featuredImage');
-    articlesSearchParams.append('populate[1]', 'category');
-    articlesSearchParams.append('populate[2]', 'author');
-    articlesSearchParams.append('populate[3]', 'comments'); // Populate comments for counting
+    // Populate essentials + comments with minimal fields
+    articlesSearchParams.append('populate[featuredImage][fields][0]', 'url');
+    articlesSearchParams.append('populate[category][fields][0]', 'Name');
+    articlesSearchParams.append('populate[category][fields][1]', 'nameEn');
+    // Only need comment IDs for counting
+    articlesSearchParams.append('populate[comments][fields][0]', 'id');
     
     const articlesResponse = await strapiAPI.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${articlesSearchParams.toString()}`

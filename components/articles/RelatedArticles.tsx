@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { Article } from '@/types';
 import { config } from '@/lib/config';
 import { ArrowRight, Clock, Eye, Heart } from 'lucide-react';
-import { getFontClass } from '@/lib/fonts';
+import { getFontClass, getfontsizeBN, isBengaliText } from '@/lib/fonts';
 
 interface RelatedArticlesProps {
   articles: Article[];
@@ -44,17 +44,17 @@ export default function RelatedArticles({ articles }: RelatedArticlesProps) {
             ? (article.featuredImage.url.startsWith('http')
                 ? article.featuredImage.url
                 : `${config.strapi.url}${article.featuredImage.url}`)
-            : '/images/hero.jpg';
+            : '/images/placeholder.jpg';
 
           const publishedDate = (article.BlogDate || article.publishedAt)
-            ? new Date(article.BlogDate || article.publishedAt).toLocaleDateString('en-US', {
+            ? new Date(article.BlogDate! || article.publishedAt!).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric'
               })
             : '';
 
-          const isBengali = article.language === 'bn';
+          const isBengali = isBengaliText(article.title);
 
           return (
             <Link 
@@ -105,8 +105,9 @@ export default function RelatedArticles({ articles }: RelatedArticlesProps) {
 
                 {/* Author Name */}
                 {(article.author?.Name || article.publication_author_name) && (
-                  <p className="text-xs text-muted-foreground mb-2 font-medium line-clamp-1">
-                    By {article.author?.Name || article.publication_author_name}
+                  
+                  <p className={`${getfontsizeBN(article.author?.Name || article.publication_author_name!, 'text-xs')} text-muted-foreground mb-2 font-medium line-clamp-1 ${getFontClass(article.author?.Name || article.publication_author_name!)}`}>
+                  <span className='font-montserrat text-xs'>By</span>  {article.author?.Name || article.publication_author_name}
                   </p>
                 )}
 

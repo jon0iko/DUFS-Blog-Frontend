@@ -34,12 +34,14 @@ import { Category, Tag } from "@/types";
 import { slugify } from "@/lib/utils";
 import HeroCropModal from "./HeroCropModal";
 import { useToast } from "@/components/ui/toast";
+import type { TiptapRef } from "@/components/tiptap/types";
 
 interface PublishModalProps {
   isOpen: boolean;
   onClose: () => void;
   contentMarkdown: string;
   onPublishSuccess: () => void;
+  tiptapRef?: React.RefObject<TiptapRef>;
 }
 
 interface FormData {
@@ -64,8 +66,11 @@ export default function PublishModal({
   onClose,
   contentMarkdown,
   onPublishSuccess,
+  tiptapRef,
 }: PublishModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const termsCheckboxRef = useRef<HTMLDivElement>(null);
+  const contentScrollRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
 
   // Form state
@@ -250,22 +255,6 @@ export default function PublishModal({
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.title.trim()) {
-      newErrors.title = "Title is required";
-    } else if (formData.title.length < 5) {
-      newErrors.title = "Title must be at least 5 characters";
-    } else if (formData.title.length > 200) {
-      newErrors.title = "Title must be less than 200 characters";
-    }
-
-    if (!formData.categoryId || formData.categoryId === null) {
-      newErrors.category = "Please select a category";
-    }
-
-    if (!imageFile) {
-      newErrors.image = "Featured image is required";
-    }
-
     if (!agreedToTerms) {
       newErrors.terms = "You must agree to the Terms of Publication";
     }
@@ -296,7 +285,26 @@ export default function PublishModal({
     try {
       const token = getToken();
 
-      // First, upload the image if present
+      // Upload pending images from editor before publishing
+      if (tiptapRef?.current) {
+        try {
+          console.log("Uploading pending images from editor...");
+          await tiptapRef.current.uploadPendingImages();
+          console.log("Pending images uploaded successfully");
+        } catch (uploadError) {
+          const uploadErrorMessage =
+            uploadError instanceof Error
+              ? uploadError.message
+              : "Failed to upload images in article content.";
+          toast.error(uploadErrorMessage, "Image Upload Failed");
+          throw uploadError;
+        }
+      }
+
+      // Get the updated markdown with real image URLs
+      const updatedMarkdown = tiptapRef?.current?.getMarkdown() || contentMarkdown;
+
+      // First, upload the featured image if present
       let uploadedImageId: number | string | null = null;
       if (imageFile) {
         if (!token) {
@@ -332,28 +340,18 @@ export default function PublishModal({
       const allTagIds = [...formData.selectedTags, ...customTagIds];
       console.log("All tag IDs for article:", allTagIds);
 
-      // Generate a unique slug from title
-      const baseSlug = slugify(formData.title);
+      // Generate a unique slug from title or use default
+      const titleForSlug = formData.title.trim() || "untitled-article";
+      const baseSlug = slugify(titleForSlug);
       const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`;
 
-      console.log("Article Submission Data:", {
-        title: formData.title,
-        slug: uniqueSlug,
-        excerpt: formData.excerpt,
-        contentMarkdown,
-        language: formData.language,
-        categoryId: formData.categoryId,
-        selectedTags: allTagIds,
-        uploadedImageId,
-        authorId,
-      });
 
-      // Call the server-side submission function
+      // Call the server-side submission function with updated markdown
       console.log("Calling submitNewArticleService...");
       await submitNewArticleService({
-        title: formData.title,
+        title: formData.title || "Untitled Article",
         slug: uniqueSlug,
-        content: contentMarkdown,
+        content: updatedMarkdown,
         language: formData.language,
         categoryId: formData.categoryId!,  // Already validated as not null
         selectedTags: allTagIds,
@@ -426,6 +424,18 @@ export default function PublishModal({
     };
   }, [imagePreview]);
 
+  // Scroll to terms error when it appears
+  useEffect(() => {
+    if (errors.terms && termsCheckboxRef.current) {
+      setTimeout(() => {
+        termsCheckboxRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+      }, 100);
+    }
+  }, [errors.terms]);
+
   if (!isOpen) return null;
 
   return (
@@ -447,22 +457,22 @@ export default function PublishModal({
       />
 
       {/* Modal */}
-      <div className="relative flex h-[100dvh] w-full max-w-none flex-col overflow-y-auto bg-background shadow-2xl rounded-none sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:mx-4 sm:rounded-md animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative flex h-[100dvh] w-full max-w-none flex-col overflow-hidden bg-background shadow-2xl rounded-none sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:mx-4 sm:rounded-md animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 px-4 py-3 backdrop-blur-sm sm:px-6 sm:py-4">
-          <h2 className="text-lg font-semibold sm:text-xl">Submit Your Article</h2>
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 backdrop-blur-sm px-4 py-3 sm:px-6 sm:py-4 gap-2">
+          <h2 className="text-base font-semibold sm:text-lg truncate">Submit Your Article</h2>
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="rounded-full hover:bg-muted"
+            className="rounded-full hover:bg-muted flex-shrink-0 h-9 w-9 sm:h-10 sm:w-10"
           >
             <X className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Content */}
-        <div className="px-4 py-4 sm:px-6 sm:py-6">
+        <div ref={contentScrollRef} className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
           {isLoadingData ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -481,6 +491,14 @@ export default function PublishModal({
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Info Message */}
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  All fields are optional. You can leave them empty and we will fill them in on your behalf.
+                </p>
+              </div>
+
               {/* General Error */}
               {errors.general && (
                 <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
@@ -489,11 +507,43 @@ export default function PublishModal({
                 </div>
               )}
 
+              {/* Title */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Title
+                </label>
+                <Input
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, title: e.target.value }))
+                  }
+                  placeholder="Enter your post title..."
+                  className={`h-12 text-base ${
+                    errors.title
+                      ? "border-destructive focus-visible:ring-destructive"
+                      : ""
+                  }`}
+                />
+                <div className="flex justify-between">
+                  {errors.title ? (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.title}
+                    </p>
+                  ) : (
+                    <span />
+                  )}
+                  <span className="text-xs text-muted-foreground">
+                    {formData.title.length}/200
+                  </span>
+                </div>
+              </div>
+
               {/* Featured Image Upload */}
               <div className="space-y-2">
                 <label className="text-sm font-medium flex items-center gap-2">
                   <ImageIcon className="h-4 w-4" />
-                  Featured Image <span className="text-destructive">*</span>
+                  Featured Image
                 </label>
                 <div
                   onClick={() => fileInputRef.current?.click()}
@@ -529,7 +579,7 @@ export default function PublishModal({
                         Click to upload featured image
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        JPG, PNG, GIF or WebP (max 5MB)
+                        JPG, PNG, or WebP (max 5MB)
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
                         <span className="font-medium">Recommended:</span> 1200×675px (16:9 ratio)
@@ -552,45 +602,13 @@ export default function PublishModal({
                 )}
               </div>
 
-              {/* Title */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Title <span className="text-destructive">*</span>
-                </label>
-                <Input
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, title: e.target.value }))
-                  }
-                  placeholder="Enter your article title..."
-                  className={`h-12 text-base ${
-                    errors.title
-                      ? "border-destructive focus-visible:ring-destructive"
-                      : ""
-                  }`}
-                />
-                <div className="flex justify-between">
-                  {errors.title ? (
-                    <p className="text-sm text-destructive flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {errors.title}
-                    </p>
-                  ) : (
-                    <span />
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    {formData.title.length}/200
-                  </span>
-                </div>
-              </div>
-
               {/* Language & Category Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Language */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium flex items-center gap-2">
                     <Globe className="h-4 w-4" />
-                    Language <span className="text-destructive">*</span>
+                    Language
                   </label>
                   <Select
                     value={formData.language}
@@ -604,12 +622,12 @@ export default function PublishModal({
                     <SelectContent>
                       <SelectItem value="en">
                         <span className="flex items-center gap-2">
-                          🇺🇸 English
+                          English
                         </span>
                       </SelectItem>
                       <SelectItem value="bn">
                         <span className="flex items-center gap-2">
-                          🇧🇩 বাংলা (Bengali)
+                          Bangla
                         </span>
                       </SelectItem>
                     </SelectContent>
@@ -619,7 +637,7 @@ export default function PublishModal({
                 {/* Category */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">
-                    Category <span className="text-destructive">*</span>
+                    Category
                   </label>
                   <Select
                     value={formData.categoryId?.toString() ?? ""}
@@ -751,8 +769,15 @@ export default function PublishModal({
               </div>
 
               {/* Terms of Publication */}
-              <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3 sm:p-4">
-                <label className="flex items-start gap-3 text-sm">
+              <div
+                ref={termsCheckboxRef}
+                className={`space-y-2 rounded-lg border transition-all duration-200 p-3 sm:p-4 ${
+                  errors.terms
+                    ? 'border-destructive bg-destructive/5'
+                    : 'border-border/60 bg-muted/20'
+                }`}
+              >
+                <label className="flex items-start gap-3 text-sm cursor-pointer group">
                   <input
                     type="checkbox"
                     checked={agreedToTerms}
@@ -762,15 +787,15 @@ export default function PublishModal({
                         setErrors((prev) => ({ ...prev, terms: undefined }));
                       }
                     }}
-                    className="mt-0.5 h-4 w-4 rounded border-border text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="mt-0.5 h-4 w-4 rounded border-border text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
                   />
-                  <span>
+                  <span className="leading-relaxed">
                     I agree to the{' '}
                     <a
                       href="/terms-and-conditions"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="underline font-medium hover:opacity-80"
+                      className="underline font-medium hover:opacity-80 transition-opacity"
                     >
                       Terms of Publication
                     </a>{' '}
@@ -778,9 +803,9 @@ export default function PublishModal({
                   </span>
                 </label>
                 {errors.terms && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {errors.terms}
+                  <p className="text-sm text-destructive flex items-center gap-2 mt-2 animate-in fade-in slide-in-from-bottom-2">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <span>{errors.terms}</span>
                   </p>
                 )}
               </div>
@@ -790,20 +815,20 @@ export default function PublishModal({
 
         {/* Footer */}
         {!isLoadingData && !showSuccess && (
-          <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t bg-muted/30 px-4 py-3 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-end sm:gap-3 sm:px-6 sm:py-4">
+          <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t bg-background/95 backdrop-blur-sm px-4 py-3 sm:flex-row sm:items-center sm:justify-end sm:gap-3 sm:px-6 sm:py-4">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
-              className="w-full rounded-md sm:w-auto"
+              className="h-11 rounded-md sm:h-10 sm:w-auto w-full"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="w-full rounded-md bg-green-600 px-6 text-white hover:bg-green-500 sm:w-auto"
+              className="h-11 rounded-md bg-green-600 px-6 text-white hover:bg-green-500 sm:h-10 sm:w-auto w-full font-medium"
             >
               {isSubmitting ? (
                 <>

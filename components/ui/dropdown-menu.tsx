@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 interface DropdownMenuProps {
@@ -18,23 +19,63 @@ interface DropdownMenuItemProps {
 
 interface Position {
   top: number;
-  left?: number;
-  right?: number;
-  transform?: string;
+  left: number;
 }
 
 const DropdownMenu = ({ children, trigger, align = "left" }: DropdownMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isPositioned, setIsPositioned] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<Position>({ top: 0, left: 0 });
+  const [isReady, setIsReady] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
   const dropdownContentRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<Position>({ top: 0 });
-  const [constrainedWidth, setConstrainedWidth] = useState<number | null>(null);
+  const [menuWidth, setMenuWidth] = useState<number | null>(null);
 
-  // Close dropdown when clicking outside or pressing Escape
+  const updatePosition = () => {
+    if (!triggerRef.current || !dropdownContentRef.current) return;
+
+    const triggerRect = triggerRef.current.getBoundingClientRect();
+    const menuRect = dropdownContentRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const padding = 12;
+    const gap = 8;
+
+    // Responsive menu width for small screens
+    const responsiveMenuWidth = viewportWidth < 420 ? viewportWidth - 2 * padding : null;
+    const constrainedMenuWidth = responsiveMenuWidth || Math.min(menuRect.width, 320);
+
+    // Calculate horizontal position with better collision detection
+    let nextLeft = align === "left"
+      ? triggerRect.left
+      : triggerRect.right - constrainedMenuWidth;
+    
+    // Ensure menu doesn't overflow left or right edges
+    nextLeft = Math.max(padding, Math.min(nextLeft, viewportWidth - constrainedMenuWidth - padding));
+
+    // Calculate vertical position with collision detection
+    let nextTop = triggerRect.bottom + gap;
+    if (nextTop + menuRect.height > viewportHeight - padding) {
+      // Try to position above trigger
+      nextTop = triggerRect.top - menuRect.height - gap;
+      // If still doesn't fit, position below with reduced height
+      if (nextTop < padding) {
+        nextTop = triggerRect.bottom + gap;
+      }
+    }
+
+    setPosition({ top: nextTop, left: nextLeft });
+    setMenuWidth(responsiveMenuWidth);
+    setIsReady(true);
+  };
+
+  // Close dropdown when clicking outside or pressing Escape.
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedTrigger = triggerRef.current?.contains(target);
+      const clickedMenu = dropdownContentRef.current?.contains(target);
+
+      if (!clickedTrigger && !clickedMenu) {
         setIsOpen(false);
       }
     };
@@ -55,90 +96,26 @@ const DropdownMenu = ({ children, trigger, align = "left" }: DropdownMenuProps) 
     }
   }, [isOpen]);
 
-  // Initial positioning - just position relative to trigger
+  // Position as soon as the menu is mounted and keep it aligned during viewport changes.
   useEffect(() => {
-    if (isOpen && dropdownRef.current) {
-      const animationFrameId = requestAnimationFrame(() => {
-        const triggerButton = dropdownRef.current?.querySelector('[role="button"]') as HTMLElement;
-        if (triggerButton) {
-          const triggerRect = triggerButton.getBoundingClientRect();
-          const viewportWidth = window.innerWidth;
-          
-          const newPosition: Position = {
-            top: Math.max(triggerRect.bottom + 6, 0),
-          };
-
-          // Determine alignment based on trigger position
-          if (align === "left") {
-            newPosition.left = triggerRect.left;
-          } else {
-            newPosition.right = viewportWidth - triggerRect.right;
-          }
-
-          setPosition(newPosition);
-          setIsPositioned(true);
-        }
-      });
-      return () => cancelAnimationFrame(animationFrameId);
-    } else {
-      setIsPositioned(false);
-      setConstrainedWidth(null);
+    if (!isOpen) {
+      setIsReady(false);
+      setMenuWidth(null);
+      return;
     }
+
+    const animationFrameId = requestAnimationFrame(updatePosition);
+    const handleViewportChange = () => updatePosition();
+
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
+    };
   }, [isOpen, align]);
-
-  // Second effect: Check if dropdown overflows and adjust
-  useEffect(() => {
-    if (isOpen && isPositioned && dropdownContentRef.current && dropdownRef.current) {
-      const timeoutId = setTimeout(() => {
-        const dropdownRect = dropdownContentRef.current?.getBoundingClientRect();
-        const triggerButton = dropdownRef.current?.querySelector('[role="button"]') as HTMLElement;
-        const triggerRect = triggerButton?.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const padding = 12;
-        
-        if (dropdownRect && triggerRect) {
-          const newPosition: Position = { ...position };
-          
-          // Check if dropdown overflows right edge
-          if (dropdownRect.right > viewportWidth - padding) {
-            if (viewportWidth < 768) {
-              const maxWidth = viewportWidth - 2 * padding;
-              setConstrainedWidth(maxWidth);
-              newPosition.left = padding;
-              delete newPosition.right;
-            } else {
-              newPosition.right = padding;
-              delete newPosition.left;
-            }
-          }
-          
-          // Check if dropdown overflows left edge
-          if (dropdownRect.left < padding) {
-            if (viewportWidth < 768) {
-              const maxWidth = viewportWidth - 2 * padding;
-              setConstrainedWidth(maxWidth);
-              newPosition.left = padding;
-              delete newPosition.right;
-            } else {
-              newPosition.left = padding;
-              delete newPosition.right;
-            }
-          }
-
-          // Check if dropdown overflows bottom edge
-          if (dropdownRect.bottom > viewportHeight - padding) {
-            // Position above the trigger instead of below
-            newPosition.top = Math.max(triggerRect.top - dropdownRect.height - 6, padding);
-          }
-          
-          setPosition(newPosition);
-        }
-      }, 0); // Use setTimeout to let the DOM render first
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [isOpen, isPositioned]);
 
   const toggleDropdown = (e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation();
@@ -146,18 +123,52 @@ const DropdownMenu = ({ children, trigger, align = "left" }: DropdownMenuProps) 
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === ' ' || e.key === 'Enter') {
+    if (e.key === " " || e.key === "Enter") {
       e.preventDefault();
       toggleDropdown(e);
     }
   };
 
+  const menu = isOpen ? (
+    <div
+      ref={dropdownContentRef}
+      className="fixed bg-background dark:bg-brand-black-100 border border-border rounded-md shadow-lg"
+      style={{
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        width: menuWidth ? `${menuWidth}px` : "auto",
+        minWidth: "160px",
+        maxWidth: menuWidth ? `${menuWidth}px` : "320px",
+        zIndex: 9999,
+        overflow: "auto",
+        maxHeight: "80vh",
+        visibility: isReady ? "visible" : "hidden",
+      }}
+      role="menu"
+      aria-hidden={!isOpen}
+    >
+      <div className="py-1">
+        {React.Children.map(children, (child) => {
+          if (!React.isValidElement(child)) return null;
+          const element = child as React.ReactElement<DropdownMenuItemProps>;
+          return React.cloneElement(element, {
+            onClick: () => {
+              element.props.onClick?.();
+              setIsOpen(false);
+            },
+          });
+        })}
+      </div>
+    </div>
+  ) : null;
+
   return (
-    <div className="relative inline-flex items-center" ref={dropdownRef}>
+    <div className="relative inline-flex items-center">
       <div 
         onClick={toggleDropdown}
         onKeyDown={handleKeyDown}
         className="inline-flex items-center leading-none"
+        ref={triggerRef}
         role="button"
         tabIndex={0}
         aria-expanded={isOpen}
@@ -166,37 +177,7 @@ const DropdownMenu = ({ children, trigger, align = "left" }: DropdownMenuProps) 
         {trigger}
       </div>
 
-      {isOpen && isPositioned && (
-        <div
-          ref={dropdownContentRef}
-          className="fixed bg-background dark:bg-brand-black-100 border border-border rounded-md shadow-lg animate-in fade-in zoom-in-95 duration-100"
-          style={{
-            top: `${position.top}px`,
-            ...(position.left !== undefined && { left: `${position.left}px` }),
-            ...(position.right !== undefined && { right: `${position.right}px` }),
-            ...(constrainedWidth ? { width: `${constrainedWidth}px` } : { width: 'auto' }),
-            minWidth: '160px',
-            maxWidth: constrainedWidth ? `${constrainedWidth}px` : '320px',
-            zIndex: 9999,
-            overflow: 'auto',
-            maxHeight: '80vh',
-          }}
-          role="menu"
-        >
-          <div className="py-1">
-            {React.Children.map(children, (child) => {
-              if (!React.isValidElement(child)) return null;
-              const element = child as React.ReactElement<DropdownMenuItemProps>;
-              return React.cloneElement(element, {
-                onClick: () => {
-                  element.props.onClick?.();
-                  setIsOpen(false);
-                },
-              });
-            })}
-          </div>
-        </div>
-      )}
+      {typeof document !== "undefined" && menu ? createPortal(menu, document.body) : null}
     </div>
   );
 };

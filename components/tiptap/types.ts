@@ -6,6 +6,7 @@ export interface TiptapRef {
   getMarkdown: () => string;
   clearContent: () => void;
   focus: () => void;
+  uploadPendingImages: () => Promise<void>;
 }
 
 export interface TiptapProps {

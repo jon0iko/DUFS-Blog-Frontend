@@ -77,7 +77,6 @@ export default function BrowseContentSection({
           sort: 'BlogDate:desc',
         });
         const allArticles = response.data || [];
-        console.log('Fetched all articles for category sorting:', allArticles);
 
         // Create a map of category documentId to latest published date
         const categoryLatestDates = new Map<string, Date>();
@@ -91,10 +90,6 @@ export default function BrowseContentSection({
               const categoryId = article.category.documentId || article.category.Slug || '';
               const publishedDate = new Date(dateString);
 
-              console.log(
-                `Article: ${article.title}, Category: ${article.category.nameBn || article.category.Name}, ID: ${categoryId}, Date: ${dateString}`
-              );
-
               const currentLatest = categoryLatestDates.get(categoryId);
               if (!currentLatest || publishedDate > currentLatest) {
                 categoryLatestDates.set(categoryId, publishedDate);
@@ -103,7 +98,6 @@ export default function BrowseContentSection({
           }
         });
 
-        console.log('Category Latest Dates Map:', categoryLatestDates);
 
         // Sort categories by latest published date (descending)
         // Extract original indices to use as tiebreaker
@@ -123,19 +117,10 @@ export default function BrowseContentSection({
             return a.originalIdx - b.originalIdx;
           }
 
-          console.log(
-            `Comparing ${a.cat.nameBn || a.cat.Name} (${dateA.toISOString()}) vs ${b.cat.nameBn || b.cat.Name} (${dateB.toISOString()}) = ${dateComparison}`
-          );
-
           return dateComparison;
         });
 
         const sortedCategories = sortedWithIndices.map(item => item.cat);
-
-        console.log(
-          'Sorted categories:',
-          sortedCategories.map((c) => c.nameBn || c.Name)
-        );
 
         setCategories(sortedCategories);
       } catch (error) {

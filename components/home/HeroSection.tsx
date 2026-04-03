@@ -1,34 +1,63 @@
-import { serverStrapiAPI } from '@/lib/server-api';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { strapiAPI } from '@/lib/api';
 import HeroCarousel from './HeroCarousel';
+import type { Article } from '@/types';
 
-export default async function HeroSection() {
-  try {
-    // Fetch all hero articles from Strapi v5
-    const heroArticlesResponse = await serverStrapiAPI.getHeroArticles();
-    // console.log('Hero Articles Response:', heroArticlesResponse);
-    
-    if (!heroArticlesResponse.data || heroArticlesResponse.data.length === 0) {
-      return (
-        <section className="relative h-[80vh] w-full overflow-hidden bg-brand-black-90 flex items-center justify-center">
-          <div className="text-center text-white px-4">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">No Hero Articles Found</h2>
-            <p className="text-gray-400">Please mark an article as hero in the content manager</p>
-          </div>
-        </section>
-      );
-    }
+function HeroSkeleton() {
+  return (
+    <section className="relative h-[80vh] w-full overflow-hidden bg-white dark:bg-brand-black-90 flex items-center justify-center animate-pulse">
+      <div className="w-full h-full" />
+    </section>
+  );
+}
 
-    return <HeroCarousel articles={heroArticlesResponse.data} />;
-  } catch (error) {
-    console.error('Failed to load hero section:', error);
+export default function HeroSection() {
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchHeroArticles = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await strapiAPI.getHeroArticles();
+        
+        if (!response.data || response.data.length === 0) {
+          setError('No hero articles found');
+          setArticles([]);
+          return;
+        }
+        
+        setArticles(response.data);
+      } catch (err) {
+        console.error('Failed to load hero articles:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load content');
+        setArticles([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHeroArticles();
+  }, []);
+
+  if (loading) {
+    return <HeroSkeleton />;
+  }
+
+  if (error || articles.length === 0) {
     return (
-      <section className="relative h-[80vh] w-full overflow-hidden bg-red-900 flex items-center justify-center">
+      <section className="relative h-[80vh] w-full overflow-hidden bg-brand-black-90 flex items-center justify-center">
         <div className="text-center text-white px-4">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">Error Loading</h2>
-          <p className="text-gray-200">Failed to connect to the server. Please check your connection.</p>
-          <p className="text-sm text-gray-400 mt-2">{error instanceof Error ? error.message : 'Unknown error'}</p>
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">Unable to Load</h2>
+          <p className="text-gray-400">{error || 'Please check your connection'}</p>
         </div>
       </section>
     );
   }
+
+  return <HeroCarousel articles={articles} />;
 }

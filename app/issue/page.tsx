@@ -62,7 +62,6 @@ function IssueInner() {
         }
         if (articlesRes && articlesRes.data) {
           setPieces(articlesRes.data);
-          console.log('Fetched pieces for issue:', articlesRes.data);
         }
       } catch (err) {
         console.error('Failed to load issue or pieces:', err);

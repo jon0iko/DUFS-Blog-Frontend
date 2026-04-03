@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext'; // Import useAuth hook
 import { getUserAvatarUrl } from '@/lib/auth'; // Import avatar helper
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Palette } from 'lucide-react';
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useSocialLinks } from '@/contexts/SocialLinksContext';
 
 interface NavigationItem {
@@ -31,6 +31,19 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
   const { socialLinks } = useSocialLinks();
   const { theme, setTheme } = useTheme();
   const closeSidebar = () => setIsOpen(false);
+
+  // Prevent body scroll when sidebar is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   // Swipe-to-close gesture
   const touchStartX = useRef<number | null>(null);
@@ -88,7 +101,7 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
       {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-[59] bg-black/50 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-[59] bg-black/50 backdrop-blur-sm"
           onClick={closeSidebar}
           aria-hidden="true"
         />
@@ -105,8 +118,13 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
         aria-label="Sidebar Navigation"
+        onClick={(e) => e.stopPropagation()}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        onWheel={(e) => {
+          // Prevent scroll from propagating to body when sidebar is scrolling
+          e.stopPropagation();
+        }}
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
@@ -120,7 +138,7 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
               <img 
                 src="/images/logoo.png" 
                 alt="DUFS Blog Logo" 
-                className="h-16 w-16 p-2 rounded-3xl object-contain" 
+                className="h-16 w-16 p-2 rounded-2xl object-contain" 
               />
           </Link>
           <Button
@@ -140,11 +158,7 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
 
         {/* Navigation Section */}
         <div className="flex items-center gap-3 mb-3">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-            {isAuthenticated ? 'Navigate' : 'Explore'}
-          </span>
-          <div className="h-px flex-1 bg-border" />
+          <Separator />
         </div>
         <nav className="flex-shrink-0 mb-2">
           <ul className="space-y-5">
@@ -233,7 +247,7 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
         <div className="mt-6 flex-shrink-0 space-y-6">
           <Separator />
           {/* Social Links Section */}
-          <div className="flex space-x-4">
+          <div className="flex space-x-4 justify-evenly">
             {socialLinks.map((link) => (
               <Link
                 key={link.platform}

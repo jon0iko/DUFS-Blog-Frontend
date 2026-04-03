@@ -411,6 +411,7 @@ export default function EditorPage() {
         onClose={() => setShowPublishModal(false)}
         contentMarkdown={contentMarkdown}
         onPublishSuccess={handlePublishSuccess}
+        tiptapRef={tiptapRef}
       />
       
       {/* Save Draft Modal */}

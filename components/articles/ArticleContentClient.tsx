@@ -147,7 +147,6 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
     onFontSizeChange: setFontSize,
   };
 
-  console.log("Article data:", article);
 
   return (
     <div className={isSepiaMode ? "sepia-article min-h-screen" : undefined}>
@@ -164,6 +163,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
           shortPublishedDate={shortPublishedDate}
           viewCount={viewCount}
           isPublicationAuthor={!hasAuthorProfile}
+          publicationIssue={article.publication_issue}
         />
 
         <div className="container px-4 py-10">
@@ -233,7 +233,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
               </div>
             </div>
 
-            <ArticleRightSidebar article={article} />
+            <ArticleRightSidebar article={article} publicationIssue={article.publication_issue} />
           </div>
         </div>
 

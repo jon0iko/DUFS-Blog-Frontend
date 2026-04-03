@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { serverStrapiAPI } from '@/lib/server-api';
+import { strapiAPI } from '@/lib/api';
 import PublicationsSection from './PublicationsSection';
 import type { Publication } from '@/types';
 
@@ -15,15 +15,15 @@ export default function PublicationsWrapper() {
     const fetchPublications = async () => {
       try {
         setIsLoading(true);
-        const allPublications = await serverStrapiAPI.getPublications();
-        const visible = allPublications.data.filter((item) => !item.Hide);
-        const publications = visible.filter((item) => item.ShowInHome);
+        const allPublications = await strapiAPI.getPublications();
+        const visible = (allPublications.data || []).filter((item: any) => !item.Hide);
+        const publications = visible.filter((item: any) => item.ShowInHome);
         
         setHomePublications(publications);
         setHasMorePublications(visible.length > publications.length);
         setError(null);
       } catch (err) {
-        console.error('Failed to load publications for homepage:', err);
+        console.error('Failed to load publications:', err);
         setError(err instanceof Error ? err.message : 'Failed to load publications');
       } finally {
         setIsLoading(false);
@@ -34,11 +34,11 @@ export default function PublicationsWrapper() {
   }, []);
 
   if (isLoading) {
-    return <div>Loading publications...</div>;
+    return <div className="py-12 text-center">Loading publications...</div>;
   }
 
   if (error) {
-    return <div>Error loading publications: {error}</div>;
+    return <div className="py-12 text-center text-red-600">Error loading publications</div>;
   }
 
   return (

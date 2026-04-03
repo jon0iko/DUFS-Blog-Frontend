@@ -121,6 +121,7 @@ export default function Header() {
       await strapiAPI.createUserRequestReport({
         section: "IssueReportHome",
         description: reportIssueText,
+        userId: user?.id,
       });
       toast.success("Your report has been submitted successfully.");
       setIsReportModalOpen(false);
@@ -356,7 +357,7 @@ export default function Header() {
                             "w-full text-left px-3 py-1.5 text-sm rounded-sm transition-colors",
                             theme === "light" 
                               ? "bg-primary/10 text-primary font-medium" 
-                              : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                              : "hover:bg-gray-100 dark:hover:bg-brand-black-90"
                           )}
                         >
                           <Sun className="mr-2 h-3.5 w-3.5 inline stroke-2" />
@@ -372,7 +373,7 @@ export default function Header() {
                             "w-full text-left px-3 py-1.5 text-sm rounded-sm transition-colors",
                             theme === "dark" 
                               ? "bg-primary/10 text-primary font-medium" 
-                              : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                              : "hover:bg-gray-100 dark:hover:bg-brand-black-90"
                           )}
                         >
                           <Moon className="mr-2 h-3.5 w-3.5 inline stroke-2" />
@@ -388,7 +389,7 @@ export default function Header() {
                             "w-full text-left px-3 py-1.5 text-sm rounded-sm transition-colors",
                             theme === "system" 
                               ? "bg-primary/10 text-primary font-medium" 
-                              : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                              : "hover:bg-gray-100 dark:hover:bg-black-90"
                           )}
                         >
                           <Palette className="mr-2 h-3.5 w-3.5 inline stroke-2" />

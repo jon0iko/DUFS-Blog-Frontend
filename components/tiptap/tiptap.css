@@ -19,6 +19,10 @@
   overflow-x: hidden;
   box-sizing: border-box;
   scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  font-family: var(--font-zilla-slab), var(--font-roboto), sans-serif, 'Kalpurush Fallback', var(--font-kalpurush);
+  color: hsl(var(--foreground));
 }
 
 /* Custom scrollbar styling for editor */
@@ -46,10 +50,6 @@
   scrollbar-width: thin;
 }
 
-/* 
- * Bengali text font support via CSS font-family cascade.
- * Bengali characters will automatically use Kalpurush font via unicode-range support.
- */
 @font-face {
   font-family: 'Kalpurush Fallback';
   src: local('Kalpurush'), local('Noto Sans Bengali');
@@ -57,7 +57,7 @@
 }
 
 .ProseMirror {
-  font-family: var(--font-zilla-slab), var(--font-roboto), sans-serif,  'Kalpurush Fallback', var(--font-kalpurush);
+  font-family: var(--font-zilla-slab), var(--font-roboto), sans-serif, 'Kalpurush Fallback', var(--font-kalpurush);
 }
 
 /* Custom quote node view: mirrors published quote styling */
@@ -67,6 +67,8 @@
   margin: 0 !important;
   font-style: inherit !important;
   color: inherit !important;
+  word-spacing: normal !important;
+  letter-spacing: normal !important;
 }
 
 .ProseMirror .dufs-editor-quote-icon-light {
@@ -87,9 +89,68 @@
 
 .ProseMirror .dufs-editor-blockquote-content p {
   margin: 0 !important;
+  padding: 0 !important;
   font-size: inherit !important;
   line-height: inherit !important;
   color: inherit !important;
+}
+
+.ProseMirror .dufs-editor-blockquote-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Paragraph and text styling - matches dufs-article-render */
+.ProseMirror p {
+  margin-bottom: 0.5rem;
+  color: hsl(var(--foreground));
+  letter-spacing: 0.02em;
+  line-height: 1.75;
+}
+
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
+  font-weight: bold;
+  letter-spacing: 0.02em;
+  color: hsl(var(--foreground));
+}
+
+.ProseMirror h1 {
+  font-size: 2rem;
+}
+
+.ProseMirror h2 {
+  font-size: 1.875rem;
+}
+
+.ProseMirror h3 {
+  font-size: 1.5rem;
+}
+
+.ProseMirror strong,
+.ProseMirror b {
+  font-weight: bold;
+  color: hsl(var(--foreground));
+}
+
+.ProseMirror em,
+.ProseMirror i {
+  font-style: italic;
+  color: hsl(var(--foreground));
+}
+
+.ProseMirror a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.ProseMirror a:hover {
+  color: hsl(var(--primary) / 0.8);
 }
 
 /* Code */
@@ -105,7 +166,19 @@
   background: none;
   padding: 0;
   font-size: 0.875em;
-  color: inherit;
+  color: hsl(var(--foreground));
+}
+
+.ProseMirror code {
+  display: inline-block;
+  padding: 8px 12px;
+  background-color: hsl(var(--muted));
+  color: hsl(var(--accent-foreground));
+  border-radius: 4px;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 0.875em;
 }
 
 /* Images */
@@ -119,6 +192,59 @@
 
 .ProseMirror img.ProseMirror-selectednode {
   outline: none;
+}
+
+/* Lists */
+.ProseMirror ul,
+.ProseMirror ol {
+  margin: 1.75rem 0;
+  margin-left: 1.5rem;
+  space: 0.75rem;
+}
+
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.ProseMirror li {
+  margin-left: 0.5rem;
+  line-height: 1.75;
+  color: hsl(var(--foreground));
+}
+
+/* Blockquote and Figures */
+.ProseMirror blockquote {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  font-style: italic;
+  line-height: 1.55;
+  color: hsl(var(--foreground));
+  margin: 0;
+}
+
+.ProseMirror figure[data-image-caption] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 2.5rem 0;
+}
+
+.ProseMirror figcaption {
+  margin-top: 0.5rem;
+  text-align: center;
+  font-style: italic;
+  color: hsl(var(--foreground) / 0.9);
+}
+
+.ProseMirror hr {
+  margin: 2.5rem 0;
+  border-top: 1px solid hsl(var(--border));
+  border: none;
 }
 
 /* Tables */
@@ -138,6 +264,7 @@
   vertical-align: top;
   box-sizing: border-box;
   position: relative;
+  color: hsl(var(--foreground));
 }
 
 .ProseMirror th {
@@ -260,4 +387,185 @@
       height: 0.875rem;
     }
   }
+}
+
+/* Text shadow effects for light mode - matches article renderer */
+:root .ProseMirror p,
+:root .ProseMirror li,
+:root .ProseMirror blockquote {
+  text-shadow: 0 0.3px 0.8px rgba(0, 0, 0, 0.18);
+}
+
+:root .ProseMirror h1,
+:root .ProseMirror h2,
+:root .ProseMirror h3 {
+  text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.15);
+}
+
+.dark .ProseMirror p,
+.dark .ProseMirror li,
+.dark .ProseMirror blockquote,
+.dark .ProseMirror h1,
+.dark .ProseMirror h2,
+.dark .ProseMirror h3 {
+  text-shadow: none;
+}
+
+/* Typography scales for editor - matching article renderer */
+
+/* Small typography */
+.ProseMirror[data-size="small"] p,
+.ProseMirror[data-size="small"] li {
+  font-size: 1rem;
+  line-height: 1.75;
+}
+@media (min-width: 768px) {
+  .ProseMirror[data-size="small"] p,
+  .ProseMirror[data-size="small"] li {
+    font-size: 1.125rem;
+  }
+}
+
+.ProseMirror[data-size="small"] h1 { font-size: 1.875rem; margin-bottom: 0.75rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="small"] h1 { font-size: 2.25rem; }
+}
+
+.ProseMirror[data-size="small"] h2 { font-size: 1.5rem; margin-bottom: 0.75rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="small"] h2 { font-size: 1.875rem; }
+}
+
+.ProseMirror[data-size="small"] h3 { font-size: 1.25rem; margin-bottom: 0.75rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="small"] h3 { font-size: 1.5rem; }
+}
+
+.ProseMirror[data-size="small"] blockquote { font-size: 1.125rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="small"] blockquote { font-size: 1.25rem; }
+}
+
+.ProseMirror[data-size="small"] figcaption { font-size: 0.875rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="small"] figcaption { font-size: 1rem; }
+}
+
+.ProseMirror[data-size="small"] code { font-size: 0.875rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="small"] code { font-size: 1rem; }
+}
+
+/* Medium typography */
+.ProseMirror[data-size="medium"] p,
+.ProseMirror[data-size="medium"] li {
+  font-size: 1.125rem;
+  line-height: 1.8;
+}
+@media (min-width: 768px) {
+  .ProseMirror[data-size="medium"] p,
+  .ProseMirror[data-size="medium"] li {
+    font-size: 1.25rem;
+  }
+}
+
+.ProseMirror[data-size="medium"] h1 { font-size: 2.25rem; margin-bottom: 0.75rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="medium"] h1 { font-size: 3rem; }
+}
+
+.ProseMirror[data-size="medium"] h2 { font-size: 1.875rem; margin-bottom: 0.75rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="medium"] h2 { font-size: 2.25rem; }
+}
+
+.ProseMirror[data-size="medium"] h3 { font-size: 1.5rem; margin-bottom: 0.75rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="medium"] h3 { font-size: 1.875rem; }
+}
+
+.ProseMirror[data-size="medium"] blockquote { font-size: 1.25rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="medium"] blockquote { font-size: 1.5rem; }
+}
+
+.ProseMirror[data-size="medium"] figcaption { font-size: 1rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="medium"] figcaption { font-size: 1.125rem; }
+}
+
+.ProseMirror[data-size="medium"] code { font-size: 1rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="medium"] code { font-size: 1.125rem; }
+}
+
+/* Large typography */
+.ProseMirror[data-size="large"] p,
+.ProseMirror[data-size="large"] li {
+  font-size: 1.25rem;
+  line-height: 1.85;
+}
+
+.ProseMirror[data-size="large"] h1 { font-size: 2.5rem; margin-bottom: 0.75rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="large"] h1 { font-size: 3.75rem; }
+}
+
+.ProseMirror[data-size="large"] h2 { font-size: 2rem; margin-bottom: 0.75rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="large"] h2 { font-size: 2.5rem; }
+}
+
+.ProseMirror[data-size="large"] h3 { font-size: 1.875rem; margin-bottom: 0.75rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="large"] h3 { font-size: 2.25rem; }
+}
+
+.ProseMirror[data-size="large"] blockquote { font-size: 1.5rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="large"] blockquote { font-size: 1.875rem; }
+}
+
+.ProseMirror[data-size="large"] figcaption { font-size: 1.125rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="large"] figcaption { font-size: 1.25rem; }
+}
+
+.ProseMirror[data-size="large"] code { font-size: 1.125rem; }
+@media (min-width: 768px) {
+  .ProseMirror[data-size="large"] code { font-size: 1.25rem; }
+}
+
+/* Sepia mode support for editor */
+.sepia-article .ProseMirror {
+  --background: 35 45% 91%;
+  --foreground: 25 30% 18%;
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--background));
+}
+
+.sepia-article .ProseMirror p,
+.sepia-article .ProseMirror li,
+.sepia-article .ProseMirror blockquote {
+  color: #1a1008 !important;
+}
+
+.sepia-article .ProseMirror h1,
+.sepia-article .ProseMirror h2,
+.sepia-article .ProseMirror h3,
+.sepia-article .ProseMirror strong,
+.sepia-article .ProseMirror b {
+  color: #0d0804 !important;
+}
+
+.sepia-article .ProseMirror code {
+  background-color: #ebe0d1 !important;
+  color: #1a1008 !important;
+}
+
+.dark .sepia-article .ProseMirror {
+  --background: 35 45% 91%;
+  --foreground: 25 30% 18%;
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--background)) !important;
 }

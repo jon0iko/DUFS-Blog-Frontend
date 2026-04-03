@@ -85,7 +85,9 @@ export default function ArticleAuthorSection({
             {publicationAuthorName}
           </h3>
         </div>
-        <PublicationIssueCard />
+        <div className="lg:hidden">
+          <PublicationIssueCard />
+        </div>
       </div>
     );
   }
@@ -198,7 +200,9 @@ export default function ArticleAuthorSection({
         </div>
       </div>
 
-      <PublicationIssueCard />
+      <div className="lg:hidden">
+        <PublicationIssueCard />
+      </div>
     </div>
   );
 }

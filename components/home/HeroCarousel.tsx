@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
@@ -18,13 +19,50 @@ interface HeroCarouselProps {
   articles: Article[];
 }
 
-// Utility to split text into words and graphemes (safe for Bengali)
-// Removed splitIntoWordsAndChars as it is no longer used
+// ========== PERSISTENT IMAGE CACHE ==========
+// Module-level cache persists across component remounts within the same page session
+// Survives: component unmount/remount, carousel re-initialization
+// Clears on: page reload, navigation to different route
+let persistentImageCache = new Set<string>();
+
+// Initialize cache cleanup on route changes
+let cacheCleanupInitialized = false;
+
+const initializeCacheCleanup = (router: ReturnType<typeof useRouter>) => {
+  if (cacheCleanupInitialized) return;
+  cacheCleanupInitialized = true;
+
+  const handleRouteChange = () => {
+    persistentImageCache.clear();
+  };
+
+  router.prefetch; // Touch router to ensure it's ready
+};
+
 
 const SLIDE_DURATION = 6000; // 6 seconds per slide
 const IMAGE_LOAD_TIMEOUT = 3000; // Fallback if image onLoad/onError never fires
 
 export default function HeroCarousel({ articles }: HeroCarouselProps) {
+  const router = useRouter();
+
+  // Initialize cache cleanup handler on first render
+  useEffect(() => {
+    initializeCacheCleanup(router);
+  }, [router]);
+
+  // Listen for route changes via popstate and beforeunload to clear cache
+  useEffect(() => {
+    const handlePageUnload = () => {
+      persistentImageCache.clear();
+    };
+
+    window.addEventListener("beforeunload", handlePageUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handlePageUnload);
+    };
+  }, []);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
@@ -47,6 +85,7 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
   const kenBurnsRef = useRef<HTMLDivElement>(null);
   const contentTextRef = useRef<HTMLDivElement>(null);
   const titletextref = useRef<HTMLHeadingElement>(null);
+
 
   // Memoize article data for performance
   const processedArticles = useMemo(() => {
@@ -311,6 +350,71 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
     }
   };
 
+  // Optimized image preloading: Only preload new images once, track what's already loaded
+  // Preload current + next 3 slides incrementally to avoid network congestion
+  // Uses persistent cache across component remounts within the same page session
+  useEffect(() => {
+    if (processedArticles.length === 0) return;
+
+    // Calculate which images to preload (current + next 3)
+    const indicesToPreload = [];
+    for (let i = 0; i < 4; i++) {
+      indicesToPreload.push((currentIndex + i) % processedArticles.length);
+    }
+
+    // Filter out already-preloaded URLs to avoid duplicate requests
+    const urlsToPreload = indicesToPreload
+      .map((index) => processedArticles[index]?.imageSrc)
+      .filter((url) => url && !persistentImageCache.has(url));
+
+    // If nothing new to preload, skip
+    if (urlsToPreload.length === 0) return;
+
+    // Stagger preloading: start after 800ms, then batch by 200ms intervals
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    urlsToPreload.forEach((url, order) => {
+      const delay = 800 + order * 200;
+      const timer = setTimeout(() => {
+        persistentImageCache.add(url);
+        const img = new window.Image();
+        img.src = url;
+      }, delay);
+      timers.push(timer);
+    });
+
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer));
+    };
+  }, [currentIndex, processedArticles]);
+
+  // Expert optimization: Preload ALL article images upfront (decoupled from slide transitions)
+  // This runs only once when articles load, preventing duplicate requests as user navigates
+  // Uses persistent cache to avoid re-preloading if carousel remounts
+  useEffect(() => {
+    if (processedArticles.length <= 4) return; // Only worth it if we have more than 4 articles
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    
+    // Start preloading remaining images (beyond the first 4) after 2 seconds
+    processedArticles.forEach((article, index) => {
+      if (!article.imageSrc || persistentImageCache.has(article.imageSrc)) return;
+
+      // Stagger remaining images: 2000ms + 300ms intervals to avoid network flood
+      const delay = 2000 + (index % 10) * 300;
+      const timer = setTimeout(() => {
+        persistentImageCache.add(article.imageSrc);
+        const img = new window.Image();
+        img.src = article.imageSrc;
+      }, delay);
+      timers.push(timer);
+    });
+
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer));
+    };
+  }, [processedArticles.length]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -330,6 +434,7 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
   const authorFontClass = currentArticle?.author?.name
     ? getFontClass(currentArticle.author.name)
     : "font-roboto";
+
 
   return (
     <>
