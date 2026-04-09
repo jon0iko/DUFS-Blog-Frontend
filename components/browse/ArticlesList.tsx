@@ -56,7 +56,7 @@ export default function ArticlesList({
           } = {
             page: currentPage,
             pageSize: ARTICLES_PER_PAGE,
-            sort: sortBy === 'recent' ? 'BlogDate:desc' : sortBy === 'oldest' ? 'BlogDate:asc' : 'viewCount:desc',
+            sort: sortBy === 'recent' ? 'BlogDate:desc' : sortBy === 'oldest' ? 'BlogDate:asc' : sortBy === 'liked' ? 'likes:desc' : 'viewCount:desc',
           }
           
           if (category && category !== 'all') {

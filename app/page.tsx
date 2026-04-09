@@ -6,6 +6,8 @@ import ScrollReveal from '@/components/ui/ScrollReveal';
 import CurveDivider from '@/components/home/CurveDivider';
 import TextReel from '@/components/home/TextReel';
 import BackToTopButton from '@/components/home/BackToTopButton';
+import { TextReelProvider } from '@/contexts/TextReelContext';
+import CTAPoster from '@/components/home/CTAPoster';
 
 export default function Home() {
   return (
@@ -13,19 +15,18 @@ export default function Home() {
       <HeroSection />
       <CurveDivider />
 
-      {/* BrowseContentSection fetches its own data client-side */}
       <BrowseContentSectionWrapper />
 
-      {/* Editor's Choice — stagger reveals added inside EditorChoice */}
       <EditorChoice />
 
-      {/* Publications — full section reveal */}
       <ScrollReveal yOffset={50} duration={0.9}>
         <PublicationsWrapper />
       </ScrollReveal>
 
-      {/* Text reel — GSAP marquee with scroll‑velocity */}
-      <TextReel />
+      <TextReelProvider>
+        <CTAPoster  />
+        <TextReel />
+      </TextReelProvider>
 
       <BackToTopButton />
     </div>

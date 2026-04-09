@@ -9,7 +9,7 @@ import type { Article } from '@/types';
 
 function ArticleCardSkeleton() {
   return (
-    <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-64 md:h-72 animate-pulse" />
+    <div className="bg-gray-200 dark:bg-brand-black-90 rounded-lg h-64 md:h-72 animate-pulse" />
   );
 }
 

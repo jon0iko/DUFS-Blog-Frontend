@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useTransition } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -20,6 +20,7 @@ const SubmitPage = () => {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const toast = useToast();
+  const [isPending, startTransition] = useTransition();
   
   const [articles, setArticles] = useState<UserArticle[]>([]);
   const [stats, setStats] = useState({
@@ -46,6 +47,13 @@ const SubmitPage = () => {
   const caretRef = useRef<HTMLSpanElement | null>(null)
 
   const headingText = "Writers' Room"
+
+  // Navigation handlers with instant loading state
+  const handleNavigate = (href: string) => {
+    startTransition(() => {
+      router.push(href);
+    });
+  };
 
   // Debounce search query
   useEffect(() => {
@@ -217,19 +225,19 @@ const SubmitPage = () => {
     { label: 'Total Comments', value: stats.totalComments.toString(), icon: MessageSquare, rotation: '0.5deg' },
   ]
 
-  if (authLoading) return <LoadingScreen isLoading={true} />;
+  if (authLoading || isPending) return <LoadingScreen isLoading={true} />;
   if (!isAuthenticated) return null;
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden font-montserrat">
       {/* Background Images */}
-      <div className="absolute inset-0 dark:hidden select-none pointer-events-none" style={{ backgroundImage: 'url(/images/bgpaper.jpg)', backgroundRepeat: 'repeat' }} />
-      <div className="bg-pattern-dark absolute inset-0 hidden dark:block select-none pointer-events-none" style={{ backgroundImage: 'url(/images/bgpaper_dark.jpg)', backgroundRepeat: 'repeat', backgroundSize: '1667px 1200px' }} />
+      <div className="absolute -inset-2/4 dark:hidden select-none pointer-events-none" style={{ backgroundImage: 'url(/images/bgpaper.jpg)', backgroundRepeat: 'repeat' }} />
+      <div className="bg-pattern-dark absolute -inset-2/4 hidden dark:block select-none pointer-events-none" style={{ backgroundImage: 'url(/images/bgpaper_dark.jpg)', backgroundRepeat: 'repeat', backgroundSize: '1667px 1200px' }} />
 
       <div className="container relative z-20 px-7 pt-8 md:pt-10">
         {/* Coffee stain */}
         <div className="pointer-events-none absolute z-10 -right-20 -top-20 rotate-[15deg] md:right-8 md:top-0 md:-translate-y-[52%] md:rotate-0">
-          <Image src="/images/Coffee-Stain.png" alt="stain" width={280} height={280} className="h-auto w-[180px] md:w-[280px] object-contain opacity-80" priority unoptimized />
+          <Image src="/images/Coffee-Stain.png" alt="stain" width={280} height={280} className="h-auto w-[200px] md:w-[280px] object-contain opacity-80" priority unoptimized />
         </div>
 
         {/* Hero Title - Alte Haas Grotesk */}
@@ -242,8 +250,8 @@ const SubmitPage = () => {
 
         {/* 1. Quick Action Buttons */}
         <div className="mt-10 flex flex-col md:flex-row gap-5 lg:gap-8">
-          <Link href="/editor" className="flex-1">
-            <button className="group relative w-full bg-[#F9F7F1] dark:bg-[#1C1B1A] border-2 border-foreground/90 p-5 md:p-6 rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.8)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.8)] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]">
+          <button onClick={() => handleNavigate('/editor')} className="flex-1">
+            <div className="group relative w-full bg-[#F9F7F1] dark:bg-[#1C1B1A] border-2 border-foreground/90 p-5 md:p-6 rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.8)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.8)] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-foreground text-background rounded-sm group-hover:bg-background group-hover:text-foreground border border-transparent group-hover:border-foreground transition-colors shrink-0">
                   <PenTool className="w-6 h-6" />
@@ -253,11 +261,11 @@ const SubmitPage = () => {
                   <p className="text-muted-foreground text-xs mt-1 leading-tight">Start a new article.</p>
                 </div>
               </div>
-            </button>
-          </Link>
+            </div>
+          </button>
 
-          <Link href="/blogup" className="flex-1">
-            <button className="group relative w-full bg-[#F9F7F1] dark:bg-[#1C1B1A] border-2 border-foreground/90 p-5 md:p-6 rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.8)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.8)] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]">
+          <button onClick={() => handleNavigate('/blogup')} className="flex-1">
+            <div className="group relative w-full bg-[#F9F7F1] dark:bg-[#1C1B1A] border-2 border-foreground/90 p-5 md:p-6 rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.8)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.8)] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-foreground text-background rounded-sm group-hover:bg-background group-hover:text-foreground border border-transparent group-hover:border-foreground transition-colors shrink-0">
                   <Upload className="w-6 h-6" />
@@ -267,8 +275,8 @@ const SubmitPage = () => {
                   <p className="text-muted-foreground text-xs mt-1 leading-tight">Submit document for review.</p>
                 </div>
               </div>
-            </button>
-          </Link>
+            </div>
+          </button>
         </div>
 
         {/* 2. Stats Row */}
@@ -345,7 +353,7 @@ const SubmitPage = () => {
           ) : articles.length === 0 ? (
             <div className="bg-[#FAFAF8]/50 dark:bg-[#181817]/50 border border-dashed border-neutral-300 dark:border-neutral-700 rounded-sm p-10 text-center">
               <p className="text-muted-foreground text-sm">No stories yet.</p>
-              <Link href="/editor" className="text-sm font-bold hover:underline mt-2 inline-block">Start writing</Link>
+              <button onClick={() => handleNavigate('/editor')} className="text-sm font-bold hover:underline mt-2 inline-block">Start writing</button>
             </div>
           ) : (
             <div className="space-y-6 md:space-y-0 md:grid md:grid-cols-2 md:gap-6 lg:gap-8">

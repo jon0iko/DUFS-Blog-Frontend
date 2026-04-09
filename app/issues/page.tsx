@@ -162,7 +162,7 @@ function IssuesInner() {
 
         {/* Issues Grid */}
         {issues.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 justify-items-center sm:justify-items-start">
             {issues.map((issue) => (
               <Link 
                 key={issue.documentId} 
@@ -193,9 +193,9 @@ function IssuesInner() {
                 {/* Metadata */}
                 <div className="flex flex-1 flex-col p-4">
                   <time className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    {new Date(issue.PublishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}
+                    {new Date(issue.PublishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
                   </time>
-                  <h3 className={`line-clamp-2 text-base font-semibold text-foreground transition-colors group-hover:text-primary ${getFontClass(issue.Title)}`}>
+                  <h3 className={`line-clamp-2 text-base pl-1 font-semibold text-foreground transition-colors group-hover:text-primary ${getFontClass(issue.Title)}`}>
                     {issue.Title}
                   </h3>
                 </div>

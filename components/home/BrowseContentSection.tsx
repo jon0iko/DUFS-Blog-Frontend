@@ -14,8 +14,6 @@ import { getArticleData, getArticleDataEnglishcategory } from "@/lib/strapi-help
 import { cn } from "@/lib/utils";
 import ArticleCard from "./ArticleCard";
 
-const ARTICLES_PER_PAGE = 8;
-
 type SortOption = "newest" | "oldest" | "most-read";
 type LanguageFilter = "all" | "en" | "bn";
 
@@ -53,6 +51,7 @@ export default function BrowseContentSection({
   const [totalPages, setTotalPages] = useState(1);
   const [, setTotalArticles] = useState(0);
   const [spinTrigger, setSpinTrigger] = useState(0);
+  const [articlesPerPage, setArticlesPerPage] = useState(8);
 
   // Ref for scrolling to articles grid
   const articlesGridRef = useRef<HTMLDivElement>(null);
@@ -66,6 +65,22 @@ export default function BrowseContentSection({
   // Ref for filter dropdown
   const filterDropdownRef = useRef<HTMLDivElement>(null);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
+
+  // Responsive articles per page
+  useEffect(() => {
+    const handleResize = () => {
+      setArticlesPerPage(window.innerWidth >= 1024 ? 8 : 4);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Reset to page 1 when articles per page changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [articlesPerPage]);
 
   // Sort categories by latest article publication date
   useEffect(() => {
@@ -145,7 +160,7 @@ export default function BrowseContentSection({
           language?: "en" | "bn" | "both";
         } = {
           page: currentPage,
-          pageSize: ARTICLES_PER_PAGE,
+          pageSize: articlesPerPage,
           sort:
             sortBy === "newest"
               ? "BlogDate:desc"
@@ -182,7 +197,7 @@ export default function BrowseContentSection({
     };
 
     fetchArticles();
-  }, [activeCategory, sortBy, currentPage, languageFilter]);
+  }, [activeCategory, sortBy, currentPage, languageFilter, articlesPerPage]);
 
   // Detect when section is revealed and trigger spin animation
   useEffect(() => {
@@ -700,7 +715,7 @@ export default function BrowseContentSection({
             <>
               {/* Articles count info */}
               {/* <div className="mb-6 text-sm text-muted-foreground">
-                Showing {(currentPage - 1) * ARTICLES_PER_PAGE + 1} - {Math.min(currentPage * ARTICLES_PER_PAGE, totalArticles)} of {totalArticles} articles
+                Showing {(currentPage - 1) * articlesPerPage + 1} - {Math.min(currentPage * articlesPerPage, totalArticles)} of {totalArticles} articles
               </div> */}
 
               { categoryLanguage === "bn" ?

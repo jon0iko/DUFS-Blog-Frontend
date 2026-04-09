@@ -78,17 +78,17 @@ function IssueInner() {
     if (!issue) return [];
     const fields: Array<{ label: string; value: string }> = [];
     
-    if (issue.Year) fields.push({ label: 'Year', value: issue.Year });
+    if (issue.Year) fields.push({ label: 'Issue', value: issue.Year });
     if (issue.PublishedDate) {
       const date = new Date(issue.PublishedDate).toLocaleDateString('en-US', { 
         year: 'numeric', 
         month: 'short', 
         day: 'numeric' 
       });
-      fields.push({ label: 'Publish Date', value: date });
+      fields.push({ label: 'Publication Date', value: date });
     }
     if (issue.Editor) fields.push({ label: 'Editor', value: issue.Editor });
-    if (issue.CoverDesigner) fields.push({ label: 'Cover Designer', value: issue.CoverDesigner });
+    if (issue.CoverDesigner) fields.push({ label: 'Cover', value: issue.CoverDesigner });
     if (issue.Designer) fields.push({ label: 'Designer', value: issue.Designer });
     if (issue.Imprint) fields.push({ label: 'Imprint', value: issue.Imprint });
     if (issue.PageNumber) fields.push({ label: 'Pages', value: issue.PageNumber });

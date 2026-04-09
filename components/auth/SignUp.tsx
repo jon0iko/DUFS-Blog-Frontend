@@ -278,7 +278,7 @@ export default function SignUp() {
               <div className="w-full border-t border-white/10"></div>
             </div>
             <div className="relative flex justify-center text-xs uppercase tracking-widest">
-              <span className="bg-black px-2 text-white/50">Or continue with email</span>
+              <span className="px-2 text-white/90">Or continue with email</span>
             </div>
           </div>
         </>
@@ -402,7 +402,7 @@ export default function SignUp() {
             autoComplete="username"
             value={formData.username}
             onChange={handleChange}
-            placeholder="This will be your author name"
+            placeholder="Used as 'Author' name"
             disabled={isSubmitting}
             className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white-50 focus:ring-white/30 focus:border-white/30 rounded-md"
           />
@@ -421,7 +421,7 @@ export default function SignUp() {
               autoComplete="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="Enter your email address"
+              placeholder="Enter your email"
               disabled={isSubmitting}
               className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white-50 focus:ring-white/30 focus:border-white/30 rounded-md"
             />
@@ -465,7 +465,7 @@ export default function SignUp() {
                 autoComplete="new-password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Create a strong password"
+                placeholder="Create Strong password"
                 disabled={isSubmitting}
                 className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white-50 focus:ring-white/30 focus:border-white/30 rounded-md"
               />

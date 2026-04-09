@@ -9,7 +9,7 @@ function CategoriesSkeleton() {
   return (
     <section className="py-12 md:py-16 bg-background">
       <div className="container">
-        <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+        <div className="h-20 bg-gray-200 dark:bg-brand-black-90 rounded-lg animate-pulse" />
       </div>
     </section>
   );

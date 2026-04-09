@@ -22,8 +22,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-base text-background dark:text-foreground leading-relaxed mb-6 max-w-sm">
-              Discover cinematic explorations with cutting-edge analysis and
-              blogs that elevate every adventure in film.
+              Explore critical perspectives on cinema, culture, and visual storytelling.
             </p>
             {/* Social Links */}
             <div className="flex items-center gap-3">
@@ -175,13 +174,13 @@ export default function Footer() {
             <div className="flex items-center gap-6 text-sm text-background dark:text-foreground">
               <Link
                 href="#"
-                className="whitespace-nowrap hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
+                className="whitespace-nowrap text-muted-foreground hover:text-white transition-colors"
               >
                 Privacy Policy
               </Link>
               <Link
                 href="/terms-and-conditions"
-                className="whitespace-nowrap hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
+                className="whitespace-nowrap text-muted-foreground hover:text-white transition-colors"
               >
                 Terms of Publication
               </Link>

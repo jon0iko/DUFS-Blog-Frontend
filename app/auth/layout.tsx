@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Home } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -11,10 +12,21 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   const reason = searchParams.get('reason');
   const isSessionEnded = reason === 'session-ended';
   const redirectUrl = searchParams.get('redirect');
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Redirect authenticated users away from auth pages
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      // Allow access if they're redirecting back to a protected page or just logged in
+      if (!redirectUrl && reason !== 'just-logged-in') {
+        router.replace('/account');
+      }
+    }
+  }, [isAuthenticated, isLoading, redirectUrl, reason, router]);
 
   const handleNavigate = () => {
     if (isSessionEnded) {
-      router.push('/');
+      router.replace('/');
     } else {
       // Always try to go back in browser history when canceling login
       router.back();
@@ -22,7 +34,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       // Fallback after a short delay if history is empty
       setTimeout(() => {
         if (window.history.length <= 1) {
-          router.push('/');
+          router.replace('/');
         }
       }, 100);
     }

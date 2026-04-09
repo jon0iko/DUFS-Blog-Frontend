@@ -545,17 +545,10 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
                       <h1
                         id="titleText"
                         ref={titletextref}
-                        className={`${titleFontClass} text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-6 decoration-white underline-offset-8 transition-all leading-tight shadow-black drop-shadow-lg`}
+                        className={`${titleFontClass} text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-12 decoration-white underline-offset-8 transition-all leading-tight shadow-black drop-shadow-lg`}
                       >
                         {currentArticle?.title}
                       </h1>
-                      {/* {currentArticle?.excerpt && (
-                        <p
-                          className={`${excerptFontClass} text-xs font-light md:text-lg text-white/90 line-clamp-2 md:line-clamp-3 max-w-2xl drop-shadow-md`}
-                        >
-                          {currentArticle.excerpt}
-                        </p>
-                      )} */}
                     </div>
                   </div>
                 </div>

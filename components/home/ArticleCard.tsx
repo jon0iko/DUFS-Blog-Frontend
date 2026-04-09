@@ -31,11 +31,13 @@ interface ArticleCardProps {
   imageHeight?: string;
   forceBlackText?: boolean;
   showcategoryenglish?: boolean;
+  priority?: boolean;
 }
 
 export default function ArticleCard({
   article,
   forceBlackText = false,
+  priority = false,
 }: ArticleCardProps) {
   const titleFontClass = getFontClass(article.title);
   const categoryFontClass = getFontClass(article.category);

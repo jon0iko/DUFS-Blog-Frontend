@@ -33,11 +33,11 @@ export default function PublicationsPage() {
     <div className="relative min-h-screen overflow-hidden">
       {/* Background patterns */}
       <div
-        className="pointer-events-none absolute -inset-52 select-none z-0 dark:hidden"
+        className="pointer-events-none absolute -inset-1/4 select-none z-0 dark:hidden"
         style={{ backgroundImage: "url(/images/bgpaper.jpg)", backgroundRepeat: "repeat" }}
       />
       <div
-        className="bg-pattern-dark pointer-events-none absolute -inset-52 hidden select-none z-0 dark:block"
+        className="bg-pattern-dark pointer-events-none absolute -inset-1/4 hidden select-none z-0 dark:block"
         style={{
           backgroundImage: "url(/images/bgpaper_dark.jpg)",
           backgroundRepeat: "repeat",

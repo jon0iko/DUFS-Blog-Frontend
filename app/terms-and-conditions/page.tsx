@@ -132,7 +132,7 @@ const TermsPage = () => {
                 Questions?
               </p>
               <p className="text-sm sm:text-base text-foreground">
-                Contact us for clarifications about our terms<br/>
+                Contact us for clarifications<br/>
                 Email: <a href="mailto:info@blog.dufs.org" className="text-primary hover:underline"> info@blog.dufs.org  </a>
               </p>
             </div>

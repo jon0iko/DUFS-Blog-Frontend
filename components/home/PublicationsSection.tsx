@@ -14,31 +14,6 @@ interface PublicationsSectionProps {
   showViewAll?: boolean;
 }
 
-/* ─── Journal Spine ─────────────────────────────────────────────────────── */
-// function JournalSpine({
-//   titleEn,
-//   spineColor,
-// }: {
-//   titleEn: string;
-//   spineColor: string;
-// }) {
-//   return (
-//     <div
-//       className="absolute left-0 top-0 bottom-0 w-8 md:w-9 flex flex-col justify-between items-center py-4 md:py-5 z-20 rounded-tl-none rounded-bl-none"
-//       style={{ backgroundColor: spineColor }}
-//       aria-hidden="true"
-//     >
-//       <span className="block w-1.5 h-1.5 rounded-full bg-white/35" />
-//       <span
-//         className="text-white/50 text-[9px] md:text-[10px] font-bold tracking-[0.3em] uppercase whitespace-nowrap"
-//         style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-//       >
-//         {titleEn}
-//       </span>
-//       <span className="block w-1.5 h-1.5 rounded-full bg-white/35" />
-//     </div>
-//   );
-// }
 
 /* ─── Section ───────────────────────────────────────────────────────────── */
 export default function PublicationsSection({
@@ -70,10 +45,10 @@ export default function PublicationsSection({
                 key={pub.documentId}
                 className="md:col-span-2 md:w-[calc(50%-0.875rem)] lg:w-[calc(50%-1.125rem)] md:mx-auto"
               >
-                <PublicationCard publication={pub} />
+                <PublicationCard publication={pub} index={index} />
               </div>
             ) : (
-              <PublicationCard key={pub.documentId} publication={pub} />
+              <PublicationCard key={pub.documentId} publication={pub} index={index} />
             );
           })}
         </div>
@@ -95,7 +70,7 @@ export default function PublicationsSection({
 }
 
 /* ─── Card ──────────────────────────────────────────────────────────────── */
-function PublicationCard({ publication: pub }: { publication: Publication }) {
+function PublicationCard({ publication: pub, index }: { publication: Publication; index: number }) {
   const palette = derivePublicationPalette(pub.Color);
   const imageUrl = getStrapiMediaUrl(pub.Image);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -251,6 +226,8 @@ function PublicationCard({ publication: pub }: { publication: Publication }) {
                   fill
                   className="object-contain object-center"
                   sizes="(max-width: 768px) 80vw, 32vw"
+                  priority={index === 0}
+                  loading={index === 0 ? "eager" : "lazy"}
                 />
               </div>
             </div>
@@ -337,6 +314,8 @@ function PublicationCard({ publication: pub }: { publication: Publication }) {
                   fill
                   className="object-contain object-center"
                   sizes="32vw"
+                  priority={index === 0}
+                  loading={index === 0 ? "eager" : "lazy"}
                 />
               </div>
 
