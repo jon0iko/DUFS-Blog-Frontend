@@ -1,38 +1,69 @@
-// File: src/components/home/HeroSection.tsx
+'use client';
 
-import Link from 'next/link';
-import { heroArticle } from '@/data/dummy-data';
-import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import { strapiAPI } from '@/lib/api';
+import HeroCarousel from './HeroCarousel';
+import type { Article } from '@/types';
 
-export default function HeroSection() {
+function HeroSkeleton() {
   return (
-    <section className="relative h-[50vh] md:h-[60vh] lg:h-[70vh] w-full overflow-hidden">
-      {/* Black and white background image with overlay */}
-      <div className="absolute inset-0">
-        <Image
-          src={heroArticle.imageSrc}
-          alt={heroArticle.title}
-          fill
-          priority
-          className="object-cover grayscale"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-      </div>
-      
-      {/* Content overlay */}
-      <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12">
-        <div className="max-w-5xl">
-          <Link href={`/articles/${heroArticle.slug}`}>
-            <h1 className="font-kalpurush text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
-              {heroArticle.title}
-            </h1>
-            <p className="text-lg md:text-xl text-white/80">
-              {heroArticle.excerpt}
-            </p>
-          </Link>
-        </div>
-      </div>
+    <section className="relative h-[80vh] w-full overflow-hidden bg-white dark:bg-brand-black-90 flex items-center justify-center animate-pulse">
+      <div className="w-full h-full" />
     </section>
   );
+}
+
+interface HeroSectionProps {
+  onReadyStateChange?: (isReady: boolean) => void;
+}
+
+export default function HeroSection({ onReadyStateChange }: HeroSectionProps) {
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchHeroArticles = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await strapiAPI.getHeroArticles();
+        
+        if (!response.data || response.data.length === 0) {
+          setError('No hero articles found');
+          setArticles([]);
+          return;
+        }
+        
+        setArticles(response.data);
+      } catch (err) {
+        console.error('Failed to load hero articles:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load content');
+        setArticles([]);
+      } finally {
+        setLoading(false);
+        // Signal parent that we're ready
+        onReadyStateChange?.(true);
+      }
+    };
+
+    fetchHeroArticles();
+  }, [onReadyStateChange]);
+
+  if (loading) {
+    return <HeroSkeleton />;
+  }
+
+  if (error || articles.length === 0) {
+    return (
+      <section className="relative h-[80vh] w-full overflow-hidden bg-brand-black-90 flex items-center justify-center">
+        <div className="text-center text-white px-4">
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">Unable to Load</h2>
+          <p className="text-gray-400">{'Please check your connection'}</p>
+        </div>
+      </section>
+    );
+  }
+
+  return <HeroCarousel articles={articles} />;
 }

@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
-import { AuthProvider } from "@/contexts/AuthContext"; // Add this import
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-import FloatingBanner from "@/components/layout/FloatingBanner";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ToastProvider } from "@/components/ui/toast";
+import LayoutContent from "@/components/layout/LayoutContent";
+import { LazyMotion, domAnimation } from "framer-motion";
+import { SocialLinksProvider } from "@/contexts/SocialLinksContext";
 
 const roboto = localFont({
   src: [
@@ -21,7 +22,7 @@ const roboto = localFont({
       style: "normal",
     },
     {
-      path: "../public/fonts/Roboto-Medium.ttf", 
+      path: "../public/fonts/Roboto-Medium.ttf",
       weight: "500",
       style: "normal",
     },
@@ -31,7 +32,7 @@ const roboto = localFont({
       style: "normal",
     },
     {
-      path: "../public/fonts/Roboto-Bold.ttf", 
+      path: "../public/fonts/Roboto-Bold.ttf",
       weight: "700",
       style: "normal",
     },
@@ -40,9 +41,114 @@ const roboto = localFont({
   display: "swap",
 });
 
-// --- Load Kalpurush Font (using TTF) ---
+const montserrat = localFont({
+  src: [
+    {
+      path: "../public/fonts/Montserrat-Thin.ttf",
+      weight: "100",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/Montserrat-Light.ttf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/Montserrat-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/Montserrat-SemiBold.ttf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/Montserrat-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/Montserrat-Black.ttf",
+      weight: "900",
+      style: "normal",
+    },
+  ],
+  variable: "--font-montserrat", // Assign CSS variable for Montserrat
+  display: "swap",
+});
+
+const Playfair_Display = localFont({
+  src: [
+    {
+      path: "../public/fonts/PlayfairDisplay-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/PlayfairDisplay-Italic.ttf",
+      weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../public/fonts/PlayfairDisplay-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-playfair-display",
+  display: "swap",
+});
+
+const LeagueSpartan_Variable = localFont({
+  src: "../public/fonts/LeagueSpartan_Variable.ttf",
+  weight: "100 900",
+  variable: "--font-league-spartan",
+  display: "swap",
+});
+
+const ZillaSlab = localFont({
+  src: [
+    {
+      path: "../public/fonts/ZillaSlab-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/ZillaSlab-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/ZillaSlab-Italic.ttf",
+      weight: "400",
+      style: "italic",
+    }
+  ],
+  variable: "--font-zilla-slab",
+  display: "swap",
+});
+
+const AlteHaasGrotesk = localFont({
+  src: [
+    {
+      path: "../public/fonts/AlteHaasGroteskRegular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/AlteHaasGroteskBold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-alte-haas-grotesk",
+  display: "swap",
+});
+
+
 const kalpurush = localFont({
-  src: "../public/fonts/kalpurush.ttf", 
+  src: "../public/fonts/kalpurush.ttf",
   weight: "400", // Adjust if your Kalpurush.ttf has a different default weight
   style: "normal",
   variable: "--font-kalpurush", // Assign CSS variable for Kalpurush
@@ -51,7 +157,14 @@ const kalpurush = localFont({
 
 export const metadata: Metadata = {
   title: "DUFS Blog - Film Publication",
-  description: "A film publication guiding film lovers.",
+  description: "A film blog created by Dhaka University Film Society.",
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#231f20" },
+    { media: "(prefers-color-scheme: dark)", color: "#231f20" },
+  ],
 };
 
 export default function RootLayout({
@@ -65,7 +178,10 @@ export default function RootLayout({
         className={cn(
           "min-h-screen bg-background font-sans antialiased",
           roboto.variable,
-          kalpurush.variable
+          montserrat.variable,
+          ZillaSlab.variable,
+          AlteHaasGrotesk.variable,
+          kalpurush.variable,
         )}
       >
         <ThemeProvider
@@ -74,14 +190,15 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-              <FloatingBanner />
-              <Footer />
-            </div>
-          </AuthProvider>
+          <SocialLinksProvider>
+            <AuthProvider>
+              <ToastProvider>
+                <LayoutContent>
+                  <LazyMotion features={domAnimation}>{children}</LazyMotion>
+                </LayoutContent>
+              </ToastProvider>
+            </AuthProvider>
+          </SocialLinksProvider>
         </ThemeProvider>
       </body>
     </html>

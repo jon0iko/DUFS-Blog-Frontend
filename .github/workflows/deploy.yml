@@ -1,0 +1,57 @@
+name: Build & Deploy to cPanel
+
+on:
+  push:
+    branches: [ main ]
+    
+  repository_dispatch:
+    types: [strapi_publish]
+  
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build static site
+        run: npm run build
+        env:
+          NEXT_PUBLIC_STRAPI_URL: ${{ secrets.STRAPI_URL }}
+          NEXT_PUBLIC_STRAPI_API_TOKEN: ${{ secrets.STRAPI_TOKEN }}
+          STRAPI_URL: ${{ secrets.STRAPI_URL }}
+          STRAPI_TOKEN: ${{ secrets.STRAPI_TOKEN }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      
+      - name: Deploy to cPanel via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          local-dir: out/
+          server-dir: blog_frontend/ 
+          exclude: |
+            **/webhooks/**
+            .htaccess
+          protocol: ftps
+          security: strict
+          
+      - name: Deployment summary
+        run: |
+          echo "✅ Deployment completed successfully!"
+          echo "🌐 Site URL: ${{ secrets.SITE_URL }}"
+          echo "📅 Deployed at: $(date)"

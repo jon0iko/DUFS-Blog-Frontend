@@ -4,65 +4,67 @@
 
 @layer base {
   :root {
+    /* DUFS Brand Colors - Light Mode */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 0 2% 12.5%; /* #231F20 */
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 0 2% 12.5%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 0 2% 12.5%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 0 2% 12.5%; /* DUFS Black #231F20 */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 0 0% 97%; /* Light gray for secondary elements */
+    --secondary-foreground: 0 2% 12.5%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 0 0% 95%; /* Subtle background */
+    --muted-foreground: 0 1% 40%; /* Darker for better readability */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 0 0% 92%; /* Slightly darker than secondary */
+    --accent-foreground: 0 2% 12.5%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 0 0% 90%; /* Subtle borders */
+    --input: 0 0% 90%;
+    --ring: 0 2% 12.5%;
 
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* DUFS Brand Colors - Dark Mode */
+    --background: 0 2% 12.5%; /* DUFS Black #231F20 */
+    --foreground: 0 0% 100%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 2% 17%; /* Slightly lighter than bg */
+    --card-foreground: 0 0% 100%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 2% 15%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 0 0% 100%; /* White in dark mode */
+    --primary-foreground: 0 2% 12.5%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 1% 29%; /* 80% black shade */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 0 1% 29%; /* 80% black shade */
+    --muted-foreground: 0 0% 85%; /* Lighter for better readability */
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 0 1% 35%; /* Between 80% and 60% */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 0 1% 29%; /* 80% black shade */
+    --input: 0 1% 29%;
+    --ring: 0 0% 70%;
   }
 }
 
@@ -76,6 +78,153 @@
   }
 }
 
+/* ── Sepia reading mode (article page only) */
+.sepia-article {
+  --background: 35 45% 91%;
+  --foreground: 25 30% 18%;
+  --card: 35 40% 87%;
+  --card-foreground: 25 30% 18%;
+  --popover: 35 42% 89%;
+  --popover-foreground: 25 30% 18%;
+  --primary: 25 30% 18%;
+  --primary-foreground: 35 45% 91%;
+  --secondary: 35 38% 86%;
+  --secondary-foreground: 25 30% 18%;
+  --muted: 33 35% 83%;
+  --muted-foreground: 25 20% 42%;
+  --accent: 33 32% 81%;
+  --accent-foreground: 25 30% 18%;
+  --border: 33 25% 76%;
+  --input: 33 25% 76%;
+  --ring: 25 30% 18%;
+  background-color: hsl(35 45% 91%);
+  color: hsl(25 30% 18%);
+}
+
+/* When global dark mode is active AND sepia is active, re-assert sepia
+   CSS variables at higher specificity (.dark .sepia-article > .sepia-article). */
+.dark .sepia-article {
+  --background: 35 45% 91%;
+  --foreground: 25 30% 18%;
+  --card: 35 40% 87%;
+  --card-foreground: 25 30% 18%;
+  --popover: 35 42% 89%;
+  --popover-foreground: 25 30% 18%;
+  --primary: 25 30% 18%;
+  --primary-foreground: 35 45% 91%;
+  --secondary: 35 38% 86%;
+  --secondary-foreground: 25 30% 18%;
+  --muted: 33 35% 83%;
+  --muted-foreground: 25 20% 42%;
+  --accent: 33 32% 81%;
+  --accent-foreground: 25 30% 18%;
+  --border: 33 25% 76%;
+  --input: 33 25% 76%;
+  --ring: 25 30% 18%;
+  background-color: hsl(35 45% 91%) !important;
+  color: hsl(25 30% 18%) !important;
+}
+
+/* Override hardcoded dark: color classes inside sepia wrapper.
+   Specificity (3 classes) beats Tailwind's dark: variants (2 classes). */
+
+/* Category badges: dark mode flips them to white bg — keep them dark on sepia */
+.dark .sepia-article .dark\:bg-white {
+  background-color: #231F20 !important;
+}
+.dark .sepia-article .dark\:text-brand-black {
+  color: #FFFFFF !important;
+}
+
+/* Text colours that were overridden by dark: variants */
+.dark .sepia-article .dark\:text-gray-100,
+.dark .sepia-article .dark\:text-gray-300 {
+  color: inherit !important;
+}
+.dark .sepia-article .dark\:text-foreground {
+  color: hsl(25 30% 18%) !important;
+}
+.dark .sepia-article .dark\:text-muted-foreground {
+  color: hsl(25 20% 42%) !important;
+}
+
+/* Italic and emphasis text in sepia mode should match paragraph color */
+.sepia-article em,
+.sepia-article i,
+.sepia-article strong,
+.sepia-article b {
+  color: hsl(25 30% 18%) !important;
+}
+
+.dark .sepia-article em,
+.dark .sepia-article i,
+.dark .sepia-article strong,
+.dark .sepia-article b {
+  color: hsl(25 30% 18%) !important;
+}
+
+/* Force article content text to black in sepia mode,
+   overriding hardcoded Tailwind gray classes */
+.sepia-article .article-content p,
+.sepia-article .article-content li,
+.sepia-article .article-content blockquote,
+.sepia-article .article-content figcaption,
+.dark .sepia-article .article-content p,
+.dark .sepia-article .article-content li,
+.dark .sepia-article .article-content blockquote,
+.dark .sepia-article .article-content figcaption {
+  color: #1a1008 !important;
+}
+
+.sepia-article .article-content .caption-text,
+.dark .sepia-article .article-content .caption-text {
+  color: #3d2f1f !important;
+}
+
+/* Keep quotation icon tone consistent in sepia regardless of global dark mode. */
+.sepia-article .article-content .quote-icon-light,
+.dark .sepia-article .article-content .quote-icon-light {
+  display: block !important;
+  filter: sepia(0.6) saturate(0.55) hue-rotate(340deg) brightness(0.96);
+  opacity: 0.92;
+}
+
+.sepia-article .article-content .quote-icon-dark,
+.dark .sepia-article .article-content .quote-icon-dark {
+  display: none !important;
+}
+
+.sepia-article .article-content h1,
+.sepia-article .article-content h2,
+.sepia-article .article-content h3,
+.sepia-article .article-content h4,
+.sepia-article .article-content h5,
+.sepia-article .article-content h6,
+.sepia-article .article-content strong,
+.sepia-article .article-content b,
+.dark .sepia-article .article-content h1,
+.dark .sepia-article .article-content h2,
+.dark .sepia-article .article-content h3,
+.dark .sepia-article .article-content h4,
+.dark .sepia-article .article-content h5,
+.dark .sepia-article .article-content h6,
+.dark .sepia-article .article-content strong,
+.dark .sepia-article .article-content b {
+  color: #0d0804 !important;
+}
+
+/* Progress wheel in sepia mode */
+.sepia-article svg circle.stroke-border {
+  stroke: #000000 !important;
+}
+
+.dark .sepia-article svg circle.stroke-border {
+  stroke: #000000 !important;
+}
+
+/* ── Infinite Marquee (CSS fallback — primary driven by GSAP TextReelClient) */
+/* Kept as no-op classes so any legacy references don't break */
+
 /* Custom utility class to hide scrollbars while keeping scrolling functionality */
 @layer utilities {
   .scrollbar-hide {
@@ -85,5 +234,327 @@
   
   .scrollbar-hide::-webkit-scrollbar {
     display: none; /* Chrome, Safari and Opera */
+  }
+}
+
+/* Dropdown and menu animations */
+@layer base {
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes zoomIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@layer utilities {
+  .animate-in {
+    animation-fill-mode: both;
+  }
+
+  .fade-in {
+    animation: fadeIn var(--animation-duration, 200ms) ease-out;
+  }
+
+  .zoom-in-95 {
+    animation: zoomIn var(--animation-duration, 200ms) ease-out;
+  }
+
+  .slide-down {
+    animation: slideDown var(--animation-duration, 200ms) ease-out;
+  }
+
+  .duration-200 {
+    animation-duration: 200ms;
+  }
+
+  .duration-300 {
+    animation-duration: 300ms;
+  }
+
+  @keyframes progress {
+    /* scaleX instead of width — compositor-only, zero reflow */
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
+  .animate-progress {
+    animation: progress linear forwards;
+    transform-origin: left;
+  }
+
+  /* Ken Burns zoom ─ now driven by GSAP in HeroCarousel (see kenBurnsRef).
+     These CSS rules are kept as a no-op fallback for pre-hydration SSR HTML. */
+  @keyframes kenburns {
+    from { transform: scale(1); }
+    to   { transform: scale(1.08); }
+  }
+
+  /* animate-kenburns class is no longer applied in JSX.
+     Defined here only so Tailwind purge doesn't remove it if referenced elsewhere. */
+
+  /* ── Scroll Reveal ─ now driven by GSAP ScrollTrigger in ScrollReveal.tsx.
+     The scroll-reveal / scroll-revealed CSS classes are no longer applied;
+     GSAP uses inline transforms instead. Kept as empty rules so any stale
+     class references in the DOM don't cause unexpected style bleed. */
+  .scroll-reveal {}
+  .scroll-revealed {}
+
+  /* Spin reveal animation - spins 3 times */
+  @keyframes spin-reveal {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(1080deg); }
+  }
+
+  .animate-spin-reveal {
+    animation: spin-reveal 4s ease-in-out;
+  }
+}
+
+
+/* ── Article body readability ─────────────────────────────────────────────── */
+@layer components {
+
+  .dufs-article-render {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    @apply font-zillaslab text-black dark:text-white max-w-none;
+  }
+
+  .dufs-article-render p {
+    @apply text-black dark:text-white tracking-wide leading-[1.75] mb-2;
+  }
+
+  .dufs-article-render h1, 
+  .dufs-article-render h2, 
+  .dufs-article-render h3 {
+    @apply font-bold tracking-wide text-black dark:text-white;
+  }
+
+  .dufs-article-render strong, .dufs-article-render b {
+    @apply font-bold text-black dark:text-white;
+  }
+
+  .dufs-article-render em, .dufs-article-render i {
+    @apply italic text-black dark:text-white;
+  }
+
+  .dufs-article-render a {
+    @apply text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 transition-colors font-medium;
+  }
+
+  .dufs-article-render code {
+    display: inline-block;
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.05);
+    color: hsl(var(--accent-foreground));
+    border-radius: 4px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .dark .dufs-article-render code {
+    background-color: rgba(255, 255, 255, 0.06);
+  }
+
+  /* Code styling in sepia mode */
+  .sepia-article .dufs-article-render code {
+    @apply bg-[#ebe0d1];
+  }
+
+  .dark .sepia-article .dufs-article-render code {
+    @apply bg-[#ebe0d1];
+  }
+
+  .dufs-article-render ul, .dufs-article-render ol {
+    @apply my-7 ml-6 space-y-3 text-black dark:text-white list-outside;
+  }
+
+  .dufs-article-render ul { @apply list-disc; }
+  .dufs-article-render ol { @apply list-decimal; }
+
+  .dufs-article-render li {
+    @apply ml-2 leading-[1.75];
+  }
+
+  .dufs-article-render hr {
+    @apply my-10 border-t border-border;
+  }
+
+  .dufs-article-render figure[data-image-caption] {
+    @apply my-10 flex flex-col items-center;
+  }
+
+  .dufs-article-render figcaption {
+    @apply mt-2 text-center italic text-black/90 dark:text-white/90;
+  }
+
+  .dufs-article-render blockquote {
+    @apply flex-1 flex items-center font-bold italic leading-[1.55] text-black dark:text-white my-0;
+  }
+
+  .dufs-article-render .quote-icon {
+    @apply shrink-0 w-20 h-20 md:w-[80px] md:h-[80px];
+  }
+
+  /* Typography scales with improved readability */
+  
+  /* Small - Optimized for compact reading without strain */
+  .dufs-article-render[data-size="small"] p,
+  .dufs-article-render[data-size="small"] li { @apply text-base md:text-[1.125rem] leading-[1.75]; }
+  .dufs-article-render[data-size="small"] h1 { @apply text-3xl md:text-4xl mb-3; }
+  .dufs-article-render[data-size="small"] h2 { @apply text-2xl md:text-3xl mb-3; }
+  .dufs-article-render[data-size="small"] h3 { @apply text-xl md:text-2xl mb-3; }
+  .dufs-article-render[data-size="small"] blockquote { @apply text-lg md:text-xl; }
+  .dufs-article-render[data-size="small"] figcaption { @apply text-sm md:text-base; }
+  .dufs-article-render[data-size="small"] code { @apply text-sm md:text-base font-bold; }
+
+  /* Medium - Balanced cinematic reading experience */
+  .dufs-article-render[data-size="medium"] p,
+  .dufs-article-render[data-size="medium"] li { @apply text-lg md:text-[1.25rem] leading-[1.8]; }
+  .dufs-article-render[data-size="medium"] h1 { @apply text-4xl md:text-5xl mb-3; }
+  .dufs-article-render[data-size="medium"] h2 { @apply text-3xl md:text-4xl mb-3; }
+  .dufs-article-render[data-size="medium"] h3 { @apply text-2xl md:text-3xl mb-3; }
+  .dufs-article-render[data-size="medium"] blockquote { @apply text-xl md:text-2xl; }
+  .dufs-article-render[data-size="medium"] figcaption { @apply text-base md:text-lg; }
+  .dufs-article-render[data-size="medium"] code { @apply text-base md:text-lg font-bold; }
+
+  /* Large - Enhanced for high readability and visual impact */
+  .dufs-article-render[data-size="large"] p,
+  .dufs-article-render[data-size="large"] li { @apply text-xl md:text-[1.5rem] leading-[1.85]; }
+  .dufs-article-render[data-size="large"] h1 { @apply text-5xl md:text-6xl mb-3; }
+  .dufs-article-render[data-size="large"] h2 { @apply text-4xl md:text-5xl mb-3; }
+  .dufs-article-render[data-size="large"] h3 { @apply text-3xl md:text-4xl mb-3; }
+  .dufs-article-render[data-size="large"] blockquote { @apply text-2xl md:text-3xl; }
+  .dufs-article-render[data-size="large"] figcaption { @apply text-lg md:text-xl; }
+  .dufs-article-render[data-size="large"] code { @apply text-lg md:text-xl font-bold; }
+
+  /* Bengali support */
+  .dufs-article-render .font-kalpurush {
+    /* Increase size slightly for Bengali optically */
+    font-size: 1.08em; 
+    line-height: 1.8;
+  }
+
+  :root .dufs-article-render p,
+  :root .dufs-article-render li,
+  :root .dufs-article-render blockquote {
+    text-shadow: 0 0.3px 0.8px rgba(0, 0, 0, 0.18);
+  }
+
+  :root .dufs-article-render h1,
+  :root .dufs-article-render h2,
+  :root .dufs-article-render h3 {
+    text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.15);
+  }
+
+  .dark .dufs-article-render p,
+  .dark .dufs-article-render li,
+  .dark .dufs-article-render blockquote,
+  .dark .dufs-article-render h1,
+  .dark .dufs-article-render h2,
+  .dark .dufs-article-render h3 {
+    text-shadow: none;
+  }
+}
+
+@layer components {
+  /*
+   * Per-line animated underline — matches Figma blog behaviour.
+   *
+   * MUST be applied to an inline element (e.g. a <span> inside a block heading).
+   * `box-decoration-break: clone` splits the inline element into one background
+   * box per wrapped line, so each line gets its own underline that spans exactly
+   * the text width — not the full container width.
+   *
+   * Hover is triggered by a `.group` ancestor via `.group:hover .underline-effect`.
+   */
+  .underline-effect {
+    display: inline;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0% 100%;
+    background-size: 0% 1.5px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    transition: background-size 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .group:hover .underline-effect {
+    background-size: 100% 1.5px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .underline-effect {
+      transition: none;
+    }
+    .group:hover .underline-effect {
+      background-size: 100% 1.5px;
+    }
+  }
+}
+
+::selection {
+  background-color: #E0D5D0; /* The color of the highlight background */
+  color: black; /* The color of the text itself when highlighted */
+}
+
+/* Responsive background size for dark pattern */
+.bg-pattern-dark {
+  background-size: 200px 200px !important;
+}
+
+@media (min-width: 768px) {
+  .bg-pattern-dark {
+    background-size: 1667px 1200px !important;
+  }
+}
+
+
+
+/* Optimized Grain Background - Performance optimized for low-end devices */
+@layer utilities {
+  .grain-bg {
+    background-image: url('/images/grain.gif');
+    background-repeat: repeat;
+    background-size: 551px 310px;
+    background-attachment: scroll;
+    will-change: auto;
+    /* GPU acceleration hint for mobile devices */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+  
+  /* Reduce animation on low-end devices */
+  @media (prefers-reduced-motion: reduce) {
+    .grain-bg {
+      animation: none;
+    }
   }
 }

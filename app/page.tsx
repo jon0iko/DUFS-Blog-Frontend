@@ -1,16 +1,51 @@
+'use client';
 
+import { useState } from 'react';
 import HeroSection from '@/components/home/HeroSection';
-import FeaturedArticles from '@/components/home/FeaturedArticles';
 import EditorChoice from '@/components/home/EditorChoice';
-import MorePostsButton from '@/components/home/MorePostsButton';
+import BrowseContentSectionWrapper from '@/components/home/BrowseContentSectionWrapper';
+import PublicationsWrapper from '@/components/home/PublicationsWrapper';
+import ScrollReveal from '@/components/ui/ScrollReveal';
+import CurveDivider from '@/components/home/CurveDivider';
+import TextReel from '@/components/home/TextReel';
+import BackToTopButton from '@/components/home/BackToTopButton';
+import { TextReelProvider } from '@/contexts/TextReelContext';
+import CTAPoster from '@/components/home/CTAPoster';
+import LoadingScreen from '@/components/common/LoadingScreen';
 
 export default function Home() {
+  const [browseError, setBrowseError] = useState(false);
+  const [editorError, setEditorError] = useState(false);
+  const [publicationsError, setPublicationsError] = useState(false);
+  const [isHeroReady, setIsHeroReady] = useState(false);
+
+  // Check if ALL three sections have errors
+  const allSectionsHaveErrors = browseError && editorError && publicationsError;
+
   return (
-    <div>
-      <HeroSection />
-      <FeaturedArticles />
-      <MorePostsButton />
-      <EditorChoice />
-    </div>
+    <>
+      {/* Show loading overlay until hero section loads */}
+      <LoadingScreen isLoading={!isHeroReady} />
+      
+      <div>
+        <HeroSection onReadyStateChange={setIsHeroReady} />
+        <CurveDivider />
+
+        <BrowseContentSectionWrapper onErrorChange={setBrowseError} />
+
+        <EditorChoice onErrorChange={setEditorError} />
+
+        <ScrollReveal yOffset={50} duration={0.9}>
+          <PublicationsWrapper onErrorChange={setPublicationsError} />
+        </ScrollReveal>
+
+        <TextReelProvider>
+          {!allSectionsHaveErrors && <CTAPoster />}
+          <TextReel />
+        </TextReelProvider>
+
+        <BackToTopButton />
+      </div>
+    </>
   );
 }
