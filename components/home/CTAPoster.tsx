@@ -1,64 +1,59 @@
 'use client';
 
-import React from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 
-const CTAPoster = () => {
+const CTAPoster = React.memo(() => {
   const { isAuthenticated, isLoading } = useAuth();
+
+  // Memoize computed values
+  const href = useMemo(() => isAuthenticated ? "/submit" : "/auth/signup", [isAuthenticated]);
+  const buttonText = useMemo(() => isAuthenticated ? "Start Writing" : "Sign Up", [isAuthenticated]);
+
+  // Early return if loading
+  if (isLoading) return null;
 
   return (
     <div className="container px-4 md:px-6 mb-6">
-      <section className="relative w-full rounded-[20px] overflow-hidden border border-black/10 px-4 sm:px-8 py-8 flex flex-col items-center justify-center min-h-[250px]">
-        {/* LAYER 1: Solid Base (Fallback) */}
-        <div className="absolute inset-0 bg-[#faf8f6]  z-0"></div>
-
-        {/* LAYER 2: The Grainy GIF */}
+      <section className="relative w-full rounded-[20px] md:rounded-[10px] overflow-hidden border border-black/10 px-4 sm:px-8 py-8 flex flex-col items-center justify-center min-h-[250px] bg-[#faf8f6]  dark:border-white/10">
+        {/* LAYER 2: The Grainy GIF - Using BackgroundImage class for optimization */}
         <div
-          className="absolute inset-0 w-full h-full mix-blend-multiply z-10 pointer-events-none"
-          style={{
-            backgroundImage: "url('/images/grain.gif')",
-            backgroundRepeat: "repeat",
-            backgroundSize: "auto"
-          }}
+          className="absolute inset-0 w-full h-full mix-blend-multiply  z-10 pointer-events-none grain-bg"
         />
 
-      {/* LAYER 3: The Vignette Mask - Subtly dims edges to pull focus center */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.06)_100%)] z-20 pointer-events-none"></div>
+        {/* LAYER 3: The Vignette Mask */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.06)_100%)] z-20 pointer-events-none"></div>
 
-      {/* CONTENT: Call to action */}
-      <div className="relative z-30 text-center flex flex-col items-center max-w-5xl mx-auto w-full">
-        <span className="text-[10px] sm:text-xs md:text-base uppercase tracking-wider font-bold text-black/60 mb-1">
-          Contribute to the
-        </span>
-        
-        <h2 className="text-4xl sm:text-5xl md:text-7xl lg:text-[110px] font-black text-[#1a1a1a] mb-6 font-altehaasgrotesk leading-[0.85] tracking-tighter uppercase relative break-words px-2">
-          Film Society
-          <br /> 
-          <span className="text-transparent" style={{ WebkitTextStroke: "1.5px #1a1a1a" }}>Movement</span>
-        </h2>
+        {/* CONTENT: Call to action */}
+        <div className="relative z-30 text-center flex flex-col items-center  mx-automax-w-lg w-full">
+          <span className="text-[10px] sm:text-xs md:text-base uppercase tracking-wider font-bold text-black/60 mb-1 pointer-events-none">
+            Contribute to the
+          </span>
+          
+          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-6xl font-black text-[#1a1a1a] mb-6 font-altehaasgrotesk leading-[0.85] tracking-tighter uppercase relative break-words px-2">
+            Film Society
+            <br /> 
+            <span className="text-transparent md:hidden" style={{ WebkitTextStroke: "2px #1a1a1a" }}>Movement</span>
+            <span className="text-transparent hidden md:inline" style={{ WebkitTextStroke: "3px #1a1a1a" }}>Movement</span>
+          </h2>
 
-        {/* Action Button */}
-        <div className="flex  items-center justify-center">
-          {!isLoading && (
-            <Link 
-              href={isAuthenticated ? "/submit" : "/auth/signup"}
-              className="group relative inline-flex items-center justify-center bg-[#1a1a1a] text-white px-12 py-3 rounded-full font-bold uppercase tracking-widest text-sm overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl"
-            >
-              <span className="relative z-10 transition-transform duration-300 group-hover:-translate-y-[150%]">
-                {isAuthenticated ? "Write" : "Sign Up"}
-              </span>
-              <span className="absolute z-10 transition-transform duration-300 translate-y-[150%] group-hover:translate-y-0">
-                {isAuthenticated ? "Write" : "Sign Up"}
-              </span>
-              <div className="absolute inset-0 bg-[#1a1a1a] translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-0"></div>
-            </Link>
-          )}
+          {/* Action Button */}
+          <Link 
+            href={href}
+            className="group relative inline-flex items-center justify-center bg-[#1a1a1a] text-white px-12 py-3 rounded-full font-bold uppercase tracking-widest text-sm overflow-hidden transition-transform duration-300 will-change-transform hover:scale-105 active:scale-95 shadow-xl"
+          >
+            <span className="relative z-10 transition-transform duration-300">
+              {buttonText}
+            </span>
+
+          </Link>
         </div>
-      </div>
       </section>
     </div>
   );
-};
+});
+
+CTAPoster.displayName = 'CTAPoster';
 
 export default CTAPoster;

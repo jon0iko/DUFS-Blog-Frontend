@@ -22,7 +22,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-base text-background dark:text-foreground leading-relaxed mb-6 max-w-sm">
-              Explore critical perspectives on cinema, culture, and visual storytelling.
+              Critical perspectives on cinema, culture, and visual storytelling. Rigorous discourse on film aesthetics, cultural narratives, and cinematic scholarship.
             </p>
             {/* Social Links */}
             <div className="flex items-center gap-3">
@@ -172,15 +172,15 @@ export default function Footer() {
               rights reserved.
             </p>
             <div className="flex items-center gap-6 text-sm text-background dark:text-foreground">
-              <Link
+              {/* <Link
                 href="#"
-                className="whitespace-nowrap text-muted-foreground hover:text-white transition-colors"
+                className="whitespace-nowrap hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
               >
                 Privacy Policy
-              </Link>
+              </Link> */}
               <Link
                 href="/terms-and-conditions"
-                className="whitespace-nowrap text-muted-foreground hover:text-white transition-colors"
+                className="whitespace-nowrap hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
               >
                 Terms of Publication
               </Link>

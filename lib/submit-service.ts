@@ -22,7 +22,6 @@ interface ArticleSubmissionData {
  * - For media: use the numeric ID directly
  */
 export async function submitNewArticleService(data: ArticleSubmissionData) {
-  console.log('submitNewArticleService CALLED - Strapi v5 format');
   const {
     title,
     slug,
@@ -38,7 +37,6 @@ export async function submitNewArticleService(data: ArticleSubmissionData) {
   try {
     // Direct access to env var to avoid config issues, with fallback
     const strapi_url = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
-    console.log('Submitting article to:', strapi_url);
 
     const articleData: Record<string, unknown> = {
       title,
@@ -72,13 +70,11 @@ export async function submitNewArticleService(data: ArticleSubmissionData) {
     if (authorId) {
       articleData.author = authorId;
     }
-    console.log('Article data prepared (Strapi v5 format):', JSON.stringify(articleData, null, 2));
 
     // Use query parameter to ensure article is created as draft (not published)
     // In Strapi v5, articles with draftAndPublish enabled are drafts by default
     // Adding status=draft explicitly ensures it stays unpublished
     const endpoint = `${strapi_url}/api/articles?status=draft`;
-    console.log('Fetching endpoint:', endpoint);
 
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -96,7 +92,6 @@ export async function submitNewArticleService(data: ArticleSubmissionData) {
     }
 
     const result = await response.json();
-    console.log('Article created successfully:', result);
     return { success: true, data: result };
   } catch (error) {
     console.error('Article submission error:', error);

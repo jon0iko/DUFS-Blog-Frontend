@@ -160,7 +160,6 @@ export function getAuthorSlug(author?: Author): string | undefined {
  * Returns null if article is invalid (for proper error handling)
  */
 export function getArticleData(article: Article | null | undefined) {
-  console.log('getArticleData called with article:', article);
 
   // Validate article structure - return null for proper error handling
   if (!article || !article.title) {

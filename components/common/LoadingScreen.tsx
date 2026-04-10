@@ -98,6 +98,24 @@ export default function LoadingScreen({
     }
   }, [])
 
+  // Manage body scroll state when loading
+  useEffect(() => {
+    const html = document.documentElement
+    const body = document.body
+    if (isLoading) {
+      html.style.overflow = 'hidden'
+      body.style.overflow = 'hidden'
+    } else {
+      html.style.overflow = ''
+      body.style.overflow = ''
+    }
+
+    return () => {
+      html.style.overflow = ''
+      body.style.overflow = ''
+    }
+  }, [isLoading])
+
   // Fade in / fade out based on isLoading
   useEffect(() => {
     const overlay = overlayRef.current

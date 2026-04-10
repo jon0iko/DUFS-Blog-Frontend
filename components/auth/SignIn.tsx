@@ -104,9 +104,6 @@ export default function SignIn() {
             disabled={isLoading}
             className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:ring-white/30 focus:border-white/30 rounded-md"
           />
-          {errors.identifier && (
-            <p className="mt-1 text-xs text-destructive">{errors.identifier}</p>
-          )}
         </FormGroup>
         
         <FormGroup error={errors.password}>

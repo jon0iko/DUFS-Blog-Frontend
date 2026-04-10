@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import HeroSection from '@/components/home/HeroSection';
 import EditorChoice from '@/components/home/EditorChoice';
 import BrowseContentSectionWrapper from '@/components/home/BrowseContentSectionWrapper';
@@ -10,21 +13,28 @@ import { TextReelProvider } from '@/contexts/TextReelContext';
 import CTAPoster from '@/components/home/CTAPoster';
 
 export default function Home() {
+  const [browseError, setBrowseError] = useState(false);
+  const [editorError, setEditorError] = useState(false);
+  const [publicationsError, setPublicationsError] = useState(false);
+
+  // Check if ALL three sections have errors
+  const allSectionsHaveErrors = browseError && editorError && publicationsError;
+
   return (
     <div>
       <HeroSection />
       <CurveDivider />
 
-      <BrowseContentSectionWrapper />
+      <BrowseContentSectionWrapper onErrorChange={setBrowseError} />
 
-      <EditorChoice />
+      <EditorChoice onErrorChange={setEditorError} />
 
       <ScrollReveal yOffset={50} duration={0.9}>
-        <PublicationsWrapper />
+        <PublicationsWrapper onErrorChange={setPublicationsError} />
       </ScrollReveal>
 
       <TextReelProvider>
-        <CTAPoster  />
+        {!allSectionsHaveErrors && <CTAPoster />}
         <TextReel />
       </TextReelProvider>
 

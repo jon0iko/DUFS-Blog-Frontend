@@ -432,7 +432,10 @@ export default function BrowseContentSection({
             <div className="flex items-center gap-2 h-fit">
               <div className="inline-flex rounded-md border border-foreground bg-background shadow-sm overflow-hidden">
                 <button
-                  onClick={() => setCategoryLanguage("bn")}
+                  onClick={() => {
+                    setCategoryLanguage("bn");
+                    setLanguageFilter("all");
+                  }}
                   className={cn(
                     "px-3 md:px-4 py-2 text-xs md:text-sm font-semibold transition-all duration-200",
                     categoryLanguage === "bn"
@@ -446,7 +449,10 @@ export default function BrowseContentSection({
                 </button>
                 <div className="w-px bg-border" />
                 <button
-                  onClick={() => setCategoryLanguage("en")}
+                  onClick={() => {
+                    setCategoryLanguage("en");
+                    setLanguageFilter("en");
+                  }}
                   className={cn(
                     "px-3 md:px-4 py-2 text-xs md:text-sm font-semibold transition-all duration-200",
                     categoryLanguage === "en"

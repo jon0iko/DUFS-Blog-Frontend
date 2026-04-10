@@ -170,6 +170,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
           <div className="grid grid-cols-1 lg:grid-cols-[56px_1fr] xl:grid-cols-[56px_1fr_220px] gap-8">
             <ArticleSidebarActions
               {...actionProps}
+              disableComments={article.DisableComments}
               isSepiaMode={isSepiaMode}
               onSepiaChange={setIsSepiaMode}
             />
@@ -248,6 +249,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
         <ArticleMobileActionsBar
           show={showMobileBar}
           {...actionProps}
+          disableComments={article.DisableComments}
           isSepiaMode={isSepiaMode}
           onSepiaChange={setIsSepiaMode}
         />

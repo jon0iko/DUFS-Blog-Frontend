@@ -38,6 +38,7 @@ export interface ArticleSidebarActionsProps {
   isBookmarkLoading: boolean;
   isAuthenticated: boolean;
   isSepiaMode: boolean;
+  disableComments?: boolean;
   onLike: () => void;
   onBookmark: () => void;
   onDiscuss: () => void;
@@ -54,6 +55,7 @@ export default function ArticleSidebarActions({
   isBookmarkLoading,
   isAuthenticated,
   isSepiaMode,
+  disableComments,
   onLike,
   onBookmark,
   onDiscuss,
@@ -150,13 +152,15 @@ export default function ArticleSidebarActions({
       </button>
 
       {/* Discuss */}
-      <button
-        onClick={onDiscuss}
-        className="flex items-center justify-center w-10 h-10 rounded-xl text-muted-foreground hover:text-foreground transition-all"
-        title="Discuss article"
-      >
-        <MessageCircle className="w-5 h-5" />
-      </button>
+      {!disableComments && (
+        <button
+          onClick={onDiscuss}
+          className="flex items-center justify-center w-10 h-10 rounded-xl text-muted-foreground hover:text-foreground transition-all"
+          title="Discuss article"
+        >
+          <MessageCircle className="w-5 h-5" />
+        </button>
+      )}
 
       {/* Share */}
       <ShareMenu align="right">

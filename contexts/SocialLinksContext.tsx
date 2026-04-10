@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import { socialLinks as fallbackSocialLinks } from '@/data/dummy-data';
 import { strapiAPI, type UISocialLink } from '@/lib/api';
 
@@ -19,27 +20,67 @@ const fallbackSocialLinkData: UISocialLink[] = fallbackSocialLinks.map((link, in
   icon: typeof link.icon === 'string' ? link.icon : undefined,
 }));
 
-let socialLinksCache: UISocialLink[] | null = null;
+const SOCIAL_LINKS_CACHE_KEY = 'dufs_social_links_cache';
+const SOCIAL_LINKS_TIMESTAMP_KEY = 'dufs_social_links_cache_time';
+const CACHE_DURATION_HOURS = 24; // Cache for 24 hours
+
 let socialLinksPromise: Promise<UISocialLink[]> | null = null;
 
+function getCachedSocialLinks(): UISocialLink[] | null {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const cached = localStorage.getItem(SOCIAL_LINKS_CACHE_KEY);
+    const timestamp = localStorage.getItem(SOCIAL_LINKS_TIMESTAMP_KEY);
+    
+    if (!cached || !timestamp) return null;
+    
+    const cacheAge = Date.now() - parseInt(timestamp, 10);
+    const cacheExpired = cacheAge > CACHE_DURATION_HOURS * 60 * 60 * 1000;
+    
+    if (cacheExpired) {
+      localStorage.removeItem(SOCIAL_LINKS_CACHE_KEY);
+      localStorage.removeItem(SOCIAL_LINKS_TIMESTAMP_KEY);
+      return null;
+    }
+    
+    return JSON.parse(cached) as UISocialLink[];
+  } catch (error) {
+    console.error('Failed to read social links from cache:', error);
+    return null;
+  }
+}
+
+function setCachedSocialLinks(links: UISocialLink[]): void {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.setItem(SOCIAL_LINKS_CACHE_KEY, JSON.stringify(links));
+    localStorage.setItem(SOCIAL_LINKS_TIMESTAMP_KEY, Date.now().toString());
+  } catch (error) {
+    console.error('Failed to write social links to cache:', error);
+  }
+}
+
 async function fetchSocialLinksOnce(): Promise<UISocialLink[]> {
-  if (socialLinksCache) {
-    return socialLinksCache;
+  const cached = getCachedSocialLinks();
+  if (cached) {
+    return cached;
   }
 
   if (!socialLinksPromise) {
     socialLinksPromise = (async () => {
       try {
         const links = await strapiAPI.getSocialLinks();
-        socialLinksCache = links.length > 0 ? links : fallbackSocialLinkData;
+        const result = links.length > 0 ? links : fallbackSocialLinkData;
+        setCachedSocialLinks(result);
+        return result;
       } catch (error) {
         console.error('Failed to fetch social links from Strapi:', error);
-        socialLinksCache = fallbackSocialLinkData;
+        return fallbackSocialLinkData;
       } finally {
         socialLinksPromise = null;
       }
-
-      return socialLinksCache;
     })();
   }
 
@@ -47,19 +88,52 @@ async function fetchSocialLinksOnce(): Promise<UISocialLink[]> {
 }
 
 export function SocialLinksProvider({ children }: { children: ReactNode }) {
-  const [socialLinks, setSocialLinks] = useState<UISocialLink[]>(socialLinksCache ?? fallbackSocialLinkData);
-  const [isLoading, setIsLoading] = useState<boolean>(!socialLinksCache);
+  const pathname = usePathname();
+  const isHomePage = pathname === '/';
+  
+  const [socialLinks, setSocialLinks] = useState<UISocialLink[]>(fallbackSocialLinkData);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let mounted = true;
 
     const loadSocialLinks = async () => {
-      setIsLoading(true);
-      const links = await fetchSocialLinksOnce();
-
-      if (mounted) {
-        setSocialLinks(links);
-        setIsLoading(false);
+      // On homepage, always fetch fresh data (bypass cache)
+      if (isHomePage) {
+        setIsLoading(true);
+        
+        // Clear old cache to force refresh
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(SOCIAL_LINKS_CACHE_KEY);
+          localStorage.removeItem(SOCIAL_LINKS_TIMESTAMP_KEY);
+        }
+        
+        const links = await fetchSocialLinksOnce();
+        
+        if (mounted) {
+          setSocialLinks(links);
+          setIsLoading(false);
+        }
+      } else {
+        // On other pages, try cache first
+        setIsLoading(true);
+        const cached = getCachedSocialLinks();
+        
+        if (cached) {
+          // Use cached data immediately
+          if (mounted) {
+            setSocialLinks(cached);
+            setIsLoading(false);
+          }
+        } else {
+          // If no cache, fetch and cache
+          const links = await fetchSocialLinksOnce();
+          
+          if (mounted) {
+            setSocialLinks(links);
+            setIsLoading(false);
+          }
+        }
       }
     };
 
@@ -68,7 +142,7 @@ export function SocialLinksProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [isHomePage]);
 
   const refreshSocialLinks = useCallback(async () => {
     setIsLoading(true);
@@ -76,11 +150,10 @@ export function SocialLinksProvider({ children }: { children: ReactNode }) {
     try {
       const links = await strapiAPI.getSocialLinks();
       const nextLinks = links.length > 0 ? links : fallbackSocialLinkData;
-      socialLinksCache = nextLinks;
+      setCachedSocialLinks(nextLinks);
       setSocialLinks(nextLinks);
     } catch (error) {
       console.error('Failed to refresh social links from Strapi:', error);
-      socialLinksCache = fallbackSocialLinkData;
       setSocialLinks(fallbackSocialLinkData);
     } finally {
       setIsLoading(false);

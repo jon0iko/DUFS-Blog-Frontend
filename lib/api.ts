@@ -110,6 +110,7 @@ class StrapiAPI {
   /**
    * Make authenticated requests to Strapi v5
    * Configured for NO CACHING - Always fetch fresh data
+   * Returns null for 404 errors (missing optional content)
    */
   public async request<T>(
     endpoint: string,
@@ -133,6 +134,12 @@ class StrapiAPI {
 
     try {
       const response = await fetch(url, config);
+      
+      // Handle 404 gracefully (optional content like banners, text-reel)
+      if (response.status === 404) {
+        console.debug(`Strapi resource not found (404): ${endpoint}`);
+        return null as T;
+      }
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -205,61 +212,6 @@ class StrapiAPI {
     }
   }
 
-
-  /**
-   * Get articles with filters and pagination
-   * Strapi v5 API: GET /api/articles
-   */
-  // async getArticles(params?: {
-  //   page?: number;
-  //   pageSize?: number;
-  //   category?: string;
-  //   tag?: string;
-  //   language?: 'en' | 'bn' | 'both';
-  //   featured?: boolean;
-  //   editorsPick?: boolean;
-  //   sort?: string;
-  //   populate?: string[];
-  // }): Promise<ArticleResponse> {
-  //   const searchParams = new URLSearchParams();
-    
-  //   // Strapi v5: status=published is required to get published content (draft/publish system)
-  //   searchParams.append('status', 'published');
-    
-  //   // Pagination
-  //   if (params?.page) searchParams.append('pagination[page]', params.page.toString());
-  //   if (params?.pageSize) searchParams.append('pagination[pageSize]', params.pageSize.toString());
-    
-  //   // Filters - Strapi v5 uses filters[field][$operator]=value
-  //   if (params?.category) {
-  //     searchParams.append('filters[category][Slug][$eq]', params.category);
-  //   }
-  //   if (params?.tag) {
-  //     searchParams.append('filters[tags][slug][$in]', params.tag);
-  //   }
-  //   if (params?.language) {
-  //     searchParams.append('filters[language][$eq]', params.language);
-  //   }
-  //   if (params?.editorsPick) {
-  //     searchParams.append('filters[InFeatured][$eq]', 'true');
-  //   }
-    
-  //   // Sorting
-  //   const sort = params?.sort || 'BlogDate:desc';
-  //   searchParams.append('sort', sort);
-    
-  //   // Populate - default fields to populate
-  //   const populate = params?.populate || ['featuredImage', 'author', 'category', 'tags', 'publication_issue'];
-  //   populate.forEach((field, index) => {
-  //     searchParams.append(`populate[${index}]`, field);
-  //   });
-
-  //   console.log(`${config.strapi.endpoints.articles}?${searchParams.toString()}`)
-
-  //   return this.request<ArticleResponse>(
-  //     `${config.strapi.endpoints.articles}?${searchParams.toString()}`
-  //   );
-  // }
 
   async getArticles(params?: {
     page?: number;
@@ -339,7 +291,6 @@ class StrapiAPI {
       searchParams.append('populate[publication_issue][fields][0]', 'id'); 
     }
 
-    // console.log(`${config.strapi.endpoints.articles}?${searchParams.toString()}`)
 
     return this.request<ArticleResponse>(
       `${config.strapi.endpoints.articles}?${searchParams.toString()}`
@@ -593,7 +544,7 @@ class StrapiAPI {
     const response = await this.request<any>(
       `${config.strapi.endpoints.textReel}?${searchParams.toString()}`
     );
-    return response.data?.Content ?? '';
+    return response?.data?.Content ?? '';
   }
 
   /**
@@ -1078,9 +1029,10 @@ class StrapiAPI {
     //filter by active banners only
     searchParams.append('filters[Active][$eq]', 'true');
     
-    return this.request<BannerResponse>(
+    const response = await this.request<BannerResponse>(
       `${config.strapi.endpoints.banners}?${searchParams.toString()}`
     );
+    return response ?? { data: [] as any, meta: {} };
   }
 
   // ============================================

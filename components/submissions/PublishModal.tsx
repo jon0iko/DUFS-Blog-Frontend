@@ -212,7 +212,6 @@ export default function PublishModal({
     try {
       // Create tag in Strapi immediately
       const createdTag = await strapiAPI.getOrCreateTag(tagName);
-      console.log("Created custom tag:", createdTag);
       
       setFormData((prev) => ({
         ...prev,
@@ -235,7 +234,6 @@ export default function PublishModal({
     try {
       // Delete tag from Strapi
       await strapiAPI.deleteTag(tag.id);
-      console.log("Deleted custom tag:", tag);
       
       setFormData((prev) => ({
         ...prev,
@@ -266,7 +264,6 @@ export default function PublishModal({
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submission initiated");
 
     if (!validateForm()) return;
 
@@ -277,7 +274,6 @@ export default function PublishModal({
       return;
     }
 
-    console.log("Form validated successfully");
 
     setIsSubmitting(true);
     setErrors({});
@@ -288,9 +284,7 @@ export default function PublishModal({
       // Upload pending images from editor before publishing
       if (tiptapRef?.current) {
         try {
-          console.log("Uploading pending images from editor...");
           await tiptapRef.current.uploadPendingImages();
-          console.log("Pending images uploaded successfully");
         } catch (uploadError) {
           const uploadErrorMessage =
             uploadError instanceof Error
@@ -338,7 +332,6 @@ export default function PublishModal({
       // Combine selected tags with custom tags (already created in Strapi)
       const customTagIds = formData.customTags.map(tag => tag.id);
       const allTagIds = [...formData.selectedTags, ...customTagIds];
-      console.log("All tag IDs for article:", allTagIds);
 
       // Generate a unique slug from title or use default
       const titleForSlug = formData.title.trim() || "untitled-article";
@@ -347,7 +340,6 @@ export default function PublishModal({
 
 
       // Call the server-side submission function with updated markdown
-      console.log("Calling submitNewArticleService...");
       await submitNewArticleService({
         title: formData.title || "Untitled Article",
         slug: uniqueSlug,

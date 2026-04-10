@@ -81,7 +81,7 @@ const TermsPage = () => {
             <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <h3 className="font-semibold text-destructive mb-1">Unable to Load Content</h3>
-              <p className="text-sm text-muted-foreground">{error}</p>
+              {/* <p className="text-sm text-muted-foreground">{error}</p> */}
             </div>
           </div>
         )}

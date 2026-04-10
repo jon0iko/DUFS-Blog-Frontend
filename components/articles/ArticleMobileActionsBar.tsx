@@ -24,6 +24,7 @@ interface ArticleMobileActionsBarProps {
   isAuthenticated: boolean;
   fontSize: string;
   isSepiaMode: boolean;
+  disableComments?: boolean;
   onLike: () => void;
   onBookmark: () => void;
   onDiscuss: () => void;
@@ -40,6 +41,7 @@ export default function ArticleMobileActionsBar({
   isBookmarkLoading,
   isAuthenticated,
   isSepiaMode,
+  disableComments,
   onLike,
   onBookmark,
   onDiscuss,
@@ -101,13 +103,15 @@ export default function ArticleMobileActionsBar({
           </button>
 
           {/* Discuss */}
-          <button
-            onClick={onDiscuss}
-            className="flex flex-col items-center gap-0.5 flex-1 py-1.5 rounded-xl text-muted-foreground active:scale-95 transition-all"
-          >
-            <MessageCircle className="w-5 h-5" />
-            <span className="text-[11px] font-medium">Discuss</span>
-          </button>
+          {!disableComments && (
+            <button
+              onClick={onDiscuss}
+              className="flex flex-col items-center gap-0.5 flex-1 py-1.5 rounded-xl text-muted-foreground active:scale-95 transition-all"
+            >
+              <MessageCircle className="w-5 h-5" />
+              <span className="text-[11px] font-medium">Discuss</span>
+            </button>
+          )}
 
           {/* Share */}
           <div className="flex flex-1 justify-center relative cursor-pointer">

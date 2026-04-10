@@ -534,3 +534,27 @@
     background-size: 1667px 1200px !important;
   }
 }
+
+
+
+/* Optimized Grain Background - Performance optimized for low-end devices */
+@layer utilities {
+  .grain-bg {
+    background-image: url('/images/grain.gif');
+    background-repeat: repeat;
+    background-size: auto;
+    background-attachment: scroll;
+    will-change: auto;
+    /* GPU acceleration hint for mobile devices */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+  
+  /* Reduce animation on low-end devices */
+  @media (prefers-reduced-motion: reduce) {
+    .grain-bg {
+      animation: none;
+    }
+  }
+}

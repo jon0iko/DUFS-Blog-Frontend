@@ -48,9 +48,6 @@ const FloatingBanner = () => {
           }
           const isExpired = data.EndDate ? new Date() > new Date(data.EndDate) : false;
 
-          console.log("Is Expired:", isExpired);
-          console.log("Is Dismissed:", isDismissed);
-
 
           if (data.Active && !isExpired && !isDismissed) {
             setIsVisible(true);

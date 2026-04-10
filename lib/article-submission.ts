@@ -25,8 +25,7 @@ export async function submitNewArticle(data: ArticleSubmissionData) {
 
   try {
     const strapi_url = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
-    console.log('Submitting article to:', strapi_url);
-    console.log('Config object was:', config); // Debugging why config might be failing
+
 
     const articleData: Record<string, unknown> = {
       title,
@@ -53,9 +52,7 @@ export async function submitNewArticle(data: ArticleSubmissionData) {
     if (uploadedImageId) {
       articleData.featuredImage = uploadedImageId;
     }
-    console.log('Article data prepared:', articleData);
 
-    console.log(`${strapi_url}/api/articles`);
 
     const response = await fetch(`${strapi_url}/api/articles`, {
       method: 'POST',

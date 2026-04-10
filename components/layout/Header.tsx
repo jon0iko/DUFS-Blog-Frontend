@@ -354,9 +354,9 @@ export default function Header() {
                             handleThemeChange("light");
                           }}
                           className={cn(
-                            "w-full text-left px-3 py-1.5 text-sm rounded-sm transition-colors",
+                            "w-full text-left px-3 py-1.5 text-sm rounded-sm transition-colors font-bold",
                             theme === "light" 
-                              ? "bg-primary/10 text-primary font-medium" 
+                              ? "bg-primary/10 text-primary" 
                               : "hover:bg-gray-100 dark:hover:bg-brand-black-90"
                           )}
                         >
@@ -370,9 +370,9 @@ export default function Header() {
                             handleThemeChange("dark");
                           }}
                           className={cn(
-                            "w-full text-left px-3 py-1.5 text-sm rounded-sm transition-colors",
+                            "w-full text-left px-3 py-1.5 text-sm rounded-sm transition-colors font-bold",
                             theme === "dark" 
-                              ? "bg-primary/10 text-primary font-medium" 
+                              ? "bg-primary/10 text-primary" 
                               : "hover:bg-gray-100 dark:hover:bg-brand-black-90"
                           )}
                         >
@@ -386,9 +386,9 @@ export default function Header() {
                             handleThemeChange("system");
                           }}
                           className={cn(
-                            "w-full text-left px-3 py-1.5 text-sm rounded-sm transition-colors",
+                            "w-full text-left px-3 py-1.5 text-sm rounded-sm transition-colors font-bold",
                             theme === "system" 
-                              ? "bg-primary/10 text-primary font-medium" 
+                              ? "bg-primary/10 text-primary" 
                               : "hover:bg-gray-100 dark:hover:bg-black-90"
                           )}
                         >

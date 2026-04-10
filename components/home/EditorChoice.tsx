@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { strapiAPI } from '@/lib/api';
 import ArticleCard from './ArticleCard';
+import ErrorScreen from './ErrorScreen';
 import { getArticleData } from '@/lib/strapi-helpers';
 import ScrollReveal, { StaggerReveal } from '@/components/ui/ScrollReveal';
 import type { Article } from '@/types';
@@ -13,7 +14,11 @@ function ArticleCardSkeleton() {
   );
 }
 
-export default function EditorChoice() {
+interface EditorChoiceProps {
+  onErrorChange?: (hasError: boolean) => void;
+}
+
+export default function EditorChoice({ onErrorChange }: EditorChoiceProps) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,16 +30,19 @@ export default function EditorChoice() {
         setError(null);
         const response = await strapiAPI.getEditorsChoiceArticles(4);
         setArticles(response.data || []);
+        onErrorChange?.(false);
       } catch (err) {
         console.error('Failed to load featured articles:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load articles');
+        const errorMsg = err instanceof Error ? err.message : 'Failed to load articles';
+        setError(errorMsg);
+        onErrorChange?.(true);
       } finally {
         setLoading(false);
       }
     };
 
     fetchArticles();
-  }, []);
+  }, [onErrorChange]);
 
   if (loading) {
     return (
@@ -55,19 +63,16 @@ export default function EditorChoice() {
 
   if (error || !articles.length) {
     return (
-      <section className="py-12 bg-secondary dark:bg-brand-black-90">
-        <div className="container">
-          <div className="flex justify-center mb-8">
-            <h2 className="text-2xl font-semibold relative text-brand-black-90">
-              <span className="relative z-10">Featured</span>
-              <span className="absolute left-0 right-0 bottom-0 h-[1px] bg-border"></span>
-            </h2>
-          </div>
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-8 text-center">
-            <p className="text-muted-foreground">{error || 'No Featured articles found'}</p>
-          </div>
-        </div>
-      </section>
+      <ErrorScreen
+        title="Unable to Load Featured Articles"
+        message="We encountered a connection problem while loading featured articles. Please check your internet connection and try again."
+        onRetry={() => {
+          if (typeof window !== 'undefined') {
+            window.location.reload();
+          }
+        }}
+        showRetry={true}
+      />
     );
   }
 

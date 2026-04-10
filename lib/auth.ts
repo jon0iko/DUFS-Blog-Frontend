@@ -240,7 +240,6 @@ async function updateUserProfile(
     throw new Error(errorData?.error?.message || 'Failed to update profile');
   }
 
-  console.log('User profile updated successfully');
 }
 
 /**
@@ -272,7 +271,6 @@ async function createAuthorForUser(user: UserData, token: string): Promise<void>
     throw new Error(errorData?.error?.message || 'Failed to create author');
   }
 
-  console.log('Author created successfully for user:', user.username);
 }
 
 /**

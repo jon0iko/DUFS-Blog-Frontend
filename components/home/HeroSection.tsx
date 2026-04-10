@@ -53,7 +53,7 @@ export default function HeroSection() {
       <section className="relative h-[80vh] w-full overflow-hidden bg-brand-black-90 flex items-center justify-center">
         <div className="text-center text-white px-4">
           <h2 className="text-2xl md:text-3xl font-bold mb-2">Unable to Load</h2>
-          <p className="text-gray-400">{error || 'Please check your connection'}</p>
+          <p className="text-gray-400">{'Please check your connection'}</p>
         </div>
       </section>
     );
