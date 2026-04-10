@@ -43,7 +43,7 @@ jobs:
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
           local-dir: out/
-          server-dir: blog_frontend/ 
+          server-dir: ./ 
           exclude: |
             **/webhooks/**
             .htaccess
