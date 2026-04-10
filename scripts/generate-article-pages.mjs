@@ -81,10 +81,11 @@ async function fetchAllArticles() {
     url.searchParams.set('filters[storyState][$eq]', 'published')
     url.searchParams.set('fields[0]', 'slug')
     url.searchParams.set('fields[1]', 'title')
-    url.searchParams.set('fields[2]', 'excerpt')
+    url.searchParams.set('fields[2]', 'content')
     url.searchParams.set('fields[3]', 'publishedAt')
-    url.searchParams.set('fields[4]', 'updatedAt')
-    url.searchParams.set('fields[5]', 'language')
+    url.searchParams.set('fields[4]', 'BlogDate')
+    url.searchParams.set('fields[5]', 'updatedAt')
+    url.searchParams.set('fields[6]', 'language')
     url.searchParams.set('populate[0]', 'author')
     url.searchParams.set('populate[1]', 'featuredImage')
     url.searchParams.set('populate[2]', 'category')
@@ -220,6 +221,13 @@ function escapeHtml(str) {
 }
 
 /**
+ * Get publish date with BlogDate as priority
+ */
+function getPublishDate(article) {
+  return article.BlogDate || article.publishedAt
+}
+
+/**
  * Generate SEO-optimized HTML for search engine bots
  * 
  * NOTE: This page is ONLY for bots - human users never see this!
@@ -229,12 +237,16 @@ function escapeHtml(str) {
 function generateSeoHtml(article) {
   const slug = article.slug
   const title = article.title || 'Untitled Article'
-  const description = article.excerpt || ''
+  // Generate description from first 160 chars of content or use empty string
+  const description = article.content 
+    ? article.content.replace(/<[^>]*>/g, '').substring(0, 160) 
+    : ''
   const authorName = article.author?.Name || 'DUFS'
   const categoryName = article.category?.Name || article.category?.nameEn || 'Article'
   const imageUrl = article.featuredImage?.url ? resolveUrl(article.featuredImage.url) : ''
   const articleUrl = `${SITE_URL.replace(/\/$/, '')}/articles/${slug}`
   const language = article.language || 'en'
+  const publishDate = getPublishDate(article)
 
   // Breadcrumb schema for better SERP appearance
   const breadcrumbSchema = {
@@ -279,7 +291,7 @@ function generateSeoHtml(article) {
       width: 1200,
       height: 630
     }] : undefined,
-    datePublished: article.publishedAt,
+    datePublished: publishDate,
     dateModified: article.updatedAt,
     inLanguage: language === 'bn' ? 'bn' : 'en',
     author: {
@@ -321,7 +333,7 @@ function generateSeoHtml(article) {
   <meta property="og:image:height" content="630">` : ''}
   <meta property="og:url" content="${articleUrl}">
   <meta property="og:site_name" content="DUFS">
-  <meta property="article:published_time" content="${article.publishedAt}">
+  <meta property="article:published_time" content="${publishDate}">
   <meta property="article:modified_time" content="${article.updatedAt}">
   <meta property="article:author" content="${escapeHtml(authorName)}">
   <meta property="article:section" content="${escapeHtml(categoryName)}">
@@ -391,7 +403,7 @@ function generateSeoHtml(article) {
       <span class="meta">${escapeHtml(categoryName)}</span>
       <h1>${escapeHtml(title)}</h1>
       <div class="meta">
-        By ${escapeHtml(authorName)} • ${new Date(article.publishedAt).toLocaleDateString(language === 'bn' ? 'bn-BD' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+        By ${escapeHtml(authorName)} • ${new Date(publishDate).toLocaleDateString(language === 'bn' ? 'bn-BD' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
       </div>
       <div class="excerpt">${escapeHtml(description)}</div>
       
@@ -668,7 +680,7 @@ function generateSitemap(articles, authors, categories) {
     .filter(a => a.slug)
     .map(a => ({
       loc: `${SITE_URL.replace(/\/$/, '')}/articles/${a.slug}`,
-      lastmod: a.updatedAt || a.publishedAt || now,
+      lastmod: a.updatedAt || (a.BlogDate || a.publishedAt) || now,
       changefreq: 'weekly',
       priority: '0.8'
     }))
