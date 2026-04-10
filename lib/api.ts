@@ -1829,6 +1829,7 @@ class StrapiAPI {
 
   /**
    * Create a new user request/report (e.g., article deletion request)
+   * Works for both authenticated and unauthenticated users
    */
   async createUserRequestReport(data: {
     section: string;
@@ -1846,7 +1847,7 @@ class StrapiAPI {
       payload.user = { connect: [data.userId] };
     }
 
-    return this.userRequest<{ data: { id: number; documentId: string } }>(
+    return this.request<{ data: { id: number; documentId: string } }>(
       '/api/user-request-reports',
       {
         method: 'POST',
