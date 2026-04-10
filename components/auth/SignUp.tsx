@@ -234,7 +234,12 @@ export default function SignUp() {
       // Sync AuthContext state
       await refreshUser();
 
-      // Navigate
+      // Mark signup as complete so auth layout doesn't redirect to /account
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('signup_complete', 'true');
+      }
+
+      // Navigate to homepage (not profile page) after successful signup
       const redirectUrl = searchParams.get('redirect') || '/';
       startTransition(() => {
         router.push(redirectUrl);

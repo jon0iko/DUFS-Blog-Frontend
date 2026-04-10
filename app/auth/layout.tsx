@@ -13,19 +13,32 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
   const reason = searchParams.get('reason');
   const isSessionEnded = reason === 'session-ended';
   const redirectUrl = searchParams.get('redirect');
+  const isGoogleSignupMode = searchParams.get('mode') === 'google';
   const { isAuthenticated, isLoading } = useAuth();
 
   // Redirect authenticated users away from auth pages
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      // Allow access if they're redirecting back to a protected page or just logged in
-      if (!redirectUrl && reason !== 'just-logged-in') {
+      // Check if user just completed signup
+      const signupJustCompleted = typeof window !== 'undefined' && sessionStorage.getItem('signup_complete') === 'true';
+      
+      // Allow access if:
+      // - They're redirecting back to a protected page
+      // - They just logged in normally
+      // - They just completed signup
+      // - They're in the middle of Google signup (filling username form)
+      if (!redirectUrl && reason !== 'just-logged-in' && !signupJustCompleted && !isGoogleSignupMode) {
         startTransition(() => {
           router.replace('/account');
         });
       }
+      
+      // Clear the signup flag after checking
+      if (signupJustCompleted && typeof window !== 'undefined') {
+        sessionStorage.removeItem('signup_complete');
+      }
     }
-  }, [isAuthenticated, isLoading, redirectUrl, reason, router]);
+  }, [isAuthenticated, isLoading, redirectUrl, reason, isGoogleSignupMode, router]);
 
   const handleNavigate = () => {
     if (isSessionEnded) {
