@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -22,6 +22,7 @@ const getHighResGoogleAvatar = (url: string) => {
 
 export default function GoogleAuthButton({ isSignUp = false }: { isSignUp?: boolean }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refreshUser } = useAuth();
@@ -76,7 +77,9 @@ export default function GoogleAuthButton({ isSignUp = false }: { isSignUp?: bool
         if (author) {
           // Existing user with author profile completed
           const redirectUrl = searchParams.get('redirect') || '/';
-          router.push(redirectUrl);
+          startTransition(() => {
+            router.push(redirectUrl);
+          });
           toast.success('Welcome back!', 'Authentication Successful');
         } else {
           // New user needing onboarding - Store info for the signup page
@@ -85,7 +88,9 @@ export default function GoogleAuthButton({ isSignUp = false }: { isSignUp?: bool
             sessionStorage.setItem('google_picture', highResPicture || '');
             sessionStorage.setItem('google_email', userInfo.email || '');
           }
-          router.push('/auth/signup?mode=google');
+          startTransition(() => {
+            router.push('/auth/signup?mode=google');
+          });
         }
       } catch (error) {
         console.error('Google Auth Error:', error);

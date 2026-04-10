@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Save, MoreVertical, FileText, Edit3, FilePlus, Sun, Moon, Check, MessageSquareWarning, Trash2 } from 'lucide-react'
@@ -35,6 +35,7 @@ export default function SubmitHeader({
   currentDraftName
 }: SubmitHeaderProps) {
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const { theme, setTheme } = useTheme()
   const toast = useToast()
   const { user } = useAuth()
@@ -46,7 +47,9 @@ export default function SubmitHeader({
     if (onBack) {
       onBack()
     } else {
-      router.back()
+      startTransition(() => {
+        router.back()
+      })
     }
   }
 

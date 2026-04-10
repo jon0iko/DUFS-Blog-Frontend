@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +19,7 @@ export default function SignUp() {
   const { refreshUser } = useAuth();
   const toast = useToast();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const searchParams = useSearchParams();
   const isGoogleMode = searchParams.get('mode') === 'google';
 
@@ -235,7 +236,9 @@ export default function SignUp() {
 
       // Navigate
       const redirectUrl = searchParams.get('redirect') || '/';
-      router.push(redirectUrl);
+      startTransition(() => {
+        router.push(redirectUrl);
+      });
     } catch (error) {
       console.error('Registration error:', error);
       setErrors((prev) => ({

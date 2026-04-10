@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import LoadingScreen from '@/components/common/LoadingScreen';
@@ -22,6 +22,7 @@ import { normalizeContent } from '@/lib/content-utils';
 export default function EditorPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const tiptapRef = useRef<TiptapRef>(null);
   const toast = useToast();
   
@@ -101,7 +102,9 @@ export default function EditorPage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/auth/signin?redirect=/editor');
+      startTransition(() => {
+        router.push('/auth/signin?redirect=/editor');
+      });
     }
   }, [authLoading, isAuthenticated, router]);
 
@@ -252,7 +255,9 @@ export default function EditorPage() {
     }
     
     toast.success('Article posted for review successfully! Redirecting...', 'Success');
-    setTimeout(() => router.push('/submit'), 1000);
+    startTransition(() => {
+      setTimeout(() => router.push('/submit'), 1000);
+    });
   }, [router, currentDraftId, user?.id, toast]);
 
   const handleClear = useCallback(() => {
@@ -357,11 +362,14 @@ export default function EditorPage() {
 
   const handleBack = useCallback(() => {
     // Content is already saved to local storage on every change
+    startTransition(() => {
+      router.back();
+    });
     router.back();
   }, [router]);
 
   // Show loading while checking auth
-  if (authLoading || !isPageReady) {
+  if (authLoading || !isPageReady || isPending) {
     return <LoadingScreen isLoading={true} />;
   }
 

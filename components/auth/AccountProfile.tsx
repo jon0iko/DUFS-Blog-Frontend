@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useTransition } from 'react';
 import { 
   Mail, AtSign, Calendar, FileText, Clock, Trash2, Edit3, Loader2, 
   ChevronRight, Bookmark, Phone, Globe, Lock, LogOut, AlertTriangle,
@@ -36,6 +36,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog';
 export default function AccountProfile() {
   const { user, logout, updateLocalUser } = useAuth();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const toast = useToast();
   const auth = useAuth();
   
@@ -186,7 +187,9 @@ export default function AccountProfile() {
       localStorage.removeItem(getStorageKey(user.id, EDITOR_STORAGE_KEYS.DRAFT_ID));
       localStorage.removeItem(getStorageKey(user.id, EDITOR_STORAGE_KEYS.DRAFT_NAME));
     }
-    router.push('/editor');
+    startTransition(() => {
+      router.push('/editor');
+    });
   };
 
 
@@ -204,7 +207,9 @@ export default function AccountProfile() {
       });
     }
     
-    router.push('/editor');
+    startTransition(() => {
+      router.push('/editor');
+    });
   };
 
   // Handle deleting a draft
@@ -1319,7 +1324,7 @@ export default function AccountProfile() {
                   <p className="text-foreground font-medium mb-2">No bookmarks yet</p>
                   <p className="text-sm text-muted-foreground mb-4">Bookmark articles to save them for later</p>
                   <Button 
-                    onClick={() => router.push('/browse')}
+                    onClick={() => startTransition(() => router.push('/browse'))}
                     variant="outline"
                     className="flex-inline items-center gap-2"
                   >

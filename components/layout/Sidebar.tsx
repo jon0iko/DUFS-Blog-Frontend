@@ -254,7 +254,7 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white hover:bg-muted-foreground/50 text-background dark:text-foreground hover:text-foreground transition-all duration-200"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-neutral-200 hover:bg-white dark:bg-white/80 dark:hover:bg-white text-background dark:text-foreground hover:text-foreground transition-all duration-200"
                 aria-label={`Visit our ${link.platform} page`}
               >
                 {typeof link.icon === 'string' && link.icon ? (

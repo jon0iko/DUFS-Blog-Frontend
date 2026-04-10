@@ -11,34 +11,41 @@ import TextReel from '@/components/home/TextReel';
 import BackToTopButton from '@/components/home/BackToTopButton';
 import { TextReelProvider } from '@/contexts/TextReelContext';
 import CTAPoster from '@/components/home/CTAPoster';
+import LoadingScreen from '@/components/common/LoadingScreen';
 
 export default function Home() {
   const [browseError, setBrowseError] = useState(false);
   const [editorError, setEditorError] = useState(false);
   const [publicationsError, setPublicationsError] = useState(false);
+  const [isHeroReady, setIsHeroReady] = useState(false);
 
   // Check if ALL three sections have errors
   const allSectionsHaveErrors = browseError && editorError && publicationsError;
 
   return (
-    <div>
-      <HeroSection />
-      <CurveDivider />
+    <>
+      {/* Show loading overlay until hero section loads */}
+      <LoadingScreen isLoading={!isHeroReady} />
+      
+      <div>
+        <HeroSection onReadyStateChange={setIsHeroReady} />
+        <CurveDivider />
 
-      <BrowseContentSectionWrapper onErrorChange={setBrowseError} />
+        <BrowseContentSectionWrapper onErrorChange={setBrowseError} />
 
-      <EditorChoice onErrorChange={setEditorError} />
+        <EditorChoice onErrorChange={setEditorError} />
 
-      <ScrollReveal yOffset={50} duration={0.9}>
-        <PublicationsWrapper onErrorChange={setPublicationsError} />
-      </ScrollReveal>
+        <ScrollReveal yOffset={50} duration={0.9}>
+          <PublicationsWrapper onErrorChange={setPublicationsError} />
+        </ScrollReveal>
 
-      <TextReelProvider>
-        {!allSectionsHaveErrors && <CTAPoster />}
-        <TextReel />
-      </TextReelProvider>
+        <TextReelProvider>
+          {!allSectionsHaveErrors && <CTAPoster />}
+          <TextReel />
+        </TextReelProvider>
 
-      <BackToTopButton />
-    </div>
+        <BackToTopButton />
+      </div>
+    </>
   );
 }

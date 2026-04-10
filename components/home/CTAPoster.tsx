@@ -16,7 +16,7 @@ const CTAPoster = React.memo(() => {
 
   return (
     <div className="container px-4 md:px-6 mb-6">
-      <section className="relative w-full rounded-[20px] md:rounded-[10px] overflow-hidden border border-black/10 px-4 sm:px-8 py-8 flex flex-col items-center justify-center min-h-[250px] bg-[#faf8f6]  dark:border-white/10">
+      <section className="relative w-full rounded-[20px] md:rounded-[10px] overflow-hidden border border-black/10 px-4 sm:px-8 py-8 flex flex-col items-center justify-center min-h-[250px] bg-[#faf8f6] dark:bg-[#faf8f6]/80">
         {/* LAYER 2: The Grainy GIF - Using BackgroundImage class for optimization */}
         <div
           className="absolute inset-0 w-full h-full mix-blend-multiply  z-10 pointer-events-none grain-bg"
@@ -24,6 +24,21 @@ const CTAPoster = React.memo(() => {
 
         {/* LAYER 3: The Vignette Mask */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.06)_100%)] z-20 pointer-events-none"></div>
+
+        {/* LAYER 4: Background Logo */}
+        {/* <img 
+          src="/images/bglogoo.png" 
+          alt="" 
+          className="hidden lg:block absolute -right-44 top-40 -translate-y-1/2 opacity-40 mix-blend-multiply z-20 pointer-events-none"
+          style={{ width: '500px', height: 'auto' }}
+        />
+
+        <img 
+          src="/images/bglogoleft.png" 
+          alt="" 
+          className="hidden lg:block absolute -left-52 top-40 -translate-y-1/2 opacity-40 mix-blend-multiply z-20 pointer-events-none"
+          style={{ width: '550px', height: 'auto' }}
+        /> */}
 
         {/* CONTENT: Call to action */}
         <div className="relative z-30 text-center flex flex-col items-center  mx-automax-w-lg w-full">

@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, useTransition } from 'react'
 import { useSearchParams, usePathname, useRouter } from 'next/navigation'
 import LoadingScreen from '@/components/common/LoadingScreen'
 import { strapiAPI } from '@/lib/api'
@@ -11,6 +11,7 @@ function BrowsePageContent() {
   const searchParams = useSearchParams()
   const pathname = usePathname()
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState<string>('')
@@ -61,7 +62,9 @@ function BrowsePageContent() {
     
     if (activeCategory !== currentCategory) {
       params.set('category', activeCategory)
-      router.push(`${pathname}?${params.toString()}`)
+      startTransition(() => {
+        router.push(`${pathname}?${params.toString()}`)
+      })
     }
   }, [activeCategory, searchParams, pathname, router])
 
@@ -69,14 +72,18 @@ function BrowsePageContent() {
   const handleFilterChange = (type: string, value: string) => {
     const params = new URLSearchParams(searchParams)
     params.set(type, value)
-    router.push(`${pathname}?${params.toString()}`)
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`)
+    })
   }
 
   // Clear search
   const handleClearSearch = () => {
     const params = new URLSearchParams(searchParams)
     params.delete('search')
-    router.push(`${pathname}?${params.toString()}`)
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`)
+    })
   }
 
   // Set search from top controls
@@ -87,7 +94,9 @@ function BrowsePageContent() {
     } else {
       params.delete('search')
     }
-    router.push(`${pathname}?${params.toString()}`)
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`)
+    })
   }
 
   return (

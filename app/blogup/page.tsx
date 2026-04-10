@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import LoadingScreen from '@/components/common/LoadingScreen';
@@ -13,6 +13,7 @@ import { getToken } from '@/lib/auth';
 export default function BlogUpPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -23,7 +24,9 @@ export default function BlogUpPage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/auth/signin?redirect=/blogup');
+      startTransition(() => {
+        router.push('/auth/signin?redirect=/blogup');
+      });
     }
   }, [authLoading, isAuthenticated, router]);
 
@@ -117,6 +120,7 @@ export default function BlogUpPage() {
 
   return (
     <>
+      <LoadingScreen isLoading={authLoading || isPending} />
       {isAuthenticated && (
         <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden font-montserrat">
           {/* Background Images */}
@@ -128,7 +132,7 @@ export default function BlogUpPage() {
 
             {/* Back Button */}
             <button
-              onClick={() => router.push('/submit')}
+              onClick={() => startTransition(() => router.push('/submit'))}
               className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors mb-8"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -262,7 +266,7 @@ export default function BlogUpPage() {
             {/* Alternative Action */}
             <div className="mt-12 text-center">
               <button
-                onClick={() => router.push('/editor')}
+                onClick={() => startTransition(() => router.push('/editor'))}
                 className="group relative px-8 py-4 bg-[#F9F7F1] dark:bg-[#1C1B1A] border-2 border-foreground/90 rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.8)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.8)] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]"
               >
                 <span className="font-bold text-sm uppercase tracking-[0.2em] text-foreground">Start Writing Instead</span>

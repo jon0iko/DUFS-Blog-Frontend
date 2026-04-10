@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import gsap from "gsap";
@@ -41,6 +41,7 @@ interface ArticleContentClientProps {
 
 export default function ArticleContentClient({ slug }: ArticleContentClientProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const toast = useToast();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -98,7 +99,7 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
           <p className="text-muted-foreground mb-8">
             {error || "The article you are looking for does not exist."}
           </p>
-          <Button onClick={() => router.push("/")}>
+          <Button onClick={() => startTransition(() => router.push("/"))}>
             <ChevronLeft className="w-4 h-4 mr-2" />
             Back to Home
           </Button>

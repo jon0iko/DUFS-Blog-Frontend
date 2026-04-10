@@ -13,7 +13,11 @@ function HeroSkeleton() {
   );
 }
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  onReadyStateChange?: (isReady: boolean) => void;
+}
+
+export default function HeroSection({ onReadyStateChange }: HeroSectionProps) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,11 +42,13 @@ export default function HeroSection() {
         setArticles([]);
       } finally {
         setLoading(false);
+        // Signal parent that we're ready
+        onReadyStateChange?.(true);
       }
     };
 
     fetchHeroArticles();
-  }, []);
+  }, [onReadyStateChange]);
 
   if (loading) {
     return <HeroSkeleton />;

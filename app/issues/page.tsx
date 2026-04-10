@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState, useMemo } from 'react';
+import { Suspense, useEffect, useState, useMemo, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -25,9 +25,12 @@ function IssuesInner() {
   const [loading, setLoading] = useState(true);
 
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const handleBack = () => {
-    router.back();
+    startTransition(() => {
+      router.back();
+    });
   }
 
   useEffect(() => {

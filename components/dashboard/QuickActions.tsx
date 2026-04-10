@@ -1,6 +1,6 @@
 'use client';
 
-import { FC } from 'react';
+import { FC, useTransition } from 'react';
 import { Edit, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -15,17 +15,20 @@ interface QuickActionCardProps {
 
 const QuickActionCard: FC<QuickActionCardProps> = ({ title, description, icon, route, className }) => {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const IconComponent = icon === 'write' ? Edit : Upload;
 
   return (
     <button
-      onClick={() => router.push(route)}
+      onClick={() => startTransition(() => router.push(route))}
+      disabled={isPending}
       className={cn(
         "group relative flex flex-col items-start p-8 rounded-2xl border-2 transition-all duration-300",
         "bg-white dark:bg-brand-black-90 border-gray-200 dark:border-gray-500",
         "hover:border-black dark:hover:border-white hover:shadow-xl",
         "transform hover:-translate-y-1 active:translate-y-0",
+        "disabled:opacity-50 disabled:cursor-not-allowed",
         className
       )}
     >

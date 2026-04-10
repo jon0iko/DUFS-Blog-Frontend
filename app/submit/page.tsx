@@ -67,7 +67,9 @@ const SubmitPage = () => {
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.replace('/auth/signin?redirect=/submit');
+      startTransition(() => {
+        router.replace('/auth/signin?redirect=/submit');
+      });
     }
   }, [authLoading, isAuthenticated, router]);
 

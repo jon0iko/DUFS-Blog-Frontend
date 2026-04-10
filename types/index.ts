@@ -55,6 +55,7 @@ export interface Author {
   Name: string; // Backend uses capital N
   slug: string;
   Bio?: string; // Backend uses capital B
+  badge?: string; // Optional badge text (e.g., "Verified Author")
   Avatar?: StrapiMedia;
   users_permissions_user?: {
     id?: number;

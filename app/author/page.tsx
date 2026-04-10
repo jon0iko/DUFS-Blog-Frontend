@@ -191,9 +191,20 @@ function AuthorPageInner() {
           </div>
           <div className="text-center md:text-left">
             <h1 className={cn("text-3xl font-bold mb-2", authorNameFont)}>{author.Name}</h1>
-            <p className="text-sm text-muted-foreground mb-4">
-              Writer • Joined {formatDate(author.createdAt)}
-            </p>
+            
+            {/* Author Badge */}
+            <div className="flex flex-wrap items-center gap-2 mb-3 justify-center md:justify-start">
+              <p className="text-sm text-muted-foreground">
+                Writer • Joined {formatDate(author.createdAt)}
+              </p>
+              
+              {(author.badge) && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-800/50 whitespace-nowrap">
+                  {author.badge}
+                </span>
+              )}
+            </div>
+            
             {author.Bio && (
               <p className={cn("text-muted-foreground max-w-2xl", authorBioFont)}>{author.Bio}</p>
             )}

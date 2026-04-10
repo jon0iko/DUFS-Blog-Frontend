@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { 
@@ -32,6 +32,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -93,7 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await loginApi(data);
       setUser(response.user);
       const redirectUrl = searchParams.get('redirect') || '/';
-      router.replace(redirectUrl);
+      startTransition(() => {
+        router.replace(redirectUrl);
+      });
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -113,7 +116,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await registerApi(data);
       setUser(response.user);
       const redirectUrl = searchParams.get('redirect') || '/';
-      router.replace(redirectUrl);
+      startTransition(() => {
+        router.replace(redirectUrl);
+      });
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);

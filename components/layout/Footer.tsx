@@ -70,7 +70,7 @@ export default function Footer() {
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white hover:bg-muted-foreground/50 text-background dark:text-foreground hover:text-foreground transition-all duration-200"
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/80 hover:bg-white text-background dark:text-foreground hover:text-foreground transition-all duration-200"
                   aria-label={`Visit our ${link.platform} page`}
                 >
                   {link.icon ? (
@@ -226,7 +226,7 @@ export default function Footer() {
               </Link> */}
               <Link
                 href="/terms-and-conditions"
-                className="whitespace-nowrap text-muted-foreground hover:text-white transition-colors"
+                className="whitespace-nowrap text-white/80 hover:text-white transition-colors"
               >
                 Terms of Publication
               </Link>
