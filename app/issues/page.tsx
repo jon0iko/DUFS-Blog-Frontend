@@ -13,7 +13,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getFontClass } from '@/lib/fonts';
 import { useRouter } from 'next/navigation';
 import { marked } from 'marked';
-import DOMPurify from 'isomorphic-dompurify';//import DOMPurify from 'dompurify';
+
+// Prevent static prerendering for this page (use dynamic rendering instead)
+export const dynamic = 'force-dynamic';
 
 
 function IssuesInner() {
@@ -149,7 +151,7 @@ function IssuesInner() {
                 <div 
                   className={`text-foreground text-lg md:text-2xl prose prose-invert max-w-none ${getFontClass(publication.Description)}`}
                   dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(marked.parse(publication.Description, { gfm: true, breaks: false, async: false }) as string)
+                    __html: marked.parse(publication.Description, { gfm: true, breaks: false, async: false }) as string
                   }}
                 />
               )}

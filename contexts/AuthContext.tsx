@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useTransition } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { 
   login as loginApi, 
@@ -33,7 +33,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const searchParams = useSearchParams();
   const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,9 +92,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await loginApi(data);
       setUser(response.user);
-      const redirectUrl = searchParams.get('redirect') || '/';
+      // Redirect is now handled by the calling component via useSearchParams
+      // Default to '/' if no redirect is specified
       startTransition(() => {
-        router.replace(redirectUrl);
+        router.replace('/');
       });
     } catch (error) {
       if (error instanceof Error) {
@@ -115,9 +115,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await registerApi(data);
       setUser(response.user);
-      const redirectUrl = searchParams.get('redirect') || '/';
+      // Redirect is now handled by the calling component via useSearchParams
+      // Default to '/' if no redirect is specified
       startTransition(() => {
-        router.replace(redirectUrl);
+        router.replace('/');
       });
     } catch (error) {
       if (error instanceof Error) {

@@ -13,7 +13,6 @@ import { ChevronLeft, FolderOpen, ChevronDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import ArticleCard from '@/components/home/ArticleCard';
 import { marked } from 'marked';
-import DOMPurify from 'isomorphic-dompurify';//import DOMPurify from 'dompurify';
 
 // Collapsible section component
 function CollapsibleSection({ title, children }: { title: string; children: React.ReactNode }) {
@@ -261,7 +260,7 @@ function IssueInner() {
             <div 
               className={`prose dark:prose-invert prose-headings:text-foreground prose-p:text-foreground max-w-none px-3 pt-4 ${gefontSizeSection(issue.Editorial)} ${getFontClass(issue.Editorial)}`}
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(marked.parse(issue.Editorial, { gfm: true, breaks: false, async: false }) as string)
+                __html: marked.parse(issue.Editorial, { gfm: true, breaks: false, async: false }) as string
               }}
             />
           </CollapsibleSection>
@@ -273,7 +272,7 @@ function IssueInner() {
             <div 
               className={`prose dark:prose-invert prose-headings:text-foreground prose-p:text-foreground max-w-none px-3 pt-4 ${getFontClass(issue.TableOfContents)} ${gefontSizeSection(issue.TableOfContents)}`}
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(marked.parse(issue.TableOfContents, { gfm: true, breaks: false, async: false }) as string)
+                __html: marked.parse(issue.TableOfContents, { gfm: true, breaks: false, async: false }) as string
               }}
             />
           </CollapsibleSection>

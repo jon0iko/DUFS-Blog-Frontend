@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useEffect, useTransition } from 'react';
+import React, { useEffect, useTransition, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Home } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+function AuthLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const searchParams = useSearchParams();
@@ -123,5 +123,13 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<div className="relative min-h-screen flex items-center justify-center bg-black/90" />}>
+      <AuthLayoutContent>{children}</AuthLayoutContent>
+    </Suspense>
   );
 }
