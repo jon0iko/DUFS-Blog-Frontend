@@ -14,120 +14,123 @@ function BrowsePageContent() {
   const [, startTransition] = useTransition()
   
   const [categories, setCategories] = useState<Category[]>([])
-  const [activeCategory, setActiveCategory] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(true)
   const [isMounted, setIsMounted] = useState(false)
-  
-  // Get search query from URL - only after mount to prevent hydration mismatch
-  const searchQuery = isMounted ? (searchParams.get('search') || '') : ''
   
   // Mark component as mounted (client-side only) to prevent hydration mismatches
   useEffect(() => {
     setIsMounted(true)
   }, [])
   
-  // Fetch categories and sync with URL on mount
+  // 1. Fetch categories ONCE on mount
   useEffect(() => {
-    if (!isMounted) return
+    let active = true;
     
     const fetchCategories = async () => {
       try {
         setIsLoading(true)
         // Strapi v5: getCategories returns CategoryResponse with data array
         const response = await strapiAPI.getCategories()
-        const fetchedCategories = response.data || []
-        setCategories(fetchedCategories)
-        
-        // Set active category from URL if provided
-        const categoryParam = searchParams.get('category')
-        let newCategory = 'all'
-        
-        if (categoryParam && categoryParam !== 'all') {
-          // Validate that the category exists
-          const categoryExists = fetchedCategories.some(cat => cat.Slug === categoryParam || cat.id.toString() === categoryParam)
-          if (categoryExists) {
-            newCategory = categoryParam
-          }
+        if (active) {
+          setCategories(response.data || [])
+          setIsLoading(false)
         }
-        
-        setActiveCategory(newCategory)
-        
-        // If URL had invalid category, clean it up to set to 'all'
-        if (categoryParam && newCategory === 'all') {
-          const params = new URLSearchParams(searchParams)
-          params.delete('category')
-          startTransition(() => {
-            router.push(`${pathname}?${params.toString()}`)
-          })
-        }
-        
-        setIsLoading(false)
       } catch (error) {
         console.error('Failed to fetch categories:', error)
-        setActiveCategory('all')
-        setCategories([])
-        setIsLoading(false)
+        if (active) {
+          setCategories([])
+          setIsLoading(false)
+        }
       }
     }
+    
     fetchCategories()
-  }, [isMounted])
+    return () => { active = false }
+  }, [])
   
+  // 2. Validate URL once categories have loaded
+  useEffect(() => {
+    if (!isMounted || categories.length === 0) return;
+    
+    // Check if current URL category is valid
+    const currentParam = searchParams.get('category');
+    if (currentParam && currentParam !== 'all') {
+      const categoryExists = categories.some(cat => cat.Slug === currentParam || cat.id.toString() === currentParam);
+      
+      if (!categoryExists) {
+        // Invalid category! Clean the URL.
+        const params = new URLSearchParams(searchParams.toString())
+        params.delete('category')
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+      }
+    }
+  }, [categories, isMounted, pathname, router, searchParams])
+
+  // Single source of truth from URL (after mount)
+  const hasLoadedData = categories.length > 0;
+  let activeCategory = 'all';
+  
+  if (isMounted) {
+    const currentParam = searchParams.get('category');
+    if (currentParam && currentParam !== 'all') {
+      if (hasLoadedData) {
+        const categoryExists = categories.some(cat => cat.Slug === currentParam || cat.id.toString() === currentParam);
+        if (categoryExists) {
+          activeCategory = currentParam;
+        } // else it remains 'all' while the useEffect cleans the URL
+      } else {
+        // Optimistically show the category while data loads
+        activeCategory = currentParam;
+      }
+    }
+  }
+
   // Get filter values from URL params - only after mount
+  const searchQuery = isMounted ? (searchParams.get('search') || '') : ''
   const language = isMounted ? (searchParams.get('language') || 'all') : 'all'
   const sortBy = isMounted ? (searchParams.get('sort') || 'recent') : 'recent'
 
-  // Sync activeCategory to URL when it changes (client-side only)
-  useEffect(() => {
-    if (!isMounted) return
-    
-    const params = new URLSearchParams(searchParams)
-    const currentCategory = params.get('category')
-    
-    // If activeCategory is 'all', remove it from URL (clean URLs)
-    if (activeCategory === 'all') {
-      if (currentCategory !== null) {
-        params.delete('category')
-        startTransition(() => {
-          router.push(`${pathname}?${params.toString()}`)
-        })
-      }
-    } else if (activeCategory && activeCategory !== currentCategory) {
-      // If activeCategory is set and different from URL, update it
-      params.set('category', activeCategory)
-      startTransition(() => {
-        router.push(`${pathname}?${params.toString()}`)
-      })
+  // Explicit event handler for category clicks (Instead of dual-state syncing)
+  const handleSetCategory = (newCategory: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (newCategory === 'all' || !newCategory) {
+      params.delete('category')
+    } else {
+      params.set('category', newCategory)
     }
-  }, [activeCategory, isMounted, pathname, router, searchParams])
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`, { scroll: false })
+    })
+  }
 
   // Handle filter changes
   const handleFilterChange = (type: string, value: string) => {
-    const params = new URLSearchParams(searchParams)
+    const params = new URLSearchParams(searchParams.toString())
     params.set(type, value)
     startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`)
+      router.push(`${pathname}?${params.toString()}`, { scroll: false })
     })
   }
 
   // Clear search
   const handleClearSearch = () => {
-    const params = new URLSearchParams(searchParams)
+    const params = new URLSearchParams(searchParams.toString())
     params.delete('search')
     startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`)
+      router.push(`${pathname}?${params.toString()}`, { scroll: false })
     })
   }
 
   // Set search from top controls
   const handleSearchSubmit = (query: string) => {
-    const params = new URLSearchParams(searchParams)
+    const params = new URLSearchParams(searchParams.toString())
     if (query) {
       params.set('search', query)
     } else {
       params.delete('search')
     }
     startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`)
+      router.push(`${pathname}?${params.toString()}`, { scroll: false })
     })
   }
 
@@ -139,7 +142,7 @@ function BrowsePageContent() {
         <BrowseInteractiveBlocks 
           categories={categories}
           activeCategory={activeCategory}
-          setActiveCategory={setActiveCategory}
+          setActiveCategory={handleSetCategory}
           language={language}
           sortBy={sortBy}
           onFilterChange={handleFilterChange}
