@@ -11,93 +11,47 @@ function BrowsePageContent() {
   const searchParams = useSearchParams()
   const pathname = usePathname()
   const router = useRouter()
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
   
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isMounted, setIsMounted] = useState(false)
   
-  // Mark component as mounted (client-side only) to prevent hydration mismatches
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
+  // Get URL parameters
+  const searchQuery = searchParams.get('search') || ''
+  const activeCategory = searchParams.get('category') || 'all'
+  const language = searchParams.get('language') || 'all'
+  const sortBy = searchParams.get('sort') || 'recent'
   
-  // 1. Fetch categories ONCE on mount
+  // Fetch categories on mount
   useEffect(() => {
-    let active = true;
-    
     const fetchCategories = async () => {
       try {
         setIsLoading(true)
         // Strapi v5: getCategories returns CategoryResponse with data array
         const response = await strapiAPI.getCategories()
-        if (active) {
-          setCategories(response.data || [])
-          setIsLoading(false)
-        }
+        const fetchedCategories = response.data || []
+        setCategories(fetchedCategories)
+        setIsLoading(false)
       } catch (error) {
         console.error('Failed to fetch categories:', error)
-        if (active) {
-          setCategories([])
-          setIsLoading(false)
-        }
+        setCategories([])
+        setIsLoading(false)
       }
     }
-    
     fetchCategories()
-    return () => { active = false }
   }, [])
   
-  // 2. Validate URL once categories have loaded
-  useEffect(() => {
-    if (!isMounted || categories.length === 0) return;
+  // Handle category changes
+  const handleCategoryChange = (slug: string) => {
+    if (slug === activeCategory) return;
     
-    // Check if current URL category is valid
-    const currentParam = searchParams.get('category');
-    if (currentParam && currentParam !== 'all') {
-      const categoryExists = categories.some(cat => cat.Slug === currentParam || cat.id.toString() === currentParam);
-      
-      if (!categoryExists) {
-        // Invalid category! Clean the URL.
-        const params = new URLSearchParams(searchParams.toString())
-        params.delete('category')
-        router.replace(`${pathname}?${params.toString()}`, { scroll: false })
-      }
-    }
-  }, [categories, isMounted, pathname, router, searchParams])
-
-  // Single source of truth from URL (after mount)
-  const hasLoadedData = categories.length > 0;
-  let activeCategory = 'all';
-  
-  if (isMounted) {
-    const currentParam = searchParams.get('category');
-    if (currentParam && currentParam !== 'all') {
-      if (hasLoadedData) {
-        const categoryExists = categories.some(cat => cat.Slug === currentParam || cat.id.toString() === currentParam);
-        if (categoryExists) {
-          activeCategory = currentParam;
-        } // else it remains 'all' while the useEffect cleans the URL
-      } else {
-        // Optimistically show the category while data loads
-        activeCategory = currentParam;
-      }
-    }
-  }
-
-  // Get filter values from URL params - only after mount
-  const searchQuery = isMounted ? (searchParams.get('search') || '') : ''
-  const language = isMounted ? (searchParams.get('language') || 'all') : 'all'
-  const sortBy = isMounted ? (searchParams.get('sort') || 'recent') : 'recent'
-
-  // Explicit event handler for category clicks (Instead of dual-state syncing)
-  const handleSetCategory = (newCategory: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    if (newCategory === 'all' || !newCategory) {
-      params.delete('category')
+    const params = new URLSearchParams(searchParams)
+    if (slug === 'all') {
+      params.set('category', 'all')
     } else {
-      params.set('category', newCategory)
+      params.set('category', slug)
     }
+    
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false })
     })
@@ -105,30 +59,41 @@ function BrowsePageContent() {
 
   // Handle filter changes
   const handleFilterChange = (type: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams)
     params.set(type, value)
     startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`, { scroll: false })
+      router.push(`${pathname}?${params.toString()}`)
     })
   }
 
   // Clear search
   const handleClearSearch = () => {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams)
     params.delete('search')
     startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`, { scroll: false })
+      router.push(`${pathname}?${params.toString()}`)
     })
   }
 
   // Set search from top controls
   const handleSearchSubmit = (query: string) => {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams)
     if (query) {
       params.set('search', query)
     } else {
       params.delete('search')
     }
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`)
+    })
+  }
+
+  // Handle completely resetting filters
+  const handleResetAll = () => {
+    const params = new URLSearchParams(searchParams)
+    params.delete('search')
+    params.set('category', 'all')
+    
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false })
     })
@@ -138,19 +103,18 @@ function BrowsePageContent() {
     <>
       <LoadingScreen isLoading={isLoading} />
       
-      {isMounted && (
-        <BrowseInteractiveBlocks 
-          categories={categories}
-          activeCategory={activeCategory}
-          setActiveCategory={handleSetCategory}
-          language={language}
-          sortBy={sortBy}
-          onFilterChange={handleFilterChange}
-          searchQuery={searchQuery}
-          onClearSearch={handleClearSearch}
-          onSearchSubmit={handleSearchSubmit}
-        />
-      )}
+      <BrowseInteractiveBlocks 
+        categories={categories}
+        activeCategory={activeCategory}
+        setActiveCategory={handleCategoryChange}
+        language={language}
+        sortBy={sortBy}
+        onFilterChange={handleFilterChange}
+        searchQuery={searchQuery}
+        onClearSearch={handleClearSearch}
+        onSearchSubmit={handleSearchSubmit}
+        onResetAll={handleResetAll}
+      />
     </>
   )
 }

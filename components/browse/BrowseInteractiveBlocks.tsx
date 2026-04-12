@@ -19,6 +19,7 @@ interface BrowseInteractiveBlocksProps {
   searchQuery?: string;
   onClearSearch: () => void;
   onSearchSubmit: (query: string) => void;
+  onResetAll?: () => void;
 }
 
 export default function BrowseInteractiveBlocks({
@@ -31,6 +32,7 @@ export default function BrowseInteractiveBlocks({
   searchQuery,
   onClearSearch,
   onSearchSubmit,
+  onResetAll,
 }: BrowseInteractiveBlocksProps) {
   const [isSearchMode, setIsSearchMode] = useState(!!searchQuery);
   const [searchDraft, setSearchDraft] = useState(searchQuery || "");
@@ -273,8 +275,12 @@ export default function BrowseInteractiveBlocks({
             </div>
             <button 
               onClick={() => {
-                setActiveCategory("all");
-                onClearSearch();
+                if (onResetAll) {
+                  onResetAll();
+                } else {
+                  setActiveCategory("all");
+                  onClearSearch();
+                }
                 setSearchDraft("");
               }}
               className="text-[0.65rem] md:text-xs font-bold uppercase tracking-widest text-[#6A635E] hover:text-black dark:hover:text-white self-start sm:self-auto"
