@@ -11,17 +11,25 @@ function BrowsePageContent() {
   const searchParams = useSearchParams()
   const pathname = usePathname()
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const [, startTransition] = useTransition()
   
   const [categories, setCategories] = useState<Category[]>([])
-  const [activeCategory, setActiveCategory] = useState<string>('')
+  const [activeCategory, setActiveCategory] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(true)
+  const [isMounted, setIsMounted] = useState(false)
   
-  // Get search query from URL
-  const searchQuery = searchParams.get('search') || ''
+  // Get search query from URL - only after mount to prevent hydration mismatch
+  const searchQuery = isMounted ? (searchParams.get('search') || '') : ''
   
-  // Fetch categories on mount
+  // Mark component as mounted (client-side only) to prevent hydration mismatches
   useEffect(() => {
+    setIsMounted(true)
+  }, [])
+  
+  // Fetch categories and sync with URL on mount
+  useEffect(() => {
+    if (!isMounted) return
+    
     const fetchCategories = async () => {
       try {
         setIsLoading(true)
@@ -30,43 +38,67 @@ function BrowsePageContent() {
         const fetchedCategories = response.data || []
         setCategories(fetchedCategories)
         
-        // Set active category from URL or default to 'all'
+        // Set active category from URL if provided
         const categoryParam = searchParams.get('category')
-        if (categoryParam) {
-          setActiveCategory(categoryParam)
-        } else {
-          // Default to 'all' to show all articles
-          setActiveCategory('all')
+        let newCategory = 'all'
+        
+        if (categoryParam && categoryParam !== 'all') {
+          // Validate that the category exists
+          const categoryExists = fetchedCategories.some(cat => cat.Slug === categoryParam || cat.id.toString() === categoryParam)
+          if (categoryExists) {
+            newCategory = categoryParam
+          }
         }
+        
+        setActiveCategory(newCategory)
+        
+        // If URL had invalid category, clean it up to set to 'all'
+        if (categoryParam && newCategory === 'all') {
+          const params = new URLSearchParams(searchParams)
+          params.delete('category')
+          startTransition(() => {
+            router.push(`${pathname}?${params.toString()}`)
+          })
+        }
+        
         setIsLoading(false)
       } catch (error) {
         console.error('Failed to fetch categories:', error)
+        setActiveCategory('all')
         setCategories([])
         setIsLoading(false)
       }
     }
     fetchCategories()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isMounted])
   
-  // Get filter values from URL params
-  const language = searchParams.get('language') || 'all'
-  const sortBy = searchParams.get('sort') || 'recent'
+  // Get filter values from URL params - only after mount
+  const language = isMounted ? (searchParams.get('language') || 'all') : 'all'
+  const sortBy = isMounted ? (searchParams.get('sort') || 'recent') : 'recent'
 
-  // Update URL when category changes
+  // Sync activeCategory to URL when it changes (client-side only)
   useEffect(() => {
-    if (!activeCategory) return
+    if (!isMounted) return
     
     const params = new URLSearchParams(searchParams)
     const currentCategory = params.get('category')
     
-    if (activeCategory !== currentCategory) {
+    // If activeCategory is 'all', remove it from URL (clean URLs)
+    if (activeCategory === 'all') {
+      if (currentCategory !== null) {
+        params.delete('category')
+        startTransition(() => {
+          router.push(`${pathname}?${params.toString()}`)
+        })
+      }
+    } else if (activeCategory && activeCategory !== currentCategory) {
+      // If activeCategory is set and different from URL, update it
       params.set('category', activeCategory)
       startTransition(() => {
         router.push(`${pathname}?${params.toString()}`)
       })
     }
-  }, [activeCategory, searchParams, pathname, router])
+  }, [activeCategory, isMounted, pathname, router, searchParams])
 
   // Handle filter changes
   const handleFilterChange = (type: string, value: string) => {
@@ -103,17 +135,19 @@ function BrowsePageContent() {
     <>
       <LoadingScreen isLoading={isLoading} />
       
-      <BrowseInteractiveBlocks 
-        categories={categories}
-        activeCategory={activeCategory}
-        setActiveCategory={setActiveCategory}
-        language={language}
-        sortBy={sortBy}
-        onFilterChange={handleFilterChange}
-        searchQuery={searchQuery}
-        onClearSearch={handleClearSearch}
-        onSearchSubmit={handleSearchSubmit}
-      />
+      {isMounted && (
+        <BrowseInteractiveBlocks 
+          categories={categories}
+          activeCategory={activeCategory}
+          setActiveCategory={setActiveCategory}
+          language={language}
+          sortBy={sortBy}
+          onFilterChange={handleFilterChange}
+          searchQuery={searchQuery}
+          onClearSearch={handleClearSearch}
+          onSearchSubmit={handleSearchSubmit}
+        />
+      )}
     </>
   )
 }
