@@ -35,14 +35,20 @@ RewriteRule ^browse$ /browse/%1/en/index.html [L]
 # Do not rewrite if the physical file exists (serves sitemap.xml, images, etc. directly)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-
+RewriteCond %{REQUEST_URI} !\.(txt|json|rsc|js|css|map)$
 # Human Articles -> Use the universal reader
 RewriteRule ^articles/([^/]+)/?$ /read-article?slug=$1 [L,QSA]
 
 # Human Authors -> Route to authors page with slug
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !\.(txt|json|rsc|js|css|map)$
 RewriteRule ^authors/([^/]+)/?$ /authors?slug=$1 [L,QSA]
 
 # Human Browse/Categories
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !\.(txt|json|rsc|js|css|map)$
 RewriteRule ^browse/([^/]+)/?$ /browse?category=$1 [L,QSA]
 
 # Fallback to index.html for SPA routing (standard Next.js export behavior)

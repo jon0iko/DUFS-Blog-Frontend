@@ -14,7 +14,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { strapiAPI } from '@/lib/api';
 import { Draft } from '@/types';
 import { useToast } from '@/components/ui/toast';
-import { getStorageKey, EDITOR_STORAGE_KEYS, saveDraftToStorage, loadDraftFromStorage, clearDraftFromStorage } from '@/lib/storage-utils';
+import { getStorageKey, EDITOR_STORAGE_KEYS } from '@/lib/storage-utils';
 import { normalizeContent } from '@/lib/content-utils';
 
 
@@ -362,9 +362,6 @@ export default function EditorPage() {
 
   const handleBack = useCallback(() => {
     // Content is already saved to local storage on every change
-    startTransition(() => {
-      router.back();
-    });
     router.back();
   }, [router]);
 

@@ -18,7 +18,13 @@ function BrowsePageContent() {
   
   // Get URL parameters
   const searchQuery = searchParams.get('search') || ''
-  const activeCategory = searchParams.get('category') || 'all'
+  let activeCategory = searchParams.get('category') || 'all'
+  
+  // Failsafe: Prevent Next.js internal RSC/hydration payloads from bleeding into user state
+  if (activeCategory.endsWith('.txt') || activeCategory.endsWith('.json') || activeCategory.endsWith('.rsc')) {
+    activeCategory = 'all'
+  }
+
   const language = searchParams.get('language') || 'all'
   const sortBy = searchParams.get('sort') || 'recent'
   
