@@ -7,7 +7,7 @@ import type { Article } from '@/types';
 
 function HeroSkeleton() {
   return (
-    <section className="relative h-[80vh] w-full overflow-hidden bg-white dark:bg-brand-black-90 flex items-center justify-center animate-pulse">
+    <section className="relative h-[81svh] md:h-[90vh] w-full overflow-hidden bg-white dark:bg-brand-black-90 flex items-center justify-center animate-pulse">
       <div className="w-full h-full" />
     </section>
   );
@@ -32,6 +32,7 @@ export default function HeroSection({ onReadyStateChange }: HeroSectionProps) {
         if (!response.data || response.data.length === 0) {
           setError('No hero articles found');
           setArticles([]);
+          onReadyStateChange?.(true); // Signal ready on empty data to dismiss loader
           return;
         }
         
@@ -40,10 +41,10 @@ export default function HeroSection({ onReadyStateChange }: HeroSectionProps) {
         console.error('Failed to load hero articles:', err);
         setError(err instanceof Error ? err.message : 'Failed to load content');
         setArticles([]);
+        onReadyStateChange?.(true); // Signal ready on error to dismiss loader
       } finally {
         setLoading(false);
-        // Signal parent that we're ready
-        onReadyStateChange?.(true);
+        // Do NOT signal ready here on success; let HeroCarousel do it after images load
       }
     };
 
@@ -56,7 +57,7 @@ export default function HeroSection({ onReadyStateChange }: HeroSectionProps) {
 
   if (error || articles.length === 0) {
     return (
-      <section className="relative h-[80vh] w-full overflow-hidden bg-brand-black-90 flex items-center justify-center">
+      <section className="relative h-[81svh] md:h-[90vh] w-full overflow-hidden bg-brand-black-90 flex items-center justify-center">
         <div className="text-center text-white px-4">
           <h2 className="text-2xl md:text-3xl font-bold mb-2">Unable to Load</h2>
           <p className="text-gray-400">{'Please check your connection'}</p>
@@ -65,5 +66,5 @@ export default function HeroSection({ onReadyStateChange }: HeroSectionProps) {
     );
   }
 
-  return <HeroCarousel articles={articles} />;
+  return <HeroCarousel articles={articles} onReadyStateChange={onReadyStateChange} />;
 }

@@ -212,7 +212,7 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
 
               <Button
                 variant="ghost"
-                className="h-8 w-full justify-center text-xs font-medium text-red-600 hover:bg-red-50/80 dark:text-red-400 dark:hover:bg-red-900/20"
+                className="h-8 w-full justify-center text-xs font-medium text-red-600 hover:text-red-500 dark:text-red-400 "
                 size="sm"
                 onClick={() => { logout(); closeSidebar(); }}
               >
@@ -254,7 +254,7 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-neutral-200 hover:bg-white dark:bg-white/80 dark:hover:bg-white text-background dark:text-foreground hover:text-foreground transition-all duration-200"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-full  hover:bg-white dark:bg-white/80 dark:hover:bg-white text-background dark:text-foreground hover:text-foreground transition-all duration-200"
                 aria-label={`Visit our ${link.platform} page`}
               >
                 {typeof link.icon === 'string' && link.icon ? (

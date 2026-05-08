@@ -17,6 +17,7 @@ import { gsap } from "@/lib/gsap";
 
 interface HeroCarouselProps {
   articles: Article[];
+  onReadyStateChange?: (isReady: boolean) => void;
 }
 
 // ========== PERSISTENT IMAGE CACHE ==========
@@ -43,7 +44,7 @@ const initializeCacheCleanup = (router: ReturnType<typeof useRouter>) => {
 const SLIDE_DURATION = 6000; // 6 seconds per slide
 const IMAGE_LOAD_TIMEOUT = 3000; // Fallback if image onLoad/onError never fires
 
-export default function HeroCarousel({ articles }: HeroCarouselProps) {
+export default function HeroCarousel({ articles, onReadyStateChange }: HeroCarouselProps) {
   const router = useRouter();
 
   // Initialize cache cleanup handler on first render
@@ -137,6 +138,7 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
 
       setIsImageLoading(false);
       setHasLoadedInitial(true);
+      onReadyStateChange?.(true);
 
       if (safetyTimer.current) {
         clearTimeout(safetyTimer.current);
@@ -147,7 +149,7 @@ export default function HeroCarousel({ articles }: HeroCarouselProps) {
       setProgressKey((k) => k + 1);
       startAutoplay(duration);
     },
-    [startAutoplay],
+    [startAutoplay, onReadyStateChange],
   );
 
   // Stable ref for onSlideReady

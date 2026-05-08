@@ -80,7 +80,7 @@ export default function GoogleAuthButton({ isSignUp = false }: { isSignUp?: bool
           startTransition(() => {
             router.push(redirectUrl);
           });
-          toast.success('Welcome back!', 'Authentication Successful');
+          // toast.success('Welcome back!', 'Authentication Successful');
         } else {
           // New user needing onboarding - Store info for the signup page
           if (typeof window !== 'undefined') {
