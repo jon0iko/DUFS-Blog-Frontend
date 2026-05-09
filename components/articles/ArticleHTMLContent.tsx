@@ -27,20 +27,25 @@ export default function ArticleHTMLContent({
   // Process HTML to add proper structure and font classes
   const processedContent = React.useMemo(() => {
     // Handle image captions in markdown format
-    const markdownWithImageCaptions = content.replace(
-      /!\[([^\]]*)\]\(([^)\s]+(?:\s+"[^"]*")?)\)\s*\n\s*\*([^\n]+?)\*\s*(?=\n|$)/g,
-      (match, alt, src, caption) => {
-        return (
-          `\n<figure data-image-caption="true">` +
-            `<img src="${src}" alt="${alt}" data-caption-image="true" />` +
-            `<figcaption>${caption}</figcaption>` +
-          `</figure>\n`
-        );
-      }
-    );
+    // Only strikethrough (~~caption~~) is treated as a caption
+    const markdownWithImageCaptions = content
+      .replace(
+        /!\[([^\]]*)\]\(([^)\s]+(?:\s+"[^"]*")?)\)\s*~~([\s\S]+?)~~\s*(?=\n|$)/g,
+        (match, alt, src, caption) => {
+          return (
+            `\n<figure data-image-caption="true">` +
+              `<img src="${src}" alt="${alt}" data-caption-image="true" />` +
+              `<figcaption>${caption}</figcaption>` +
+            `</figure>\n`
+          );
+        }
+      );
 
     const rawHtml = marked.parse(markdownWithImageCaptions, { gfm: true, breaks: false, async: false });
-    let html = DOMPurify.sanitize(rawHtml as string);
+    let html = DOMPurify.sanitize(rawHtml as string, { 
+      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'del', 's', 'strike', 'a', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'figure', 'figcaption', 'img', 'br', 'hr', 'div', 'span', 'table', 'thead', 'tbody', 'tr', 'th', 'td'],
+      ALLOWED_ATTR: ['src', 'alt', 'href', 'title', 'class', 'data-image-caption', 'data-caption-image', 'style']
+    });
 
     // Helper function to extract text from HTML for font detection
     const getTextContent = (htmlStr: string): string => {
@@ -49,9 +54,9 @@ export default function ArticleHTMLContent({
       return tmp.textContent || tmp.innerText || '';
     };
 
-    // Backward-compatible fallback for image + caption markdown that reached HTML as adjacent paragraphs.
+    // Fallback: match image + strikethrough caption rendered as adjacent paragraphs (only strikethrough is treated as caption)
     html = html.replace(
-      /<p>\s*<img([^>]*)>\s*<\/p>\s*<p>\s*(?:<em>|<i>)([\s\S]*?)(?:<\/em>|<\/i>)\s*<\/p>/gi,
+      /<p>\s*<img([^>]*)>\s*<\/p>\s*<p>\s*(?:<(?:del|s|strike)(?:\s[^>]*)?>)([\s\S]*?)(?:<\/(?:del|s|strike)>)\s*<\/p>/gi,
       (match, imgAttrs, caption) => {
         return (
           `<figure data-image-caption="true">` +

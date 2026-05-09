@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, X, ExternalLink } from "lucide-react";
 import { useSocialLinks } from "@/contexts/SocialLinksContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/toast";
@@ -117,7 +117,7 @@ export default function Footer() {
                   target="_blank"
                   className="text-base text-gray-300 hover:text-white hover:underline transition-colors"
                 >
-                  About DUFS
+                  About DUFS <ExternalLink className="w-3 h-3 inline-block ml-1" />
                 </Link>
               </li>
               <li>
@@ -126,7 +126,7 @@ export default function Footer() {
                   target="_blank"
                   className="text-base text-gray-300 hover:text-white hover:underline transition-colors"
                 >
-                  IIUSFF
+                  IIUSFF <ExternalLink className="w-3 h-3 inline-block ml-1" />
                 </Link>
               </li>
             </ul>
@@ -148,10 +148,10 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/author"
+                  href="/publications"
                   className="text-base text-gray-300 hover:text-white hover:underline transition-colors"
                 >
-                  Authors
+                  Publciations
                 </Link>
               </li>
               <li>
@@ -160,14 +160,6 @@ export default function Footer() {
                   className="text-base text-gray-300 hover:text-white hover:underline transition-colors"
                 >
                   My Account
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/auth/signin"
-                  className="text-base text-gray-300 hover:text-white hover:underline transition-colors"
-                >
-                  Sign In
                 </Link>
               </li>
             </ul>

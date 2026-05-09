@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -535,7 +534,7 @@ export default function PublishModal({
               <div className="space-y-2">
                 <label className="text-sm font-medium flex items-center gap-2">
                   <ImageIcon className="h-4 w-4" />
-                  Featured Image
+                  Cover Image
                 </label>
                 <div
                   onClick={() => fileInputRef.current?.click()}
@@ -645,14 +644,22 @@ export default function PublishModal({
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem
-                          key={category.id}
-                          value={category.id.toString()}
-                        >
-                          {category.Name}
-                        </SelectItem>
-                      ))}
+                      {categories.map((category) => {
+                        const banglaName = category.nameBn || category.Name || category.nameEn || '';
+                        const englishName = category.nameEn || '';
+                        const label = englishName && englishName !== banglaName
+                          ? `${banglaName} (${englishName})`
+                          : banglaName || englishName || 'Uncategorized';
+
+                        return (
+                          <SelectItem
+                            key={category.id}
+                            value={category.id.toString()}
+                          >
+                          {label}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   {errors.category && (
