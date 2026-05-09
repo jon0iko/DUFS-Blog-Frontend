@@ -103,7 +103,7 @@ export default function ConfirmDialog({
             onClick={onConfirm}
             className={cn(
               "flex-1 rounded-md",
-              isDangerous && "bg-red-600 hover:bg-red-700"
+              isDangerous && "bg-red-700 hover:bg-red-600 text-white"
             )}
           >
             {confirmText}

@@ -184,7 +184,8 @@ export const ImageWithCaption = Node.create({
           const caption = captionRaw.trim();
           if (caption) {
             state.ensureNewLine();
-            state.write(`*${caption.replace(/\*/g, '\\*')}*`);
+            const safeCaption = caption.replace(/~/g, '\\~');
+            state.write(`~~${safeCaption}~~`);
           }
 
           state.closeBlock(node);

@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 
-const CTAPoster = React.memo(() => {
+const CTAPoster = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
   // Memoize computed values
@@ -16,7 +16,7 @@ const CTAPoster = React.memo(() => {
 
   return (
     <div className="container px-4 md:px-6 mb-6">
-      <section className="relative w-full rounded-[20px] md:rounded-[10px] overflow-hidden border border-black/10 px-4 sm:px-8 py-8 flex flex-col items-center justify-center min-h-[250px] bg-[#faf8f6] dark:bg-[#faf8f6]/80">
+      <section className="relative w-full rounded-[10px] md:rounded-[20px] overflow-hidden border border-black/10 px-4 sm:px-8 py-8 flex flex-col items-center justify-center min-h-[250px] bg-[#faf8f6] dark:bg-[#faf8f6]/80">
         {/* LAYER 2: The Grainy GIF - Using BackgroundImage class for optimization */}
         <div
           className="absolute inset-0 w-full h-full mix-blend-multiply  z-10 pointer-events-none grain-bg"
@@ -67,8 +67,6 @@ const CTAPoster = React.memo(() => {
       </section>
     </div>
   );
-});
-
-CTAPoster.displayName = 'CTAPoster';
+};
 
 export default CTAPoster;

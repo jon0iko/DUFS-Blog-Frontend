@@ -38,6 +38,7 @@ export async function submitNewArticleService(data: ArticleSubmissionData) {
     // Direct access to env var to avoid config issues, with fallback
     const strapi_url = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
+    const currentDate = new Date().toISOString();
     const articleData: Record<string, unknown> = {
       title,
       slug,
@@ -47,8 +48,8 @@ export async function submitNewArticleService(data: ArticleSubmissionData) {
       InSlider: false,
       viewCount: 0,
       likes: 0,
-      BlogDate: null, // Will be set by admin later
-      SubmitDate: new Date().toISOString(), // Current date/time when submitted
+      BlogDate: currentDate, // Set to current date when submitted
+      SubmitDate: currentDate, // Current date/time when submitted
     };
 
     // Add category relation (manyToOne) - Strapi v5 REST API uses numeric ID directly
