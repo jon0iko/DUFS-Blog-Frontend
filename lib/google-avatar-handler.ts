@@ -1,14 +1,8 @@
 /**
- * Production-grade Google Avatar Handler
- * Handles fetching, validating, re-encoding, and uploading Google profile pictures
- */
-
-/**
- * Fetch a Google avatar URL and validate it's a real image
- * Returns the image data as a canvas-validated, re-encoded blob
+ * Fetch and validate a Google avatar URL
  * @param imageUrl - Google picture URL
  * @param timeout - Fetch timeout in milliseconds
- * @returns Promise<{blob: Blob, dataUrl: string}> - Re-encoded blob and preview data URL
+ * @returns Promise<{blob: Blob, dataUrl: string}>
  */
 export async function fetchAndValidateGoogleAvatar(
   imageUrl: string,
@@ -18,12 +12,10 @@ export async function fetchAndValidateGoogleAvatar(
     throw new Error('Google avatar URL is empty');
   }
 
-  // Create abort controller for timeout
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
-    // Fetch with proper CORS handling and no referrer
     const response = await fetch(imageUrl, {
       method: 'GET',
       mode: 'cors',
@@ -32,7 +24,6 @@ export async function fetchAndValidateGoogleAvatar(
       referrerPolicy: 'no-referrer',
       signal: controller.signal,
       headers: {
-        // Some services respect this to avoid being blocked
         'User-Agent': 'Mozilla/5.0',
       },
     });

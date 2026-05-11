@@ -1,12 +1,3 @@
-/**
- * Editor storage utilities
- * Handles localStorage operations for draft management and editor state
- */
-
-/**
- * Storage key constants for editor state
- * Centralized to ensure consistency across components
- */
 export const EDITOR_STORAGE_KEYS = {
   CONTENT: 'draft_content',
   WORD_COUNT: 'draft_word_count',
@@ -14,18 +5,11 @@ export const EDITOR_STORAGE_KEYS = {
   DRAFT_NAME: 'current_draft_name',
 } as const;
 
-/**
- * Generate user-specific storage key
- * Prevents data collision between users on same device
- */
 export function getStorageKey(userId: number | undefined, key: string): string {
   if (!userId) return `tiptap_guest_${key}`;
   return `tiptap_user_${userId}_${key}`;
 }
 
-/**
- * Save draft to localStorage with user isolation
- */
 export function saveDraftToStorage(
   userId: number | undefined,
   draftData: {

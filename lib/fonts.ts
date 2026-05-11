@@ -1,15 +1,8 @@
 /**
- * Font utility functions for language-specific styling
- * Bengali text uses Kalpurush font (--font-kalpurush)
- * English text uses Roboto font (--font-roboto)
- */
-
-/**
  * Detect if text contains Bengali characters
  */
 export const isBengaliText = (text: string): boolean => {
   if (!text) return false
-  // Bengali Unicode range: U+0980 to U+09FF
   const bengaliRegex = /[\u0980-\u09FF]/g
   return bengaliRegex.test(text)
 }
@@ -23,7 +16,6 @@ export const isMixedBengaliEnglishText = (text: string): boolean => {
   const hasEnglish = /[A-Za-z]/.test(text)
   return hasBengali && hasEnglish
 }
-
 
 /**
  * Detect if text is Bengali-only (no English letters)

@@ -20,13 +20,9 @@ interface HeroCarouselProps {
   onReadyStateChange?: (isReady: boolean) => void;
 }
 
-// ========== PERSISTENT IMAGE CACHE ==========
-// Module-level cache persists across component remounts within the same page session
-// Survives: component unmount/remount, carousel re-initialization
-// Clears on: page reload, navigation to different route
+// Module-level image cache persists across component remounts
 let persistentImageCache = new Set<string>();
 
-// Initialize cache cleanup on route changes
 let cacheCleanupInitialized = false;
 
 const initializeCacheCleanup = (router: ReturnType<typeof useRouter>) => {
@@ -37,7 +33,7 @@ const initializeCacheCleanup = (router: ReturnType<typeof useRouter>) => {
     persistentImageCache.clear();
   };
 
-  router.prefetch; // Touch router to ensure it's ready
+  router.prefetch;
 };
 
 
@@ -519,7 +515,7 @@ export default function HeroCarousel({ articles, onReadyStateChange }: HeroCarou
                                   currentArticle.author.avatar ||
                                   "/images/avatarPlaceholder.png"
                                 }
-                                alt={currentArticle.author.name || "Staff"}
+                                alt={currentArticle.author.name}
                                 width={40}
                                 height={40}
                                 className="w-full h-full object-cover"
@@ -528,7 +524,7 @@ export default function HeroCarousel({ articles, onReadyStateChange }: HeroCarou
                             <span
                               className={`${authorFontClass} text-white/90 text-xs md:text-base font-bold drop-shadow-md`}
                             >
-                              {currentArticle.author.name || "Staff"}
+                              {currentArticle.author.name}
                             </span>
                           </>
                         )}

@@ -39,23 +39,12 @@ export default function ArticleCard({
   forceBlackText = false,
   priority = false,
 }: ArticleCardProps) {
+  const [imageLoaded, setImageLoaded] = useState(false);
   const titleFontClass = getFontClass(article.title);
   const categoryFontClass = getFontClass(article.category);
   const authorfontclass = getFontClass(article.author.name);
-  let isauthornamebn, iscategorynamebn;
-  if (authorfontclass == 'font-kalpurush') {
-    isauthornamebn = true;
-  }
-  else {
-    isauthornamebn = false;
-  }
-
-  if (categoryFontClass == 'font-kalpurush') {
-    iscategorynamebn = true;
-  }
-  else {
-    iscategorynamebn = false;
-  }
+  const isauthornamebn = authorfontclass === 'font-kalpurush';
+  const iscategorynamebn = categoryFontClass === 'font-kalpurush';
 
   return (
     <article className="flex flex-col h-full">
@@ -70,11 +59,23 @@ export default function ArticleCard({
                 forceBlackText ? 'drop-shadow-lg' : 'shadow-md'
               )}
             >
+              {/* Skeleton Loader */}
+              {!imageLoaded && (
+                <div className="absolute inset-0 bg-gradient-to-r from-secondary via-muted to-secondary dark:from-secondary dark:via-accent dark:to-secondary animate-pulse z-10" />
+              )}
               <Image
                 src={article.image}
                 alt={article.title}
                 fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                className={cn(
+                  "object-cover transition-transform duration-300 group-hover:scale-105",
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                )}
+                style={{
+                  transitionProperty: "opacity, transform",
+                  transitionDuration: "300ms"
+                }}
+                onLoadingComplete={() => setImageLoaded(true)}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               />
               <div className="absolute top-0 left-0 m-2 flex flex-wrap gap-2 max-w-xs">

@@ -1,28 +1,12 @@
-/**
- * Content manipulation utilities
- * Functions for handling text content, word counts, and content analysis
- */
-
-/**
- * Calculate word count from HTML or plain text content
- * Strips HTML tags before counting
- */
 export function getWordCount(content: string): number {
   if (!content) return 0;
   
-  // Remove HTML tags
   const plainText = content.replace(/<[^>]*>/g, ' ').trim();
-  
   if (!plainText) return 0;
   
-  // Split by whitespace and filter out empty strings
   return plainText.split(/\s+/).filter(word => word.length > 0).length;
 }
 
-/**
- * Calculate reading time estimate from content
- * Assumes 200 words per minute
- */
 export function calculateReadingTime(content: string): number {
   const wordCount = getWordCount(content);
   return Math.ceil(wordCount / 200) || 1;
