@@ -81,12 +81,6 @@ function resolveSocialLogoUrl(logo: RawSocialLink['Logo']): string | undefined {
 
 /**
  * Strapi v5 API Client for Client-Side Data Fetching
- * 
- * Key Changes in Strapi v5:
- * - Response format is FLATTENED (no nested attributes)
- * - Use documentId to access specific documents
- * - Populate syntax: populate[field]=*
- * - Filter syntax: filters[field][$operator]=value
  */
 class StrapiAPI {
   private baseURL: string;
@@ -95,10 +89,6 @@ class StrapiAPI {
     this.baseURL = config.strapi.url;
   }
 
-  /**
-   * Build populate query parameters for Strapi v5
-   * Example: populate[0]=author&populate[1]=category
-   */
   private buildPopulateParams(fields: string[]): URLSearchParams {
     const params = new URLSearchParams();
     fields.forEach((field, index) => {
@@ -107,11 +97,6 @@ class StrapiAPI {
     return params;
   }
 
-  /**
-   * Make authenticated requests to Strapi v5
-   * Configured for NO CACHING - Always fetch fresh data
-   * Returns null for 404 errors (missing optional content)
-   */
   public async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -253,7 +238,7 @@ class StrapiAPI {
 
     // --- NEW: Top-Level Fields Selection ---
     // Grabbing the bare minimum needed for an article card/list view
-    const defaultFields = ['title', 'slug', 'BlogDate', 'language', 'createdAt', 'updatedAt', 'publishedAt'];
+    const defaultFields = ['title', 'slug', 'BlogDate', 'language', 'createdAt', 'updatedAt', 'publishedAt', 'publication_author_name'];
     defaultFields.forEach((field, index) => {
       searchParams.append(`fields[${index}]`, field);
     });
@@ -507,6 +492,7 @@ class StrapiAPI {
       searchParams.append('fields[3]', 'updatedAt');
       searchParams.append('fields[4]', 'publishedAt');
       searchParams.append('fields[5]', 'slug');
+      searchParams.append('fields[6]', 'publication_author_name');
       
       // Populate featuredImage - only url field
       searchParams.append('populate[featuredImage][fields][0]', 'url');

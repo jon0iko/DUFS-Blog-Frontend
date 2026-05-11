@@ -32,15 +32,13 @@ export function useArticleData(slug: string): UseArticleDataResult {
 
         setArticle(articleData);
 
-        // Fetch recommendation candidates using smart sampling strategy
+        // Fetch recommendation candidates
         if (articleData.category?.Slug && articleData.documentId) {
           try {
-            // getRecommendationsCandidates now uses smart sampling:
-            // Fetches 4 latest + 4 oldest + 4 from middle for better diversity
             const candidatesData = await strapiAPI.getRecommendationsCandidates(
               articleData.documentId,
               articleData.category.Slug,
-              12, // Will use smart sampling to pick 12 from different time periods
+              12,
             );
             setCandidates(candidatesData.data || []);
           } catch (err) {

@@ -20,7 +20,6 @@ export default function Footer() {
     if (!reportIssueText.trim()) return;
 
     setIsSubmittingReport(true);
-    console.log("Current User ID:", user?.id); // Debugging log
     try {
       const payload: any = {
         section: "IssueReportFooter",

@@ -1,5 +1,5 @@
 // Strapi Media Upload Helpers
-import config from "./config"
+import { config } from "./config"
 
 export const STRAPI_URL = config.strapi.url
 
@@ -97,9 +97,6 @@ export function getStrapiMediaUrl(path: string): string {
   return `${STRAPI_URL}${path}`
 }
 
-/**
- * Validate image file before upload
- */
 export function validateImageFile(file: File): { valid: boolean; error?: string } {
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
   const maxSize = 5 * 1024 * 1024 // 5MB

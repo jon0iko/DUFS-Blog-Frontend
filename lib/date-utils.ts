@@ -1,13 +1,3 @@
-/**
- * Date formatting utilities
- * Centralized date formatting functions used across components
- * Handles relative time formatting, localization, and date display
- */
-
-/**
- * Format date as relative time string (e.g., "5m ago", "yesterday")
- * Supports different granularities and localizations
- */
 export function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -29,10 +19,6 @@ export function formatRelativeTime(dateString: string): string {
   });
 }
 
-/**
- * Format date as relative time string (compact version for comments)
- * e.g., "just now", "5m", "2h", "1d", "2w", "3mo", "1y"
- */
 export function formatRelativeTimeCompact(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();

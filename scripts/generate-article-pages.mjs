@@ -1,41 +1,7 @@
 #!/usr/bin/env node
 
-/**
- * Generate static SEO pages for search engine bots ONLY
- * 
- * IMPORTANT: These pages are NOT served to human users!
- * 
- * Purpose:
- * - Search engine bots (Google, Bing, etc.) need pre-rendered HTML for indexing
- * - Human users ALWAYS fetch fresh content client-side from Strapi
- * - This gives us best of both worlds: instant updates + perfect SEO
- * 
- * What this script does:
- * 1. Fetches all published content from Strapi (articles, authors, categories)
- * 2. Generates static HTML for bots:
- *    - Article pages at /articles/<slug>/index.html
- *    - Author pages at /authors/<slug>/index.html
- *    - Category pages at /browse/<slug>/{en,bn}/index.html (language-specific)
- * 3. Each page has full meta tags (OG, Twitter, JSON-LD) for proper indexing
- * 4. Breadcrumb schema for better SERP hierarchy
- * 5. Creates sitemap.xml with all article, author, and category URLs
- * 6. Creates robots.txt pointing to sitemap
- * 
- * When it runs:
- * - Automatically after every build (via postbuild npm script)
- * - In GitHub Actions CI/CD pipeline
- * - When Strapi webhook triggers rebuild
- * 
- * Environment variables required:
- * - STRAPI_URL: Strapi backend URL (e.g., http://localhost:1337 or https://cms.yourdomain.com)
- * - STRAPI_TOKEN: Strapi API token (read-only access)
- * - SITE_URL: Frontend site URL (e.g., https://yourdomain.com)
- * 
- * Language Support:
- * - Articles: Language-specific (either English OR Bengali, not bilingual)
- * - Categories: Bilingual (separate pages for English and Bengali)
- * - Authors: English only (profile pages)
- */
+// Generate static SEO pages for search engine bots
+// Requires: STRAPI_URL, STRAPI_TOKEN, SITE_URL environment variables
 
 import fs from 'node:fs'
 import path from 'node:path'
