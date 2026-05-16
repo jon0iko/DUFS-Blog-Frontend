@@ -1,13 +1,12 @@
 'use client';
 
-import { Suspense, useEffect, useState, useMemo, useTransition } from 'react';
+import { Suspense, useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { strapiAPI } from '@/lib/api';
 import { getStrapiMediaUrl } from '@/lib/strapi-helpers';
 import type { Publication, Publication_Issue } from '@/types';
-import { derivePublicationPalette } from '@/lib/publication-colors';
 import { ChevronLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getFontClass } from '@/lib/fonts';
@@ -27,13 +26,10 @@ function IssuesInner() {
   const [loading, setLoading] = useState(true);
 
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
 
   const handleBack = () => {
-    startTransition(() => {
-      router.back();
-    });
-  }
+    router.back();
+  };
 
   useEffect(() => {
     if (!pubId) return;
@@ -95,9 +91,6 @@ function IssuesInner() {
       </div>
     );
   }
-
-  const palette = derivePublicationPalette(publication.Color);
-
   return (
     <div className="min-h-screen relative bg-background">
       {/* Consistent background pattern with main site */}
@@ -167,12 +160,12 @@ function IssuesInner() {
 
         {/* Issues Grid */}
         {issues.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 justify-items-center sm:justify-items-start">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,260px))] gap-y-6 justify-between justify-items-start">
             {issues.map((issue) => (
-              <Link 
-                key={issue.documentId} 
+              <Link
+                key={issue.documentId}
                 href={`/issue?id=${issue.documentId}`}
-                className="group flex h-full w-full max-w-[260px] flex-col overflow-hidden rounded-lg border border-border bg-card/50 transition-all duration-300 hover:border-foreground/20"
+                className="group flex h-full w-full max-w-[260px] flex-col overflow-hidden rounded-lg border border-border bg-card/50 transition-all duration-300 hover:border-foreground/20 shadow-sm hover:shadow-md"
               >
                 {/* Cover Image */}
                 <div className="relative h-[320px] w-full overflow-hidden bg-muted/70 p-2">
@@ -194,7 +187,7 @@ function IssuesInner() {
                     />
                   ) : null}
                 </div>
-                
+
                 {/* Metadata */}
                 <div className="flex flex-1 flex-col p-4">
                   <time className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">

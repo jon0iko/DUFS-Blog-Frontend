@@ -763,14 +763,18 @@ class StrapiAPI {
     // Sort by most recent
     searchParams.append('sort', 'BlogDate:desc');
     
-    // Minimal fields for card display
-    const fields = ['id', 'title', 'slug', 'language', 'BlogDate', 'publishedAt', 'viewCount', 'likes'];
+    // Minimal fields for card display, including author fallback text used elsewhere
+    const fields = ['id', 'title', 'slug', 'language', 'BlogDate', 'publishedAt', 'viewCount', 'likes', 'publication_author_name'];
     fields.forEach((field, index) => {
       searchParams.append(`fields[${index}]`, field);
     });
     
-    // Populate only essentials: featured image and category
+    // Populate only essentials: featured image, author, and category
     searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[author][fields][0]', 'Name');
+    searchParams.append('populate[author][fields][1]', 'slug');
+    searchParams.append('populate[author][populate][users_permissions_user][fields][0]', 'id');
+    searchParams.append('populate[author][populate][users_permissions_user][populate][Avatar][fields][0]', 'url');
     searchParams.append('populate[category][fields][0]', 'Name');
     searchParams.append('populate[category][fields][1]', 'Slug');
 
@@ -831,10 +835,25 @@ class StrapiAPI {
     searchParams.append('fields[1]', 'Name');
     searchParams.append('fields[2]', 'Bio');
     searchParams.append('fields[3]', 'createdAt');
+    searchParams.append('fields[4]', 'badge');
     // Only Avatar url from user relation
     searchParams.append('populate[users_permissions_user][fields][0]', 'id');
     searchParams.append('populate[users_permissions_user][populate][Avatar][fields][0]', 'url');
     
+    const response = await this.request<AuthorResponse>(
+      `${config.strapi.endpoints.authors}?${searchParams.toString()}`
+    );
+
+    return response.data.length > 0 ? response.data[0] : null;
+  }
+
+  /**
+   * Get author by linked user ID
+   */
+  async getAuthorByUserId(userId: number): Promise<Author | null> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('filters[users_permissions_user][id][$eq]', userId.toString());
+
     const response = await this.request<AuthorResponse>(
       `${config.strapi.endpoints.authors}?${searchParams.toString()}`
     );
@@ -1308,13 +1327,15 @@ class StrapiAPI {
       commentData.users_permissions_user = { connect: [userId] };
     }
 
-    const response = await this.request<{ data: Comment }>(
-      '/api/comments',
-      {
-        method: 'POST',
-        body: JSON.stringify({ data: commentData }),
-      }
-    );
+    const response = userId
+      ? await this.userRequest<{ data: Comment }>('/api/comments', {
+          method: 'POST',
+          body: JSON.stringify({ data: commentData }),
+        })
+      : await this.request<{ data: Comment }>('/api/comments', {
+          method: 'POST',
+          body: JSON.stringify({ data: commentData }),
+        });
 
     return response.data;
   }
@@ -1342,13 +1363,15 @@ class StrapiAPI {
       replyData.users_permissions_user = { connect: [userId] };
     }
 
-    const response = await this.request<{ data: Comment }>(
-      '/api/comments',
-      {
-        method: 'POST',
-        body: JSON.stringify({ data: replyData }),
-      }
-    );
+    const response = userId
+      ? await this.userRequest<{ data: Comment }>('/api/comments', {
+          method: 'POST',
+          body: JSON.stringify({ data: replyData }),
+        })
+      : await this.request<{ data: Comment }>('/api/comments', {
+          method: 'POST',
+          body: JSON.stringify({ data: replyData }),
+        });
 
     return response.data;
   }
@@ -1374,7 +1397,7 @@ class StrapiAPI {
    * Delete a comment (by documentId)
    */
   async deleteComment(documentId: string): Promise<void> {
-    await this.request(`/api/comments/${documentId}`, {
+    await this.userRequest(`/api/comments/${documentId}`, {
       method: 'DELETE',
     });
   }
@@ -1917,7 +1940,7 @@ export const transformStrapiArticleToLegacy = (strapiArticle: Article) => {
   const featuredImage = strapiArticle.featuredImage;
   const imageUrl = featuredImage?.url 
     ? (featuredImage.url.startsWith('http') ? featuredImage.url : `${config.strapi.url}${featuredImage.url}`)
-    : '/images/hero.jpg';
+    : '/images/placeholder.jpg';
   
   // Handle author - already flattened in v5, use helper for avatar
   const author = strapiArticle.author;

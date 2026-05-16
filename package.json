@@ -44,13 +44,16 @@
     "@tiptap/starter-kit": "^3.10.7",
     "@types/js-cookie": "^3.0.6",
     "@types/marked": "^5.0.2",
+    "axios": "^1.16.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dompurify": "^3.3.0",
+    "form-data": "^4.0.5",
     "framer-motion": "^11.10.0",
     "gsap": "^3.14.2",
     "isomorphic-dompurify": "^3.7.1",
     "js-cookie": "^3.0.5",
+    "jsdom": "22",
     "lenis": "1.3.18-dev.0",
     "libphonenumber-js": "^1.12.25",
     "lucide-react": "^0.485.0",
@@ -62,7 +65,8 @@
     "react-image-crop": "^11.0.10",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
-    "tiptap-markdown": "^0.9.0"
+    "tiptap-markdown": "^0.9.0",
+    "turndown": "^7.2.4"
   },
   "devDependencies": {
     "@types/node": "^20",

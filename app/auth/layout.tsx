@@ -3,12 +3,12 @@
 import React, { useEffect, useTransition, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Home } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 function AuthLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const searchParams = useSearchParams();
   const reason = searchParams.get('reason');
   const isSessionEnded = reason === 'session-ended';
@@ -73,15 +73,6 @@ function AuthLayoutContent({ children }: { children: React.ReactNode }) {
         className=" object-cover object-center select-none pointer-events-none"
         quality={90}
       />
-      {/* Full-bleed background image — mobile */}
-      {/* <Image
-        src="/images/Authbg_mobile.webp"
-        alt=""
-        fill
-        priority
-        className="md:hidden object-cover object-center select-none pointer-events-none"
-        quality={90}
-      /> */}
 
       {/* Dark overlay for readability */}
       <div className="absolute inset-0 bg-black/70" />

@@ -16,7 +16,7 @@ interface Props {
 export default function AuthorClient({ author, articles }: Props) {
   const avatarUrl = author.Avatar?.url 
     ? config.strapi.url + author.Avatar.url
-    : '/images/hero.jpg';
+    : '/images/placeholder.jpg';
 
   return (
     <div className="bg-white dark:bg-brand-black-90">
@@ -51,7 +51,7 @@ export default function AuthorClient({ author, articles }: Props) {
             {articles.map((article) => {
               const img = article.featuredImage?.url
                 ? config.strapi.url + article.featuredImage.url
-                : '/images/hero.jpg';
+                : '/images/placeholder.jpg';
               const font = getFontClass(article.title || '');
 
               return (

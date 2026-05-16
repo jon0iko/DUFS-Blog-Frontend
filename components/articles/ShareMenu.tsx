@@ -20,7 +20,7 @@ export default function ShareMenu({ children, url: _url, title: _title = "", ali
   const [title, setTitle] = useState("");
   const [hasNativeShare, setHasNativeShare] = useState(false);
 
-  const getShareUrl = () => {
+  const getShareUrl = React.useCallback(() => {
     if (_url) return _url;
     if (typeof window === "undefined") return "";
 
@@ -34,30 +34,39 @@ export default function ShareMenu({ children, url: _url, title: _title = "", ali
 
     currentUrl.hash = "";
     return currentUrl.toString();
-  };
+  }, [_url]);
 
   useEffect(() => {
     setUrl(getShareUrl());
     setTitle(_title || (typeof document !== "undefined" ? document.title : ""));
     setHasNativeShare(typeof navigator !== "undefined" && !!navigator.share);
-  }, [_url, _title]);
+  }, [getShareUrl, _title]);
 
   const shareUrl = url || getShareUrl();
-  const shareTitle = title || _title || (typeof document !== "undefined" ? document.title : "");
-
+  // Always share plain URL only
   const encodedUrl = encodeURIComponent(shareUrl);
-  const encodedTitle = encodeURIComponent(shareTitle);
 
   const shareLinks = {
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-    twitter: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
+    twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}`,
     linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
-    whatsapp: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
+    whatsapp: `https://wa.me/?text=${encodedUrl}`,
   };
 
   const socialIconClass = "w-4 h-4 dark:brightness-0 dark:invert";
 
-  const openPopup = (popupUrl: string) => {
+  const openPopup = async (popupUrl: string) => {
+    // On Android prefer the native share sheet (only URL) instead of our popup
+    const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent || '');
+    if (isAndroid && typeof navigator !== 'undefined' && !!navigator.share) {
+      try {
+        await navigator.share({ url: shareUrl });
+        return;
+      } catch (err) {
+        // If native share fails or is cancelled, fall through to popup fallback
+      }
+    }
+
     const width = 640;
     const height = 720;
     const left = Math.max(0, Math.round((window.innerWidth - width) / 2 + window.screenX));
@@ -115,7 +124,8 @@ export default function ShareMenu({ children, url: _url, title: _title = "", ali
     e?.preventDefault();
     e?.stopPropagation();
     try {
-      await navigator.share({ title: shareTitle, text: shareTitle, url: shareUrl });
+      // Share only the URL (omit title/text)
+      await navigator.share({ url: shareUrl });
     } catch (err: unknown) {
       if (err instanceof Error && err.name !== "AbortError") {
         copyToClipboard();
@@ -125,7 +135,7 @@ export default function ShareMenu({ children, url: _url, title: _title = "", ali
 
   if (directNativeShare && hasNativeShare && React.isValidElement(children)) {
     return React.cloneElement(children as React.ReactElement<any>, {
-      onClick: handleNativeShare
+      onClick: handleNativeShare,
     });
   }
 
