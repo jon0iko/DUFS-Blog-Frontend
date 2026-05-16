@@ -60,7 +60,7 @@ export const featuredArticles: Article[] = [
       
       <p>The film's stunning final act in Tokyo represents the most radical departure, as Edward's narrative begins to fragment and the film takes on a dreamlike quality that questions everything we've seen before. It's a bold move that transforms what might have been simply an interesting formal exercise into something more profound and unsettling.</p>
     `,
-    imageSrc: '/images/hero.jpg',
+    imageSrc: '/images/placeholder.jpg',
     category: 'features',
     author: {
       name: 'Robert Rubsam',
@@ -75,7 +75,7 @@ export const featuredArticles: Article[] = [
     title: 'Rushes | Hamdan Ballal Attacked, Miami Beach Mayor Relents, White Roadshow Bankrupt',
     isBengali: false,
     slug: 'rushes-hamdan-ballal-miami-beach',
-    imageSrc: '/images/hero.jpg',
+    imageSrc: '/images/placeholder.jpg',
     category: 'reviews',
     author: {
       name: 'Notebook',
@@ -87,7 +87,7 @@ export const featuredArticles: Article[] = [
     title: 'Sympathy for the Robot',
     isBengali: false,
     slug: 'sympathy-for-the-robot',
-    imageSrc: '/images/hero.jpg',
+    imageSrc: '/images/placeholder.jpg',
     category: 'interviews',
     author: {
       name: 'Jillian Steinhauer',
@@ -99,7 +99,7 @@ export const featuredArticles: Article[] = [
     title: 'In the Hot Seat: On the 4D Experience',
     isBengali: false,
     slug: 'hot-seat-4d-experience',
-    imageSrc: '/images/hero.jpg',
+    imageSrc: '/images/placeholder.jpg',
     category: 'reviews',
     author: {
       name: 'Gabriel Winslow-Yost',
@@ -137,7 +137,7 @@ export const editorsChoiceArticles: Article[] = [
       
       <p>এই প্রোগ্রামের অধীনে, নির্মাতারা পরিবেশবান্ধব চলচ্চিত্র নির্মাণের কৌশলগুলি শিখতে এবং বিশ্বজুড়ে তাদের সমকক্ষদের সাথে ভাল অনুশীলনগুলি ভাগ করে নিতে ওয়ার্কশপ, সেমিনার এবং নেটওয়ার্কিং ইভেন্টগুলিতে অংশগ্রহণ করতে পারেন।</p>
     `,
-    imageSrc: '/images/hero.jpg',
+    imageSrc: '/images/placeholder.jpg',
     category: 'সিনেমালাপ',
     author: {
       name: 'তানভীর সাকিব',
@@ -153,7 +153,7 @@ export const editorsChoiceArticles: Article[] = [
     title: '"ভাষা তো সত্যজিৎ রায়ের নাম জানতেন"—সত্যজিৎ রায়',
     isBengali: true,
     slug: 'satyajit-ray-language',
-    imageSrc: '/images/hero.jpg',
+    imageSrc: '/images/placeholder.jpg',
     category: 'আলাপ-সালাপ',
     author: {
       name: 'DUFS_ADMIN',
@@ -165,7 +165,7 @@ export const editorsChoiceArticles: Article[] = [
     title: 'বাংলাদেশে ওটিটি প্ল্যাটফর্ম: বাস্তবতার আলোকে নিরীক্ষা',
     isBengali: true,
     slug: 'bangladesh-ott-platforms',
-    imageSrc: '/images/hero.jpg',
+    imageSrc: '/images/placeholder.jpg',
     category: 'বিবিধ',
     author: {
       name: 'DUFS_ADMIN',
@@ -177,7 +177,7 @@ export const editorsChoiceArticles: Article[] = [
     title: 'আনুপ রাজ্জাক: টিপিকাল এর যুবকের বাংলা জয়',
     isBengali: true,
     slug: 'anup-razzak-bengali-triumph',
-    imageSrc: '/images/hero.jpg',
+    imageSrc: '/images/placeholder.jpg',
     category: 'চিত্রনাট্য',
     author: {
       name: 'ADMIN',
@@ -191,7 +191,7 @@ export const heroArticle: Article = {
   title: 'থ্রো আওয়ে ইয়োর বুকস: কৈশোর ও আধুনিকতার দ্বন্দ্ব',
   isBengali: true,
   slug: 'traveler-and-world-main',
-  imageSrc: '/images/hero.jpg',
+  imageSrc: '/images/placeholder.jpg',
   category: 'Feature',
   author: {
     name: 'Miguel Gomes',

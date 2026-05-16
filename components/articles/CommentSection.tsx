@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Comment as StrapiComment } from '@/types';
+import { Comment as StrapiComment, Author } from '@/types';
 import {
   MessageCircle,
   ThumbsUp,
@@ -22,7 +22,7 @@ import { formatRelativeTimeCompact } from '@/lib/date-utils';
 import { getUserAvatarUrl, UserData } from '@/lib/auth';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getFontClass, getfontsizeBN } from '@/lib/fonts';
+import { getFontClass, getfontsizeBN, isPureBengaliText } from '@/lib/fonts';
 
 interface CommentSectionProps {
   articleId: number;
@@ -83,6 +83,7 @@ function CommentItem({
   const [showAllReplies, setShowAllReplies] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [authorBadge, setAuthorBadge] = useState<string | null>(null);
 
   const filteredReplies = localReplies.filter(r => !r.HideComment);
 
@@ -125,6 +126,32 @@ function CommentItem({
     }
     return { name: 'Anonymous', avatar: null };
   })();
+
+  useEffect(() => {
+    const commenter =
+      typeof comment.users_permissions_user === 'object' && comment.users_permissions_user
+        ? (comment.users_permissions_user as { id?: number })
+        : null;
+    const commenterId = commenter?.id;
+
+    if (!commenterId) {
+      setAuthorBadge(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    strapiAPI.getAuthorByUserId(commenterId).then((author: Author | null) => {
+      if (cancelled) return;
+      setAuthorBadge(author?.badge?.trim() ? author.badge : null);
+    }).catch(() => {
+      if (!cancelled) setAuthorBadge(null);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [comment.users_permissions_user]);
 
   const isOwner = Boolean(
     user &&
@@ -277,9 +304,25 @@ function CommentItem({
           {/* Header */}
           <div className="flex items-start gap-2 mb-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-semibold text-foreground leading-none">
+              <span className="text-sm font-medium text-foreground leading-none">
                 {userInfo.name}
               </span>
+              {authorBadge && (() => {
+                const isBadgeBN = isPureBengaliText(authorBadge);
+                const badgeFontClass = getFontClass(authorBadge);
+                const badgeSizeClass = isBadgeBN ? getfontsizeBN(authorBadge, 'text-xs') : 'text-[9px]';
+                const badgeCase = isBadgeBN ? '' : 'uppercase tracking-[0.12em]';
+                return (
+                  <span className={cn(
+                    'inline-flex items-center px-2 py-0.5 rounded-full font-medium bg-secondary/80 text-muted-foreground border border-border/70 whitespace-nowrap',
+                    badgeFontClass,
+                    badgeSizeClass,
+                    badgeCase
+                  )}>
+                    {authorBadge}
+                  </span>
+                )
+              })()}
               <span className="text-xs text-muted-foreground">
                 {formatDate(comment.CommentDateTime)}
               </span>

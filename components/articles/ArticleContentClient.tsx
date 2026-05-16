@@ -6,7 +6,6 @@ import ScrollToPlugin from "gsap/ScrollToPlugin";
 import { config } from "@/lib/config";
 import { getAuthorAvatar } from "@/lib/strapi-helpers";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, Tag } from "lucide-react";
@@ -33,7 +32,6 @@ import BackToTopButton from "@/components/home/BackToTopButton";
 
 gsap.registerPlugin(ScrollToPlugin);
 
-type FontSize = "small" | "medium" | "large";
 
 interface ArticleContentClientProps {
   slug: string;
@@ -41,9 +39,8 @@ interface ArticleContentClientProps {
 
 export default function ArticleContentClient({ slug }: ArticleContentClientProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const toast = useToast();
   const contentRef = useRef<HTMLDivElement>(null);
 
   const [fontSize, setFontSize] = useResponsiveFontSize();

@@ -249,7 +249,7 @@ function AuthorPageInner() {
                     slug: article.slug || '',
                     image: article.featuredImage?.url
                       ? `${config.strapi.url}${article.featuredImage.url}`
-                      : '/images/hero.jpg',
+                      : '/images/placeholder.jpg',
                     category: article.category?.Name || article.category?.nameEn || '',
                     author: {
                       name: author.Name || 'Unknown',

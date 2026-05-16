@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { gsap } from '@/lib/gsap'
-import { PenTool, Upload, Eye, Heart, MessageSquare, Paperclip, Trash2, Search, X, ChevronDown } from 'lucide-react'
+import { PenTool, Upload, Eye, Heart, MessageSquare, Paperclip, Trash2, Search, X, ChevronDown, User } from 'lucide-react'
 import LoadingScreen from '@/components/common/LoadingScreen'
 import { getUserArticlesWithComments, getUserArticleStats, strapiAPI } from '@/lib/api'
 import { getStrapiMediaUrl } from '@/lib/strapi-media'
@@ -37,6 +37,9 @@ const SubmitPage = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortBy, setSortBy] = useState('BlogDate:desc');
   const ITEMS_PER_PAGE = 8;
+
+  const [authorSlug, setAuthorSlug] = useState<string | null>(null);
+  const [isLoadingAuthor, setIsLoadingAuthor] = useState(false);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [articleToDelete, setArticleToDelete] = useState<UserArticle | null>(null);
@@ -72,6 +75,29 @@ const SubmitPage = () => {
       });
     }
   }, [authLoading, isAuthenticated, router]);
+
+  // Fetch user's author slug
+  useEffect(() => {
+    const fetchAuthorSlug = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setIsLoadingAuthor(true);
+        const author = await strapiAPI.getAuthorByUserId(user.id);
+        if (author) {
+          setAuthorSlug(author.slug);
+        }
+      } catch (error) {
+        console.error('Error fetching author data:', error);
+      } finally {
+        setIsLoadingAuthor(false);
+      }
+    };
+
+    if (isAuthenticated && user?.id) {
+      fetchAuthorSlug();
+    }
+  }, [user?.id, isAuthenticated]);
 
   // Fetch user articles and stats
   useEffect(() => {
@@ -300,13 +326,23 @@ const SubmitPage = () => {
 
         {/* 3. Article List Section - Consistent and Smaller */}
         <div className="mt-16 pb-20">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-6 border-b-2 border-foreground/5 pb-3 gap-1 sm:gap-0">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 border-b-2 border-foreground/5 pb-3 gap-3 sm:gap-0">
             <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground uppercase">
               Your Blog Posts
             </h2>
-            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
-              {totalArticles} articles
-            </span>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => authorSlug && handleNavigate(`/author?slug=${authorSlug}`)} 
+                disabled={!authorSlug || isLoadingAuthor}
+                className="flex items-center gap-2 px-3 py-1.5 bg-[#F9F7F1] dark:bg-[#1C1B1A] border border-foreground/20 rounded-sm text-[10px] font-bold uppercase tracking-widest text-foreground hover:bg-foreground dark:hover:bg-white hover:text-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <User className="w-3.5 h-3.5" />
+                View Author Page
+              </button>
+              <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+                {totalArticles} articles
+              </span>
+            </div>
           </div>
 
           {/* Search and Sort Bar */}
@@ -355,7 +391,7 @@ const SubmitPage = () => {
           ) : articles.length === 0 ? (
             <div className="bg-[#FAFAF8]/50 dark:bg-[#181817]/50 border border-dashed border-neutral-300 dark:border-neutral-700 rounded-sm p-10 text-center">
               <p className="text-muted-foreground text-sm">No stories yet.</p>
-              <button onClick={() => handleNavigate('/editor')} className="text-sm font-bold hover:underline mt-2 inline-block">Start writing</button>
+              <button onClick={() => handleNavigate('/editor')} className="text-sm font-bold underline hover:no-underline mt-2 inline-block">Start writing</button>
             </div>
           ) : (
             <div className="space-y-6 md:space-y-0 md:grid md:grid-cols-2 md:gap-6 lg:gap-8">

@@ -284,6 +284,7 @@ function IssueInner() {
             <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-8">Digital Pieces</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {pieces.map((piece) => {
+                {console.log('Processing piece:', piece)}
                 const articleData = getArticleData(piece);
                 if (!articleData) return null;
                 

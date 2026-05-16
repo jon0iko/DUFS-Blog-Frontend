@@ -16,7 +16,7 @@ interface AuthorPageClientProps {
 export default function AuthorPageClient({ author, articles }: AuthorPageClientProps) {
   const avatarUrl = author.Avatar?.url 
     ? `${config.strapi.url}${author.Avatar.url}`
-    : '/images/hero.jpg';
+    : '/images/placeholder.jpg';
 
   return (
     <div className="bg-white dark:bg-brand-black-90">
@@ -51,7 +51,7 @@ export default function AuthorPageClient({ author, articles }: AuthorPageClientP
             {articles.map((article) => {
               const imageUrl = article.featuredImage?.url
                 ? `${config.strapi.url}${article.featuredImage.url}`
-                : '/images/hero.jpg';
+                : '/images/placeholder.jpg';
               const titleFont = getFontClass(article.Title || '');
 
               return (

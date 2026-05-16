@@ -36,7 +36,7 @@ export function generateMetadata({
   
   const metaTitle = title ? `${title} | ${siteName}` : siteName;
   const metaDescription = description || defaultDescription;
-  const metaImage = image || `${siteUrl}/images/hero.jpg`;
+  const metaImage = image || `${siteUrl}/images/placeholder.jpg`;
   const metaUrl = url ? `${siteUrl}${url}` : siteUrl;
 
   const metadata: Metadata = {
@@ -110,7 +110,7 @@ export function generateArticleMetadata(article: Article): Metadata {
   const keywords = article.tags ? article.tags.map(tag => tag.name) : [];
   
   // Get featured image URL using helper
-  const imageUrl = getArticleImage(article) || `${siteUrl}/images/hero.jpg`;
+  const imageUrl = getArticleImage(article) || `${siteUrl}/images/placeholder.jpg`;
 
   // Author and category are directly accessible
   const authorName = article.author ? getAuthorName(article.author) : 'DUFS Blog';
