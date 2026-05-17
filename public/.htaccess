@@ -82,6 +82,14 @@ RewriteRule . /index.html [L]
   ExpiresByType application/font-woff2 "access plus 1 year"
 </IfModule>
 
+# Aggressive caching for loading.svg specifically
+<Files "loading.svg">
+  <IfModule mod_headers.c>
+    Header set Cache-Control "public, max-age=31536000, immutable"
+    Header set Expires "Thu, 31 Dec 2036 23:59:59 GMT"
+  </IfModule>
+</Files>
+
 # Compression for faster loading
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json

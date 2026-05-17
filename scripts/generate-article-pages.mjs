@@ -52,6 +52,7 @@ async function fetchAllArticles() {
     url.searchParams.set('fields[4]', 'BlogDate')
     url.searchParams.set('fields[5]', 'updatedAt')
     url.searchParams.set('fields[6]', 'language')
+    url.searchParams.set('fields[7]', 'tags')
     url.searchParams.set('populate[0]', 'author')
     url.searchParams.set('populate[1]', 'featuredImage')
     url.searchParams.set('populate[2]', 'category')
@@ -213,6 +214,7 @@ function generateSeoHtml(article) {
   const articleUrl = `${SITE_URL.replace(/\/$/, '')}/articles/${slug}`
   const language = article.language || 'en'
   const publishDate = getPublishDate(article)
+  const keywords = article.tags ? (typeof article.tags === 'string' ? article.tags : article.tags.join(', ')) : ''
 
   // Breadcrumb schema for better SERP appearance
   const breadcrumbSchema = {
@@ -266,6 +268,7 @@ function generateSeoHtml(article) {
       url: `${SITE_URL}/authors/${article.author?.slug || ''}`
     },
     articleSection: categoryName,
+    keywords: keywords || undefined,
     publisher: {
       '@type': 'Organization',
       name: 'DUFS',
@@ -287,6 +290,7 @@ function generateSeoHtml(article) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(description)}">
+  ${keywords ? `<meta name="keywords" content="${escapeHtml(keywords)}">` : ''}
   <meta name="language" content="${language === 'bn' ? 'Bengali' : 'English'}">
   <link rel="canonical" href="${articleUrl}">
   
