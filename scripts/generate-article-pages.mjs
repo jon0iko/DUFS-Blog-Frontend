@@ -52,10 +52,10 @@ async function fetchAllArticles() {
     url.searchParams.set('fields[4]', 'BlogDate')
     url.searchParams.set('fields[5]', 'updatedAt')
     url.searchParams.set('fields[6]', 'language')
-    url.searchParams.set('fields[7]', 'tags')
     url.searchParams.set('populate[0]', 'author')
     url.searchParams.set('populate[1]', 'featuredImage')
     url.searchParams.set('populate[2]', 'category')
+    url.searchParams.set('populate[3]', 'tags')
     url.searchParams.set('pagination[page]', String(page))
     url.searchParams.set('pagination[pageSize]', String(pageSize))
 
