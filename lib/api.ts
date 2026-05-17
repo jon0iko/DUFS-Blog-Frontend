@@ -539,6 +539,7 @@ class StrapiAPI {
   async getPublications(includeHidden: boolean = false): Promise<any> {
     const searchParams = new URLSearchParams();
     searchParams.append('populate[Image][fields][0]', 'url');
+    searchParams.append('sort', 'updatedAt:desc');
     
     if (!includeHidden) {
       searchParams.append('filters[Hide][$eq]', 'false');
