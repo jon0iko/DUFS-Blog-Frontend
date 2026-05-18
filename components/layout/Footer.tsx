@@ -44,7 +44,7 @@ export default function Footer() {
 
   return (
     <footer className="border-t border-border overflow-x-hidden bg-brand-black-100">
-      <div className="container py-12 md:py-16">
+      <div className="container pt-12 pb-4 md:pt-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-12">
           {/* Brand Section */}
           <div className="lg:col-span-4">
@@ -223,6 +223,22 @@ export default function Footer() {
               </Link>
             </div>
           </div>
+
+            {/* Centered credit at the very bottom */}
+            <div className="mt-6">
+              <p className="text-center text-white/15 text-xs">
+                Made by{' '}
+                <a
+                  href="https://github.com/jon0iko"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  jon0iko
+                </a>
+                {', '}for the love of cinema.
+              </p>
+            </div>
         </div>
       </div>
 
