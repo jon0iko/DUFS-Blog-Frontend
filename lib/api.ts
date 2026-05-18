@@ -1230,6 +1230,7 @@ class StrapiAPI {
       searchParams.append('fields[3]', 'updatedAt');
       searchParams.append('fields[4]', 'publishedAt');
       searchParams.append('fields[5]', 'slug');
+      searchParams.append('fields[6]', 'publication_author_name');
     searchParams.append('populate[featuredImage][fields][0]', 'url');
     searchParams.append('populate[author][fields][0]', 'Name');
     searchParams.append('populate[author][fields][1]', 'slug');

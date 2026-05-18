@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useMemo, useState, useEffect, useCallback } from 'react'
+import { Suspense, useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -23,7 +23,7 @@ import type { Author, Article } from '@/types'
  * Apache rewrite: /authors/slug → /author?slug=slug
  */
 
-const ARTICLES_PER_PAGE = 12
+const ARTICLES_PER_PAGE = 2
 
 function AuthorPageInner() {
   const searchParams = useSearchParams()
@@ -32,10 +32,14 @@ function AuthorPageInner() {
   const [author, setAuthor] = useState<Author | null>(null)
   const [articles, setArticles] = useState<Article[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isCalculatingViews, setIsCalculatingViews] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalArticles, setTotalArticles] = useState(0)
+  const [totalViews, setTotalViews] = useState<number | null>(null)
+
+  const loadedViewCountAuthorRef = useRef<string | null>(null)
 
   const fetchAuthorAndArticles = useCallback(async (page: number = 1) => {
     if (!slug) return
@@ -54,6 +58,8 @@ function AuthorPageInner() {
       }
       
       setAuthor(fetchedAuthor)
+      setTotalViews(null)
+      loadedViewCountAuthorRef.current = null
       
       // Fetch author's articles with pagination
       const articlesResponse = await strapiAPI.getAuthorArticles(
@@ -79,6 +85,58 @@ function AuthorPageInner() {
       setIsLoading(false)
     }
   }, [slug])
+
+  useEffect(() => {
+    const authorDocumentId = author?.documentId
+
+    if (!authorDocumentId || isLoading || loadedViewCountAuthorRef.current === authorDocumentId) {
+      return
+    }
+
+    if (totalArticles === 0) {
+      loadedViewCountAuthorRef.current = authorDocumentId
+      setTotalViews(0)
+      return
+    }
+
+    let isCancelled = false
+    setIsCalculatingViews(true)
+
+    const calculateTotalViews = async () => {
+      try {
+        const allArticlesResponse = await strapiAPI.getAuthorArticles(
+          authorDocumentId,
+          1,
+          totalArticles
+        )
+
+        const summedViews = (allArticlesResponse.data || []).reduce(
+          (sum, article) => sum + (article.viewCount || 0),
+          0
+        )
+
+        if (!isCancelled) {
+          setTotalViews(summedViews)
+          loadedViewCountAuthorRef.current = authorDocumentId
+        }
+      } catch (err) {
+        console.error('Error calculating author view count:', err)
+        if (!isCancelled) {
+          setTotalViews(0)
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsCalculatingViews(false)
+        }
+      }
+    }
+
+    void calculateTotalViews()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [author?.documentId, isLoading, totalArticles])
 
   useEffect(() => {
     fetchAuthorAndArticles(1)
@@ -210,6 +268,14 @@ function AuthorPageInner() {
             )}
             <p className="text-sm text-primary mt-4">
               {totalArticles} {totalArticles === 1 ? 'article' : 'articles'} published
+            </p>
+            <p className="mt-2 flex items-center justify-center md:justify-start gap-2 text-sm text-muted-foreground">
+              <span className="font-medium">Article Views:</span>
+              {isCalculatingViews || totalViews === null ? (
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              ) : (
+                <span className="font-semibold text-foreground">{totalViews.toLocaleString()}</span>
+              )}
             </p>
         </div>
         </div>

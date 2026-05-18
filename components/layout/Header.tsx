@@ -244,6 +244,24 @@ export default function Header() {
               <Search className="!h-5 !w-5 stroke-[2.5]" />
             </Button>
 
+            {!isAuthenticated && (
+              <Button
+                asChild
+                size="icon"
+                className={cn(
+                  "flex md:hidden flex-shrink-0 transition-all duration-300",
+                  isScrolledPastHero
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-white text-gray-900 hover:bg-white/90"
+                )}
+                aria-label="Sign in"
+              >
+                <Link href="/auth/signin">
+                  <LogIn className="!h-5 !w-5 stroke-[2.5]" />
+                </Link>
+              </Button>
+            )}
+
             {!isAuthenticated ? (
               <>
                 {/* Login Button — hidden on mobile */}
