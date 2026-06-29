@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,9 @@ import GoogleAuthButton from './GoogleAuthButton';
 
 export default function SignIn() {
   const { login, isLoading } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [, startTransition] = useTransition();
   const [formData, setFormData] = useState<LoginData>({
     identifier: '',
     password: '',
@@ -52,6 +56,11 @@ export default function SignIn() {
     
     try {
       await login(formData);
+      // Honor ?redirect= (e.g. /submit) like SignUp/Google do; fall back to home.
+      const redirectUrl = searchParams.get('redirect') || '/';
+      startTransition(() => {
+        router.push(redirectUrl);
+      });
     } catch (error) {
       console.error('Login error:', error);
       // Set a general form error

@@ -252,10 +252,9 @@ class StrapiAPI {
     } else {
       // Highly optimized default population mapping
       
-      // 1. Featured Image
-      searchParams.append('populate[featuredImage][fields][0]', 'url');
-      searchParams.append('populate[featuredImage][fields][1]', 'alternativeText');
-      
+      // 1. Featured Image (full media: url, formats, width/height, alternativeText)
+      searchParams.append('populate[featuredImage]', 'true');
+
       // 2. Author & Avatar (Secure & Minimal)
       searchParams.append('populate[author][fields][0]', 'Name');
       searchParams.append('populate[author][fields][1]', 'slug');
@@ -332,7 +331,7 @@ class StrapiAPI {
     });
     
     // Populate only essentials: featured image, category, author, publication_issue
-    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[featuredImage]', 'true'); // full media incl. responsive formats
     searchParams.append('populate[category]', 'true');
     searchParams.append('populate[author][fields][0]', 'Name');
     searchParams.append('populate[author][fields][1]', 'slug');
@@ -364,7 +363,7 @@ class StrapiAPI {
         'fields[8]': 'likes',
         'fields[9]': 'language',
 
-        'populate[featuredImage][fields][0]': 'url',
+        'populate[featuredImage]': 'true', // full media incl. responsive formats
 
         // 3. Category
         'populate[category][fields][0]': 'Name',
@@ -379,9 +378,14 @@ class StrapiAPI {
         'populate[publication_issue][populate][CoverImage][fields][0]': 'url',
 
         // 6. Author Profile & Deep-Nested Avatar URL
+        //    Bio powers the author card below the article (mirrors the author page);
+        //    the linked user id lets the UI detect when the reader is the author.
         'populate[author][fields][0]': 'Name',
         'populate[author][fields][1]': 'slug',
-        'populate[author][populate][users_permissions_user][fields][0]': 'username',
+        'populate[author][fields][2]': 'Bio',
+        'populate[author][populate][users_permissions_user][fields][0]': 'id',
+        'populate[author][populate][users_permissions_user][fields][1]': 'username',
+        'populate[author][populate][users_permissions_user][fields][2]': 'Bio',
         'populate[author][populate][users_permissions_user][populate][Avatar][fields][0]': 'url'
       }).toString();
 
@@ -416,7 +420,7 @@ class StrapiAPI {
     searchParams.append('fields[7]', 'language');
     
     // Minimal populate - only essentials for article display
-    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[featuredImage]', 'true'); // full media incl. responsive formats
     searchParams.append('populate[category][fields][0]', 'Name');
     searchParams.append('populate[category][fields][1]', 'Slug');
     searchParams.append('populate[tags][fields][0]', 'name');
@@ -462,7 +466,7 @@ class StrapiAPI {
     searchParams.append('fields[3]', 'publishedAt');
     
     // Populate only essentials: featured image and author with avatar
-    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[featuredImage]', 'true'); // full media incl. responsive formats
     searchParams.append('populate[author][fields][0]', 'Name');
     searchParams.append('populate[author][fields][1]', 'slug');
     searchParams.append('populate[author][populate][users_permissions_user][fields][0]', 'id');
@@ -495,7 +499,7 @@ class StrapiAPI {
       searchParams.append('fields[6]', 'publication_author_name');
       
       // Populate featuredImage - only url field
-      searchParams.append('populate[featuredImage][fields][0]', 'url');
+      searchParams.append('populate[featuredImage]', 'true'); // full media incl. responsive formats
       
       // Populate author - only Name field
       searchParams.append('populate[author][fields][0]', 'Name');
@@ -538,7 +542,7 @@ class StrapiAPI {
    */
   async getPublications(includeHidden: boolean = false): Promise<any> {
     const searchParams = new URLSearchParams();
-    searchParams.append('populate[Image][fields][0]', 'url');
+    searchParams.append('populate[Image]', 'true'); // full media incl. responsive formats
     searchParams.append('sort', 'updatedAt:desc');
     
     if (!includeHidden) {
@@ -560,7 +564,7 @@ class StrapiAPI {
     searchParams.append('sort', 'updatedAt:desc');
     searchParams.append('pagination[pageSize]', limit.toString());
     // Only fetch Image.url field (not entire Image object)
-    searchParams.append('populate[Image][fields][0]', 'url');
+    searchParams.append('populate[Image]', 'true'); // full media incl. responsive formats
 
     const response = await this.request<any>(
       `${config.strapi.endpoints.publications}?${searchParams.toString()}`
@@ -600,7 +604,7 @@ class StrapiAPI {
     });
     
     // Populate only essentials: featured image and category
-    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[featuredImage]', 'true'); // full media incl. responsive formats
     searchParams.append('populate[category][fields][0]', 'Name');
     searchParams.append('populate[category][fields][1]', 'Slug');
 
@@ -641,7 +645,7 @@ class StrapiAPI {
     });
     
     // Populate only essentials for card display (minimal fields only)
-    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[featuredImage]', 'true'); // full media incl. responsive formats
     searchParams.append('populate[category][fields][0]', 'Name');
     // author and publication_issue are not displayed in cards, so don't populate
 
@@ -693,7 +697,7 @@ class StrapiAPI {
     });
     
     // Populate fields needed for scoring algorithm - only specific fields for minimal payload
-    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[featuredImage]', 'true'); // full media incl. responsive formats
     searchParams.append('populate[author][fields][0]', 'Name');
     searchParams.append('populate[author][fields][1]', 'slug');
     searchParams.append('populate[category][fields][0]', 'Name');
@@ -771,7 +775,7 @@ class StrapiAPI {
     });
     
     // Populate only essentials: featured image, author, and category
-    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[featuredImage]', 'true'); // full media incl. responsive formats
     searchParams.append('populate[author][fields][0]', 'Name');
     searchParams.append('populate[author][fields][1]', 'slug');
     searchParams.append('populate[author][populate][users_permissions_user][fields][0]', 'id');
@@ -837,8 +841,9 @@ class StrapiAPI {
     searchParams.append('fields[2]', 'Bio');
     searchParams.append('fields[3]', 'createdAt');
     searchParams.append('fields[4]', 'badge');
-    // Only Avatar url from user relation
+    // Avatar url + self-written Bio (fallback) from the linked user relation
     searchParams.append('populate[users_permissions_user][fields][0]', 'id');
+    searchParams.append('populate[users_permissions_user][fields][1]', 'Bio');
     searchParams.append('populate[users_permissions_user][populate][Avatar][fields][0]', 'url');
     
     const response = await this.request<AuthorResponse>(
@@ -889,7 +894,7 @@ class StrapiAPI {
     });
     
     // Populate only essentials: featured image and category (for display)
-    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[featuredImage]', 'true'); // full media incl. responsive formats
     searchParams.append('populate[category][fields][0]', 'Name');
     searchParams.append('populate[category][fields][1]', 'nameEn');
 
@@ -1231,7 +1236,7 @@ class StrapiAPI {
       searchParams.append('fields[4]', 'publishedAt');
       searchParams.append('fields[5]', 'slug');
       searchParams.append('fields[6]', 'publication_author_name');
-    searchParams.append('populate[featuredImage][fields][0]', 'url');
+    searchParams.append('populate[featuredImage]', 'true'); // full media incl. responsive formats
     searchParams.append('populate[author][fields][0]', 'Name');
     searchParams.append('populate[author][fields][1]', 'slug');
     searchParams.append('populate[category][fields][0]', 'Name');
@@ -1877,7 +1882,7 @@ class StrapiAPI {
    */
   async getPublicationByDocumentId(documentId: string): Promise<Publication | null> {
     const searchParams = new URLSearchParams();
-    searchParams.append('populate[Image][fields][0]', 'url');
+    searchParams.append('populate[Image]', 'true'); // full media incl. responsive formats
     
     const response = await this.request<{ data: Publication; meta: object }>(
       `/api/publications/${documentId}?${searchParams.toString()}`
@@ -1898,7 +1903,7 @@ class StrapiAPI {
     searchParams.append('fields[0]', 'Title');
     searchParams.append('fields[1]', 'PublishedDate');
     // Populate only CoverImage url (not the full publication)
-    searchParams.append('populate[CoverImage][fields][0]', 'url');
+    searchParams.append('populate[CoverImage]', 'true'); // full media incl. responsive formats
 
     return this.request<IssueResponse>(
       `/api/publication-issues?${searchParams.toString()}`
@@ -2052,7 +2057,7 @@ export async function getUserArticles(
     });
     
     // Populate only essentials: featured image, category only (no author, no tags)
-    articlesSearchParams.append('populate[featuredImage][fields][0]', 'url');
+    articlesSearchParams.append('populate[featuredImage]', 'true'); // full media incl. responsive formats
     articlesSearchParams.append('populate[category][fields][0]', 'Name');
     articlesSearchParams.append('populate[category][fields][1]', 'nameEn');
     
@@ -2111,7 +2116,7 @@ export async function getUserArticlesWithComments(
     });
     
     // Populate essentials + comments with minimal fields
-    articlesSearchParams.append('populate[featuredImage][fields][0]', 'url');
+    articlesSearchParams.append('populate[featuredImage]', 'true'); // full media incl. responsive formats
     articlesSearchParams.append('populate[category][fields][0]', 'Name');
     articlesSearchParams.append('populate[category][fields][1]', 'nameEn');
     // Only need comment IDs for counting

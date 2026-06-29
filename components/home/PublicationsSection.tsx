@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { Publication } from "@/types";
-import { getStrapiMediaUrl } from "@/lib/strapi-helpers";
+import { getMediaUrlSized } from "@/lib/strapi-helpers";
 import { derivePublicationPalette } from "../../lib/publication-colors";
 import { gsap } from "@/lib/gsap";
 
@@ -72,7 +72,7 @@ export default function PublicationsSection({
 /* ─── Card ──────────────────────────────────────────────────────────────── */
 function PublicationCard({ publication: pub, index }: { publication: Publication; index: number }) {
   const palette = derivePublicationPalette(pub.Color);
-  const imageUrl = getStrapiMediaUrl(pub.Image);
+  const imageUrl = getMediaUrlSized(pub.Image, 'medium');
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);

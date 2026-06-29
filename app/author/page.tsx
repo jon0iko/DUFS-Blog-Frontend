@@ -231,7 +231,10 @@ function AuthorPageInner() {
     : '/images/avatarPlaceholder.png'
 
   const authorNameFont = getFontClass(author.Name || '')
-  const authorBioFont = getFontClass(author.Bio || '')
+  // Prefer Author.Bio; fall back to the linked user's self-written bio (/account)
+  // so it stays consistent with the author card on the article page.
+  const authorBio = author.Bio || author.users_permissions_user?.Bio
+  const authorBioFont = getFontClass(authorBio || '')
 
   return (
     <div className="bg-background min-h-screen">
@@ -263,8 +266,8 @@ function AuthorPageInner() {
               )}
             </div>
             
-            {author.Bio && (
-              <p className={cn("text-muted-foreground max-w-2xl", authorBioFont)}>{author.Bio}</p>
+            {authorBio && (
+              <p className={cn("text-muted-foreground max-w-2xl", authorBioFont)}>{authorBio}</p>
             )}
             <p className="text-sm text-primary mt-4">
               {totalArticles} {totalArticles === 1 ? 'article' : 'articles'} published

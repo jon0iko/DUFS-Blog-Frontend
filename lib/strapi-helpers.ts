@@ -11,6 +11,47 @@ export function getStrapiMediaUrl(media?: StrapiMedia | null): string {
   return getMediaUrl(media.url);
 }
 
+export type MediaSize = 'thumbnail' | 'small' | 'medium' | 'large' | 'full';
+
+// Strapi only generates a responsive format when the original is LARGER than the
+// breakpoint, so "requested format → original" never 404s: if the format is
+// missing, the original is already at/below that size.
+export function getMediaUrlSized(media?: StrapiMedia | null, size: MediaSize = 'medium'): string {
+  if (!media) return '/images/placeholder.jpg';
+  if (size !== 'full') {
+    const fmt = media.formats?.[size];
+    if (fmt?.url) return getMediaUrl(fmt.url);
+  }
+  return getMediaUrl(media.url);
+}
+
+// Build a srcset from every variant Strapi actually produced (+ the original),
+// so the browser can pick the lightest image that fits the device.
+export function getMediaSrcSet(media?: StrapiMedia | null): string | undefined {
+  if (!media) return undefined;
+  const entries: string[] = [];
+  const seen = new Set<number>();
+  const push = (url?: string, width?: number) => {
+    if (!url || !width || seen.has(width)) return;
+    seen.add(width);
+    entries.push(`${getMediaUrl(url)} ${width}w`);
+  };
+  const f = media.formats;
+  if (f) {
+    push(f.thumbnail?.url, f.thumbnail?.width);
+    push(f.small?.url, f.small?.width);
+    push(f.medium?.url, f.medium?.width);
+    push(f.large?.url, f.large?.width);
+  }
+  push(media.url, media.width);
+  return entries.length > 1 ? entries.join(', ') : undefined;
+}
+
+export function getMediaDimensions(media?: StrapiMedia | null): { width?: number; height?: number } {
+  if (!media) return {};
+  return { width: media.width, height: media.height };
+}
+
 export function getArticleImage(article: Article): string {
   if (article.featuredImage) {
     return getStrapiMediaUrl(article.featuredImage);
@@ -90,7 +131,11 @@ export function getArticleData(article: Article | null | undefined, categoryName
     title: article.title,
     slug: article.slug || '',
     content: article.content || '',
-    image: getArticleImage(article),
+    // Card-sized variant (≤750px) instead of the full-res original — the
+    // browser still gets a sharp image at card dimensions for a fraction of the bytes.
+    image: getMediaUrlSized(article.featuredImage, 'medium'),
+    imageSrcSet: getMediaSrcSet(article.featuredImage),
+    imageMedia: article.featuredImage ?? null,
     category: categoryNameFn(article.category),
     author: {
       name: getAuthorName(article.author, article.publication_author_name),

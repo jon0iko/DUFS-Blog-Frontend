@@ -15,40 +15,57 @@ function HeroSkeleton() {
 
 interface HeroSectionProps {
   onReadyStateChange?: (isReady: boolean) => void;
+  /** Build-time hero articles, used for the first paint then revalidated client-side. */
+  initialArticles?: Article[];
 }
 
-export default function HeroSection({ onReadyStateChange }: HeroSectionProps) {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function HeroSection({ onReadyStateChange, initialArticles = [] }: HeroSectionProps) {
+  const hasInitial = initialArticles.length > 0;
+  const [articles, setArticles] = useState<Article[]>(initialArticles);
+  const [loading, setLoading] = useState(!hasInitial);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchHeroArticles = async () => {
       try {
-        setLoading(true);
+        // Only show the skeleton when we have nothing to display yet. With SSG
+        // data we keep showing it and revalidate silently in the background.
+        if (!hasInitial) setLoading(true);
         setError(null);
         const response = await strapiAPI.getHeroArticles();
-        
+        if (cancelled) return;
+
         if (!response.data || response.data.length === 0) {
-          setError('No hero articles found');
-          setArticles([]);
-          onReadyStateChange?.(true); // Signal ready on empty data to dismiss loader
+          // Empty fresh data: only surface an error if we never had SSG data.
+          if (!hasInitial) {
+            setError('No hero articles found');
+            setArticles([]);
+            onReadyStateChange?.(true); // dismiss loader
+          }
           return;
         }
-        
+
         setArticles(response.data);
       } catch (err) {
+        if (cancelled) return;
         console.error('Failed to load hero articles:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load content');
-        setArticles([]);
-        onReadyStateChange?.(true); // Signal ready on error to dismiss loader
+        // Keep the build-time hero on screen if the revalidation fails.
+        if (!hasInitial) {
+          setError(err instanceof Error ? err.message : 'Failed to load content');
+          setArticles([]);
+          onReadyStateChange?.(true); // dismiss loader
+        }
       } finally {
-        setLoading(false);
-        // Do NOT signal ready here on success; let HeroCarousel do it after images load
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchHeroArticles();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onReadyStateChange]);
 
   if (loading) {
@@ -66,5 +83,11 @@ export default function HeroSection({ onReadyStateChange }: HeroSectionProps) {
     );
   }
 
-  return <HeroCarousel articles={articles} onReadyStateChange={onReadyStateChange} />;
+  return (
+    <HeroCarousel
+      articles={articles}
+      onReadyStateChange={onReadyStateChange}
+      initialReady={hasInitial}
+    />
+  );
 }

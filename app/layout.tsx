@@ -12,27 +12,27 @@ import { SocialLinksProvider } from "@/contexts/SocialLinksContext";
 const roboto = localFont({
   src: [
     {
-      path: "../public/fonts/Roboto-Regular.ttf",
+      path: "../public/fonts/Roboto-Regular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../public/fonts/Roboto-Light.ttf",
+      path: "../public/fonts/Roboto-Light.woff2",
       weight: "300",
       style: "normal",
     },
     {
-      path: "../public/fonts/Roboto-Medium.ttf",
+      path: "../public/fonts/Roboto-Medium.woff2",
       weight: "500",
       style: "normal",
     },
     {
-      path: "../public/fonts/Roboto-SemiBold.ttf",
+      path: "../public/fonts/Roboto-SemiBold.woff2",
       weight: "600",
       style: "normal",
     },
     {
-      path: "../public/fonts/Roboto-Bold.ttf",
+      path: "../public/fonts/Roboto-Bold.woff2",
       weight: "700",
       style: "normal",
     },
@@ -44,32 +44,32 @@ const roboto = localFont({
 const montserrat = localFont({
   src: [
     {
-      path: "../public/fonts/Montserrat-Thin.ttf",
+      path: "../public/fonts/Montserrat-Thin.woff2",
       weight: "100",
       style: "normal",
     },
     {
-      path: "../public/fonts/Montserrat-Light.ttf",
+      path: "../public/fonts/Montserrat-Light.woff2",
       weight: "300",
       style: "normal",
     },
     {
-      path: "../public/fonts/Montserrat-Regular.ttf",
+      path: "../public/fonts/Montserrat-Regular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../public/fonts/Montserrat-SemiBold.ttf",
+      path: "../public/fonts/Montserrat-SemiBold.woff2",
       weight: "600",
       style: "normal",
     },
     {
-      path: "../public/fonts/Montserrat-Bold.ttf",
+      path: "../public/fonts/Montserrat-Bold.woff2",
       weight: "700",
       style: "normal",
     },
     {
-      path: "../public/fonts/Montserrat-Black.ttf",
+      path: "../public/fonts/Montserrat-Black.woff2",
       weight: "900",
       style: "normal",
     },
@@ -78,49 +78,20 @@ const montserrat = localFont({
   display: "swap",
 });
 
-const Playfair_Display = localFont({
-  src: [
-    {
-      path: "../public/fonts/PlayfairDisplay-Regular.ttf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/PlayfairDisplay-Italic.ttf",
-      weight: "400",
-      style: "italic",
-    },
-    {
-      path: "../public/fonts/PlayfairDisplay-Bold.ttf",
-      weight: "700",
-      style: "normal",
-    },
-  ],
-  variable: "--font-playfair-display",
-  display: "swap",
-});
-
-const LeagueSpartan_Variable = localFont({
-  src: "../public/fonts/LeagueSpartan_Variable.ttf",
-  weight: "100 900",
-  variable: "--font-league-spartan",
-  display: "swap",
-});
-
 const ZillaSlab = localFont({
   src: [
     {
-      path: "../public/fonts/ZillaSlab-Regular.ttf",
+      path: "../public/fonts/ZillaSlab-Regular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../public/fonts/ZillaSlab-Bold.ttf",
+      path: "../public/fonts/ZillaSlab-Bold.woff2",
       weight: "700",
       style: "normal",
     },
     {
-      path: "../public/fonts/ZillaSlab-Italic.ttf",
+      path: "../public/fonts/ZillaSlab-Italic.woff2",
       weight: "400",
       style: "italic",
     }
@@ -132,12 +103,12 @@ const ZillaSlab = localFont({
 const AlteHaasGrotesk = localFont({
   src: [
     {
-      path: "../public/fonts/AlteHaasGroteskRegular.ttf",
+      path: "../public/fonts/AlteHaasGroteskRegular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../public/fonts/AlteHaasGroteskBold.ttf",
+      path: "../public/fonts/AlteHaasGroteskBold.woff2",
       weight: "700",
       style: "normal",
     },
@@ -148,16 +119,40 @@ const AlteHaasGrotesk = localFont({
 
 
 const kalpurush = localFont({
-  src: "../public/fonts/kalpurush.ttf",
+  src: "../public/fonts/kalpurush.woff2",
   weight: "400", // Adjust if your Kalpurush.ttf has a different default weight
   style: "normal",
   variable: "--font-kalpurush", // Assign CSS variable for Kalpurush
   display: "swap",
 });
 
+const siteUrl = (
+  process.env.SITE_URL ||
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  "http://localhost:3000"
+).replace(/\/$/, "");
+
 export const metadata: Metadata = {
-  title: "DUFS Blog - Film Publication",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "DUFS Blog - Film Publication",
+    template: "%s | DUFS Blog",
+  },
   description: "A film blog created by Dhaka University Film Society.",
+  applicationName: "DUFS Blog",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
+  openGraph: {
+    type: "website",
+    siteName: "DUFS Blog",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export const viewport: Viewport = {

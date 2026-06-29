@@ -3,8 +3,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import gsap from "gsap";
 import ScrollToPlugin from "gsap/ScrollToPlugin";
-import { config } from "@/lib/config";
-import { getAuthorAvatar } from "@/lib/strapi-helpers";
+import { getAuthorAvatar, getMediaUrlSized } from "@/lib/strapi-helpers";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -105,10 +104,10 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
     );
   }
 
-  const imageUrl = article.featuredImage?.url
-    ? article.featuredImage.url.startsWith("http")
-      ? article.featuredImage.url
-      : `${config.strapi.url}${article.featuredImage.url}`
+  // Use the ≤1000px 'large' variant for the article hero (falls back to the
+  // original when no smaller variant exists) instead of the full-res original.
+  const imageUrl = article.featuredImage
+    ? getMediaUrlSized(article.featuredImage, 'large')
     : "/images/placeholder.jpg";
 
   const authorAvatar = article.author ? getAuthorAvatar(article.author) : undefined;
@@ -160,7 +159,6 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
           publishedDate={publishedDate}
           shortPublishedDate={shortPublishedDate}
           viewCount={viewCount}
-          isPublicationAuthor={!hasAuthorProfile}
           publicationIssue={article.publication_issue}
         />
 

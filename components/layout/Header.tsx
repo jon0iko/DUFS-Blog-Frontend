@@ -271,7 +271,7 @@ export default function Header() {
                   className={cn(
                     "hidden md:flex items-center gap-2 font-semibold transition-all duration-300 whitespace-nowrap",
                     isScrolledPastHero 
-                      ? "text-foreground hover:bg-gray-100 dark:hover:bg-brand-black-90" 
+                      ? "text-foreground hover:bg-gray-200 dark:hover:bg-brand-black-90" 
                       : "text-white hover:bg-white/20"
                   )}
                 >
@@ -285,8 +285,8 @@ export default function Header() {
                   className={cn(
                     "hidden md:flex items-center gap-2 font-semibold transition-all duration-300 whitespace-nowrap",
                     isScrolledPastHero 
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                      : "bg-white text-gray-900 hover:bg-white/90"
+                      ? "bg-primary/90 text-primary-foreground hover:bg-primary" 
+                      : "bg-white/80 text-gray-900 hover:bg-white"
                   )}
                 >
                   <Link href="/auth/signup">

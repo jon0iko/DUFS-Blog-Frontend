@@ -338,7 +338,6 @@ export default function PublishModal({
       const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`;
 
 
-      // Call the server-side submission function with updated markdown
       await submitNewArticleService({
         title: formData.title || "Untitled Article",
         slug: uniqueSlug,

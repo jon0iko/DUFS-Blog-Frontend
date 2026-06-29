@@ -3,12 +3,12 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { PenLine } from "lucide-react";
 import { Author, Publication_Issue } from "@/types";
 import { getFontClass } from "@/lib/fonts";
 import { getStrapiMediaUrl } from "@/lib/strapi-helpers";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import { get } from "http";
 
 interface ArticleAuthorSectionProps {
   author?: Author | null;
@@ -23,16 +23,62 @@ export default function ArticleAuthorSection({
   publicationAuthorName,
   publicationIssue,
 }: ArticleAuthorSectionProps) {
+  const { user } = useAuth();
   const displayName = publicationAuthorName || author?.Name;
-  let isbioinbangla = false;
+  // Prefer the Author entity's Bio (matches the author page); fall back to the
+  // linked user's self-written bio so bios added via /account always show.
+  const bio = author?.Bio || author?.users_permissions_user?.Bio;
+  const isbioinbangla = getFontClass(bio || "") === "font-kalpurush";
 
-  if (getFontClass(author?.Bio || "") === "font-kalpurush") {
-    isbioinbangla = true;
-  }
+  // Is the logged-in reader the author of this piece? Used to nudge them to add
+  // a bio when it's missing — the reader-facing card stays clean for everyone else.
+  const linkedUserId = author?.users_permissions_user?.id;
+  const isOwner =
+    !!user && linkedUserId != null && user.id === linkedUserId;
+
+  /**
+   * Renders the bio when present, or — for the author viewing their own,
+   * bio-less article — an inviting prompt to write one.
+   */
+  const BioOrPrompt = ({ variant }: { variant: "mobile" | "desktop" }) => {
+    if (bio) {
+      return (
+        <p
+          className={cn(
+            "text-foreground/75 line-clamp-3",
+            getFontClass(bio),
+            isbioinbangla
+              ? variant === "desktop"
+                ? "text-lg"
+                : "text-base"
+              : variant === "desktop"
+                ? "text-base"
+                : "text-sm",
+          )}
+        >
+          {bio}
+        </p>
+      );
+    }
+
+    if (isOwner) {
+      return (
+        <Link
+          href="/account"
+          className="mt-1.5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-4"
+        >
+          <PenLine className="w-3.5 h-3.5 flex-shrink-0" />
+          Add a bio so readers can get to know you
+        </Link>
+      );
+    }
+
+    return null;
+  };
 
   const PublicationIssueCard = () => (
     publicationIssue && (
-      <Link 
+      <Link
         href={`/issue?id=${publicationIssue.documentId}`}
         className="block mt-8 group"
       >
@@ -49,7 +95,7 @@ export default function ArticleAuthorSection({
                 />
               </div>
             )}
-            
+
             {/* Text on right */}
             <div className="flex-1 p-4 flex flex-col justify-center">
               <p className="text-xs pl-1 font-semibold uppercase tracking-widest text-muted-foreground mb-2">
@@ -103,7 +149,7 @@ export default function ArticleAuthorSection({
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">
           Written By
         </p>
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3">
           <Link
             href={`/author?slug=${author.slug}`}
             className="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0 border-2 border-border block"
@@ -126,32 +172,14 @@ export default function ArticleAuthorSection({
                 {displayName}
               </h3>
             </Link>
-            {author.Bio && (
-              <p
-                className={cn(
-                  "text-foreground/75 line-clamp-3",
-                  getFontClass(author.Bio),
-                  isbioinbangla ? "text-base" : "text-sm"
-                )}
-              >
-                {author.Bio}
-              </p>
-            )}
+            <BioOrPrompt variant="mobile" />
           </div>
-          {/* <Button
-            variant="outline"
-            size="sm"
-            className="flex-shrink-0 rounded-full px-5"
-            asChild
-          >
-            <Link href={`/author?slug=${author.slug}`}>Subscribe</Link>
-          </Button> */}
         </div>
       </div>
 
       {/* Desktop author section — Medium-like aesthetic */}
       <div className="hidden lg:block border-t border-b pb-8 border-border pt-8">
-        <div className="flex items-center gap-5">
+        <div className="flex items-start gap-5">
           <Link
             href={`/author?slug=${author.slug}`}
             className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0 border-2 border-border hover:border-primary transition-colors block"
@@ -177,26 +205,8 @@ export default function ArticleAuthorSection({
                 {displayName}
               </h3>
             </Link>
-            {author.Bio && (
-              <p
-                className={cn(
-                  "text-foreground/75 line-clamp-3 ",
-                  getFontClass(author.Bio),
-                  isbioinbangla ? "text-lg " : "text-base"
-                )}
-              >
-                {author.Bio}
-              </p>
-            )}
+            <BioOrPrompt variant="desktop" />
           </div>
-          {/* <Button
-            variant="outline"
-            size="sm"
-            className="flex-shrink-0 rounded-md px-5 mt-6 border-foreground shadow-lg dark:shadow-lg dark:shadow-accent/40"
-            asChild
-          >
-            <Link href={`/author?slug=${author.slug}`}>Subscribe</Link>
-          </Button> */}
         </div>
       </div>
 

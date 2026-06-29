@@ -60,6 +60,7 @@ export interface Author {
   users_permissions_user?: {
     id?: number;
     username?: string;
+    Bio?: string; // self-written bio (edited via /account); fallback for Author.Bio
     Avatar?: { url?: string } | null;
   };
   email?: string;
