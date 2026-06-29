@@ -75,7 +75,7 @@ export default function ArticleCard({
                   transitionProperty: "opacity, transform",
                   transitionDuration: "300ms"
                 }}
-                onLoadingComplete={() => setImageLoaded(true)}
+                onLoad={() => setImageLoaded(true)}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               />
               <div className="absolute top-0 left-0 m-2 flex flex-wrap gap-2 max-w-xs">

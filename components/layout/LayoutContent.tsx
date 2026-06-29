@@ -20,7 +20,6 @@ export default function LayoutContent({ children }: LayoutContentProps) {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   useEffect(() => {
-    // Ensure loading screen shows for at least 500ms
     const startTime = Date.now();
     const minLoadDuration = 500;
 
@@ -33,11 +32,9 @@ export default function LayoutContent({ children }: LayoutContentProps) {
       }, remainingTime);
     };
 
-    // Check if document is already loaded (for client-side navigation)
     if (document.readyState === 'complete') {
       handleLoad();
     } else {
-      // Wait for full page load on initial visit
       window.addEventListener('load', handleLoad);
       return () => window.removeEventListener('load', handleLoad);
     }

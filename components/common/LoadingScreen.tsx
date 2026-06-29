@@ -1,104 +1,21 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import Image from 'next/image'
 import { gsap } from '@/lib/gsap'
 
 interface LoadingScreenProps {
-  /**
-   * Show/hide the loading screen
-   */
   isLoading: boolean
-  /**
-   * Minimum time to show loading screen (in ms)
-   * Prevents flickering for fast loads
-   * @default 300
-   */
   minDuration?: number
-  /**
-   * Fade out duration (in ms)
-   * @default 300
-   */
   fadeDuration?: number
 }
 
-/**
- * Full-screen loading overlay — all animations driven by a GSAP timeline.
- *
- * GSAP handles every motion (logo float, rings, orbit, dots) in a single
- * synchronized RAF loop, avoiding multiple CSS animation timelines.
- */
 export default function LoadingScreen({
   isLoading,
   minDuration = 300,
   fadeDuration = 300,
 }: LoadingScreenProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
-  const mountedRef = useRef(false)
 
-  // Build the looping animation timeline on first mount
-  useEffect(() => {
-    const overlay = overlayRef.current
-    if (!overlay || mountedRef.current) return
-    mountedRef.current = true
-
-    const logo = overlay.querySelector<HTMLElement>('[data-loading="logo"]')
-    const rings = overlay.querySelectorAll<HTMLElement>('[data-loading="ring"]')
-    const orbit = overlay.querySelector<HTMLElement>('[data-loading="orbit"]')
-    const dots = overlay.querySelectorAll<HTMLElement>('[data-loading="dot"]')
-
-    // Logo gentle float
-    // if (logo) {
-    //   gsap.to(logo, {
-    //     y: -8,
-    //     scale: 1.04,
-    //     duration: 1.6,
-    //     repeat: -1,
-    //     yoyo: true,
-    //     ease: 'sine.inOut',
-    //   })
-    // }
-
-    // Pulsing rings
-    if (rings.length) {
-      gsap.to(rings, {
-        scale: 1.12,
-        opacity: 0.9,
-        duration: 1,
-        repeat: -1,
-        yoyo: true,
-        stagger: 0.35,
-        ease: 'sine.inOut',
-        transformOrigin: '50% 50%',
-      })
-    }
-
-    // Rotation orbit
-    if (orbit) {
-      gsap.to(orbit, {
-        rotation: 360,
-        duration: 4,
-        repeat: -1,
-        ease: 'none',
-        transformOrigin: '50% 50%',
-      })
-    }
-
-    // Loading dots bounce
-    if (dots.length) {
-      gsap.to(dots, {
-        y: -6,
-        opacity: 1,
-        duration: 0.35,
-        repeat: -1,
-        yoyo: true,
-        stagger: 0.18,
-        ease: 'power1.out',
-      })
-    }
-  }, [])
-
-  // Manage body scroll state when loading
   useEffect(() => {
     const html = document.documentElement
     const body = document.body
@@ -109,14 +26,12 @@ export default function LoadingScreen({
       html.style.overflow = ''
       body.style.overflow = ''
     }
-
     return () => {
       html.style.overflow = ''
       body.style.overflow = ''
     }
   }, [isLoading])
 
-  // Fade in / fade out based on isLoading
   useEffect(() => {
     const overlay = overlayRef.current
     if (!overlay) return
@@ -149,52 +64,73 @@ export default function LoadingScreen({
     <div
       ref={overlayRef}
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-white dark:bg-background"
-      style={{ opacity: 1 }}
+      style={{
+        opacity: isLoading ? 1 : 0,
+        visibility: isLoading ? 'visible' : 'hidden',
+        pointerEvents: isLoading ? 'auto' : 'none',
+      }}
+      aria-hidden={!isLoading}
       aria-label="Loading content"
       role="status"
     >
+      {/* All animations are pure CSS — visible the instant the HTML paints,
+          no JS hydration needed for the spinner to appear. */}
       <div className="flex flex-col items-center gap-6">
-        {/* Animated Logo Container with Orbital Rings */}
         <div className="relative w-32 h-32 md:w-40 md:h-40 flex items-center justify-center">
-          {/* Pulsing ring */}
+          {/* Pulsing ring — CSS animation */}
           <div
-            data-loading="ring"
             className="absolute inset-3 rounded-full border-2 border-foreground/25 dark:border-white/55"
-            style={{ opacity: 0.45 }}
+            style={{
+              animation: 'loading-pulse 2s ease-in-out infinite',
+            }}
           />
 
-          {/* Logo float — GSAP-driven */}
-          <div
-            data-loading="logo"
-            className="relative z-10 w-24 h-24 md:w-28 md:h-28 flex items-center justify-center rounded-full bg-white dark:bg-white shadow-lg p-3"
-          >
-            <Image
+          {/* Logo */}
+          <div className="relative z-10 w-24 h-24 md:w-28 md:h-28 flex items-center justify-center rounded-full bg-white dark:bg-white shadow-lg p-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/images/loading.svg"
               alt="Loading"
               width={80}
               height={80}
               className="object-contain w-full h-full"
-              priority
-              unoptimized
             />
           </div>
 
-          {/* Orbiting dot — GSAP rotation */}
-          <div data-loading="orbit" className="absolute inset-0">
+          {/* Orbiting dot — CSS animation */}
+          <div
+            className="absolute inset-0"
+            style={{ animation: 'loading-orbit 4s linear infinite' }}
+          >
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-primary rounded-full" />
           </div>
         </div>
 
-        {/* Loading dots — GSAP bounce */}
+        {/* Loading text with CSS-animated dots */}
         <div className="flex items-center gap-1">
           <p className="text-sm md:text-base text-muted-foreground">Loading</p>
           <span className="flex gap-1 ml-1">
-            <span data-loading="dot" className="w-1 h-1 bg-muted-foreground rounded-full opacity-50" />
-            <span data-loading="dot" className="w-1 h-1 bg-muted-foreground rounded-full opacity-50" />
-            <span data-loading="dot" className="w-1 h-1 bg-muted-foreground rounded-full opacity-50" />
+            <span className="w-1 h-1 bg-muted-foreground rounded-full" style={{ animation: 'loading-dot 1.2s ease-in-out infinite 0s' }} />
+            <span className="w-1 h-1 bg-muted-foreground rounded-full" style={{ animation: 'loading-dot 1.2s ease-in-out infinite 0.2s' }} />
+            <span className="w-1 h-1 bg-muted-foreground rounded-full" style={{ animation: 'loading-dot 1.2s ease-in-out infinite 0.4s' }} />
           </span>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes loading-pulse {
+          0%, 100% { transform: scale(1); opacity: 0.45; }
+          50% { transform: scale(1.12); opacity: 0.9; }
+        }
+        @keyframes loading-orbit {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes loading-dot {
+          0%, 100% { transform: translateY(0); opacity: 0.5; }
+          50% { transform: translateY(-6px); opacity: 1; }
+        }
+      `}</style>
     </div>
   )
 }

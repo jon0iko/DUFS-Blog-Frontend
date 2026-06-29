@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react";
 import { Article } from "@/types";
 import {
   getArticleData,
-  getArticleImage,
+  getMediaUrlSized,
   formatPublishDate,
 } from "@/lib/strapi-helpers";
 import { getFontClass, getFontClassAlteHaasGrotesk } from "@/lib/fonts";
@@ -18,6 +18,9 @@ import { gsap } from "@/lib/gsap";
 interface HeroCarouselProps {
   articles: Article[];
   onReadyStateChange?: (isReady: boolean) => void;
+  /** True when articles came from the build-time render — skip the opaque
+   *  loading overlay so the pre-rendered hero image counts as the LCP. */
+  initialReady?: boolean;
 }
 
 // Module-level image cache persists across component remounts
@@ -40,7 +43,7 @@ const initializeCacheCleanup = (router: ReturnType<typeof useRouter>) => {
 const SLIDE_DURATION = 6000; // 6 seconds per slide
 const IMAGE_LOAD_TIMEOUT = 3000; // Fallback if image onLoad/onError never fires
 
-export default function HeroCarousel({ articles, onReadyStateChange }: HeroCarouselProps) {
+export default function HeroCarousel({ articles, onReadyStateChange, initialReady = false }: HeroCarouselProps) {
   const router = useRouter();
 
   // Initialize cache cleanup handler on first render
@@ -61,8 +64,8 @@ export default function HeroCarousel({ articles, onReadyStateChange }: HeroCarou
   }, []);
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isImageLoading, setIsImageLoading] = useState(true);
-  const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(!initialReady);
+  const [hasLoadedInitial, setHasLoadedInitial] = useState(initialReady);
   const [progressKey, setProgressKey] = useState(0);
   const [progressDuration, setProgressDuration] = useState(SLIDE_DURATION);
   const [isUserInteracting, setIsUserInteracting] = useState(false);
@@ -87,10 +90,16 @@ export default function HeroCarousel({ articles, onReadyStateChange }: HeroCarou
   // Memoize article data for performance
   const processedArticles = useMemo(() => {
     return articles
-      .map((article) => ({
-        ...getArticleData(article),
-        imageSrc: getArticleImage(article),
-      }))
+      .map((article) => {
+        const data = getArticleData(article);
+        return {
+          ...data,
+          // 'large' (≤1000px) as the default/fallback; srcSet lets the browser
+          // grab a much smaller variant on phones (where the score is lowest).
+          imageSrc: getMediaUrlSized(article.featuredImage, 'large'),
+          imageSrcSet: data?.imageSrcSet,
+        };
+      })
       .filter((a) => a !== null);
   }, [articles]);
 
@@ -482,15 +491,21 @@ export default function HeroCarousel({ articles, onReadyStateChange }: HeroCarou
                     }}
                   >
                     {/* Mobile: object-contain shows full image; desktop: object-cover fills frame */}
-                    <Image
+                    {/* Plain <img> so we can serve a responsive srcSet of Strapi variants
+                        (next/image with unoptimized export can't emit a custom srcSet). */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src={currentArticle.imageSrc}
+                      srcSet={currentArticle.imageSrcSet}
+                      sizes="100vw"
                       alt={currentArticle.title || "Hero Image"}
-                      fill
-                      priority
+                      // First slide is the LCP element — load it as eagerly as possible.
+                      fetchPriority={currentIndex === 0 ? "high" : "auto"}
+                      loading="eager"
+                      decoding="async"
                       onLoad={() => onSlideReadyRef.current()}
                       onError={() => onSlideReadyRef.current()}
-                      className=" object-cover"
-                      sizes="100vw"
+                      className="absolute inset-0 w-full h-full object-cover"
                     />
                     {/* Cinematic Gradient Overlay - Fades from bottom and top for cinematic effect */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />

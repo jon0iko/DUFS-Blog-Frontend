@@ -169,7 +169,7 @@ export default function Sidebar({ isOpen, setIsOpen, navigation = [] }: SidebarP
                   onClick={closeSidebar}
                   target={item.isExternal ? '_blank' : undefined}
                   rel={item.isExternal ? 'noopener noreferrer' : undefined}
-                  className="block text-lg font-medium text-foreground/90 hover:text-background hover:bg-brand-black-90 dark:hover:bg-white py-2 px-4 -mx-4 rounded transition-colors"
+                  className="block text-lg font-black text-foreground/90 hover:text-background hover:bg-brand-black-90 dark:hover:bg-white py-2 px-4 -mx-4 rounded transition-colors"
                 >
                    {item.title}
                 </Link>

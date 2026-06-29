@@ -29,8 +29,7 @@ export default function ArticleRightSidebar({ article, publicationIssue }: Artic
               <div
                 className={cn(
                   "w-full text-center py-2 px-3 rounded-lg text-sm font-medium cursor-pointer transition-opacity opacity-80 hover:opacity-100 shadow-xl dark:shadow-xl",
-                  "bg-black text-white",
-                  getFontClass(article.category.Name),
+                  "bg-black text-white font-kalpurush",
                 )}
               >
                 {article.category.nameBn}
@@ -95,7 +94,12 @@ export default function ArticleRightSidebar({ article, publicationIssue }: Artic
                   key={tag.id}
                   href={`/browse?search=${encodeURIComponent(tag.name)}&category=all`}
                 >
-                  <span className="inline-block text-xs px-2.5 py-1 rounded-md border border-border bg-secondary hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors cursor-pointer">
+                  <span
+                    className={cn(
+                      "inline-block text-xs px-2.5 py-1 rounded-md border border-border bg-secondary hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors cursor-pointer",
+                      getFontClass(tag.name),
+                    )}
+                  >
                     #{tag.name}
                   </span>
                 </Link>

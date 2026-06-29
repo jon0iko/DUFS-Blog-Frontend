@@ -91,7 +91,7 @@ export default function EditorChoice({ onErrorChange }: EditorChoiceProps) {
       <div
         className="absolute inset-0 pointer-events-none select-none z-[5]"
         style={{
-          backgroundImage: 'url(/images/paper.svg)',
+          backgroundImage: 'url(/images/paper.webp)',
           backgroundRepeat: 'repeat',
           backgroundSize: '500px',
           opacity: 1,
@@ -102,7 +102,7 @@ export default function EditorChoice({ onErrorChange }: EditorChoiceProps) {
       {/* <div
         className="absolute inset-0 pointer-events-none select-none z-[5] hidden dark:block"
         style={{
-          backgroundImage: 'url(/images/paper.svg)',
+          backgroundImage: 'url(/images/paper.webp)',
           backgroundRepeat: 'repeat',
           backgroundSize: '600px',
           opacity: 1,

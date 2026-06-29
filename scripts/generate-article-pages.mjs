@@ -44,7 +44,7 @@ async function fetchAllArticles() {
 
   for (;;) {
     const url = new URL(`${STRAPI_URL}/api/articles`)
-    url.searchParams.set('filters[storyState][$eq]', 'published')
+    url.searchParams.set('filters[publishedAt][$notNull]', 'true')
     url.searchParams.set('fields[0]', 'slug')
     url.searchParams.set('fields[1]', 'title')
     url.searchParams.set('fields[2]', 'content')
@@ -204,10 +204,40 @@ function getPublishDate(article) {
 function generateSeoHtml(article) {
   const slug = article.slug
   const title = article.title || 'Untitled Article'
-  // Generate description from first 160 chars of content or use empty string
-  const description = article.content 
+  // Strip HTML then sanitize markdown/code fences and collapse whitespace
+  function sanitizeText(input) {
+    if (!input) return ''
+    let s = String(input)
+    // Remove HTML tags (already applied in caller but keep for safety)
+    s = s.replace(/<[^>]*>/g, '')
+    // Remove fenced code blocks ```...```
+    s = s.replace(/```[\s\S]*?```/g, '')
+    // Remove inline code `code`
+    s = s.replace(/`([^`]+)`/g, '$1')
+    // Remove images ![alt](url)
+    s = s.replace(/!\[[^\]]*\]\([^\)]*\)/g, '')
+    // Convert links [text](url) => text
+    s = s.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+    // Remove markdown headings, bold/italic markers
+    s = s.replace(/^#{1,6}\s*/gm, '')
+    s = s.replace(/\*\*(.*?)\*\*/g, '$1')
+    s = s.replace(/\*(.*?)\*/g, '$1')
+    s = s.replace(/__([^_]+)__/g, '$1')
+    s = s.replace(/_([^_]+)_/g, '$1')
+    // Remove blockquote markers
+    s = s.replace(/^>\s?/gm, '')
+    // Remove list markers at line starts
+    s = s.replace(/^[\-\*\+]\s+/gm, '')
+    // Collapse newlines and excessive whitespace
+    s = s.replace(/[\r\n]+/g, ' ')
+    s = s.replace(/\s{2,}/g, ' ')
+    return s.trim()
+  }
+
+  const rawDesc = article.content 
     ? article.content.replace(/<[^>]*>/g, '').substring(0, 160) 
     : ''
+  const description = sanitizeText(rawDesc)
   const authorName = article.author?.Name || 'DUFS'
   const categoryName = article.category?.Name || article.category?.nameEn || 'Article'
   const imageUrl = article.featuredImage?.url ? resolveUrl(article.featuredImage.url) : ''

@@ -3,8 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Calendar, Clock, Eye, FolderOpen, User, Notebook } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Calendar, Eye, FolderOpen, User, Notebook } from "lucide-react";
 import { Article } from "@/types";
 import { getFontClass, getfontsizeBN } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
@@ -29,7 +28,6 @@ export default function ArticleHero({
   publishedDate,
   shortPublishedDate,
   viewCount,
-  isPublicationAuthor = false,
   publicationIssue,
 }: ArticleHeroProps) {
   return (
@@ -80,7 +78,7 @@ export default function ArticleHero({
             </div>
             <span
               className={cn(
-                "text-sm font-semibold text-foreground truncate",
+                "text-sm font-semibold text-foreground truncate pl-1",
                 getFontClass(article.publication_author_name || article.author.Name),
               )}
             >

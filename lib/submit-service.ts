@@ -50,6 +50,7 @@ export async function submitNewArticleService(data: ArticleSubmissionData) {
       likes: 0,
       BlogDate: currentDate, // Set to current date when submitted
       SubmitDate: currentDate, // Current date/time when submitted
+      storyState: 'published', // Default to 'published'
     };
 
     // Add category relation (manyToOne) - Strapi v5 REST API uses numeric ID directly

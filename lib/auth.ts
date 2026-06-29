@@ -253,6 +253,7 @@ async function createAuthorForUser(user: UserData, token: string): Promise<void>
   const authorData = {
     Name: user.username,
     slug: slug,
+    Bio: user.Bio || '',
     users_permissions_user: user.id, // Link to the user (using numeric ID for Strapi v5)
   };
 
