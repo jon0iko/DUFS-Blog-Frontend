@@ -27,16 +27,15 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Camera, X as CloseIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
-import { getFontClass } from '@/lib/fonts';
+import { getFontClass, getfontsizeBN } from '@/lib/fonts';
 import AvatarCropModal from './AvatarCropModal';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 
 
 export default function AccountProfile() {
   const { user, logout, updateLocalUser } = useAuth();
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const toast = useToast();
   const auth = useAuth();
   
@@ -707,7 +706,7 @@ export default function AccountProfile() {
                 
                 <div className="flex-1">
                   <div>
-                    <p className="font-semibold text-lg">{user.username}</p>
+                    <p className={cn("font-semibold", getfontsizeBN(user.username, "text-lg"), getFontClass(user.username))}>{user.username}</p>
                     <p className="text-sm text-muted-foreground">
                       Member since {formatDate(user.createdAt)}
                     </p>
@@ -822,7 +821,7 @@ export default function AccountProfile() {
                   </div>
                 ) : (
                   <div className="pl-6">
-                    <p className="text-base text-foreground font-medium">{user.username}</p>
+                    <p className={cn("text-foreground font-medium", getfontsizeBN(user.username, "text-base"), getFontClass(user.username))}>{user.username}</p>
                   </div>
                 )}
               </div>
