@@ -49,7 +49,7 @@ export default function TextReel() {
 
   return (
     <section aria-label="Tagline reel" className="w-full bg-[#E0D5D0] py-4 sm:py-5 md:py-6 overflow-hidden">
-      <TextReelClient text={text} baseDuration={220} reps={5} />
+      <TextReelClient text={text} baseDuration={220} mobileBaseDuration={90} reps={5} />
       <p className="sr-only">{text}</p>
     </section>
   );
