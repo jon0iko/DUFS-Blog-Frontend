@@ -61,6 +61,53 @@ export interface RegisterData {
 const STRAPI_URL = config.strapi.url;
 
 import { authChannel } from './auth-channel';
+import { slugify } from './utils';
+
+type AuthorRecord = {
+  id?: number;
+  documentId?: string;
+  slug?: string;
+};
+
+async function findAuthorsBySlug(slug: string, token?: string): Promise<AuthorRecord[]> {
+  const searchParams = new URLSearchParams();
+  searchParams.append('filters[slug][$eq]', slug);
+  searchParams.append('fields[0]', 'slug');
+
+  const response = await fetch(`${STRAPI_URL}${config.strapi.endpoints.authors}?${searchParams.toString()}`, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.error('Author slug lookup error:', errorData);
+    throw new Error('Could not verify username uniqueness. Please try again.');
+  }
+
+  const data = await response.json();
+  return Array.isArray(data?.data) ? data.data : [];
+}
+
+async function assertUsernameIsAvailableBySlug(
+  username: string,
+  options?: { token?: string; excludeAuthorDocumentId?: string }
+): Promise<void> {
+  const normalizedSlug = slugify(username);
+  if (!normalizedSlug) {
+    throw new Error('Username must contain at least one letter or number.');
+  }
+
+  const authors = await findAuthorsBySlug(normalizedSlug, options?.token);
+  const slugTaken = authors.some(
+    (author) => !options?.excludeAuthorDocumentId || author.documentId !== options.excludeAuthorDocumentId
+  );
+
+  if (slugTaken) {
+    throw new Error('This username is already taken. Please choose a different one.');
+  }
+}
 
 // Set authentication token in cookies
 export const setToken = (token: string) => {
@@ -153,6 +200,8 @@ async function fetchCurrentUserWithToken(token: string): Promise<UserData | null
 // Custom fields (phoneNumber, Country) must be updated after registration
 export async function register(data: RegisterData): Promise<AuthResponse> {
   try {
+    await assertUsernameIsAvailableBySlug(data.username);
+
     // Step 1: Register with core fields only
     const coreData = {
       username: data.username,
@@ -248,7 +297,10 @@ async function updateUserProfile(
  */
 async function createAuthorForUser(user: UserData, token: string): Promise<void> {
   // Generate a slug from username
-  const slug = user.username.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const slug = slugify(user.username);
+  if (!slug) {
+    throw new Error('Failed to create author slug from username');
+  }
   
   const authorData = {
     Name: user.username,
@@ -353,6 +405,14 @@ export async function updateUserData(
     throw new Error('Not authenticated');
   }
 
+  if (profileData.username !== undefined) {
+    const currentAuthor = await getAuthorForCurrentUser();
+    await assertUsernameIsAvailableBySlug(profileData.username, {
+      token,
+      excludeAuthorDocumentId: currentAuthor?.documentId,
+    });
+  }
+
   const response = await fetch(`${STRAPI_URL}/api/users/${userId}`, {
     method: 'PUT',
     headers: {
@@ -378,57 +438,38 @@ export async function updateUserData(
 
   const updatedUser: UserData = await response.json();
   setUser(updatedUser); // Update stored user data
-  
-  // If Bio was updated, also update the author's Bio
-  if (profileData.Bio !== undefined) {
+
+  // Sync author fields, but never block successful user profile update.
+  if (profileData.username !== undefined || profileData.Bio !== undefined) {
     try {
-      await updateAuthorBio(profileData.Bio);
+      const author = await getAuthorForCurrentUser();
+      if (author?.documentId) {
+        const authorResponse = await fetch(`${STRAPI_URL}/api/authors/${author.documentId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            data: {
+              ...(profileData.username ? { Name: profileData.username, slug: slugify(profileData.username) } : {}),
+              ...(profileData.Bio !== undefined ? { Bio: profileData.Bio } : {}),
+            },
+          }),
+        });
+
+        if (!authorResponse.ok) {
+          const authorError = await authorResponse.json().catch(() => ({}));
+          console.warn('Failed to sync author profile:', authorError);
+        }
+      }
     } catch (err) {
-      console.warn('Failed to sync bio to author:', err);
-      // Don't throw - user update succeeded, author sync is secondary
+      console.warn('Author sync request failed:', err);
+      throw new Error('Failed to sync author profile. Try again after some moments.');
     }
   }
   
   return updatedUser;
-}
-
-/**
- * Update the author's Bio field
- * Called when user updates their bio to keep author in sync
- */
-async function updateAuthorBio(bio: string): Promise<void> {
-  const token = getToken();
-  const user = getUser();
-  
-  if (!token || !user) {
-    return;
-  }
-
-  // First, get the author for this user
-  const author = await getAuthorForCurrentUser();
-  if (!author) {
-    return; // No author linked to this user
-  }
-
-  // Update the author's Bio
-  const response = await fetch(`${STRAPI_URL}/api/authors/${author.documentId}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      data: {
-        Bio: bio,
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    console.error('Author bio update error:', errorData);
-    throw new Error('Failed to update author bio');
-  }
 }
 
 /**
@@ -718,6 +759,12 @@ export async function completeGoogleOnboarding(data: { username: string, fullNam
   if (!token || !user) {
     throw new Error('Not authenticated');
   }
+
+  const currentAuthor = await getAuthorForCurrentUser();
+  await assertUsernameIsAvailableBySlug(data.username, {
+    token,
+    excludeAuthorDocumentId: currentAuthor?.documentId,
+  });
 
   // 1. Update user profile
   const response = await fetch(`${STRAPI_URL}/api/users/${user.id}`, {

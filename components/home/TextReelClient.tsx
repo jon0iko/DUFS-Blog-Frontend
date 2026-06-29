@@ -23,6 +23,8 @@ interface TextReelClientProps {
   text: string;
   /** Base duration for one full pass in seconds (default: 50) */
   baseDuration?: number;
+  /** Mobile duration for one full pass in seconds (faster than desktop). */
+  mobileBaseDuration?: number;
   /** Number of repeated text instances per track */
   reps?: number;
 }
@@ -30,6 +32,7 @@ interface TextReelClientProps {
 export default function TextReelClient({
   text,
   baseDuration = 50,
+  mobileBaseDuration,
   reps = 5,
 }: TextReelClientProps) {
   const track1Ref = useRef<HTMLDivElement>(null);
@@ -55,9 +58,12 @@ export default function TextReelClient({
     //   track2 → translateX(0%)  (visual x ≈ 100vw, placed after track1 in flex)
     // Animating both to xPercent(-100) moves everything left by one track-width,
     // creating a seamless infinite loop when repeat: -1 is set.
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+    const effectiveDuration = isMobile ? mobileBaseDuration : baseDuration;
+
     const tween = gsap.to([track1, track2], {
       xPercent: -100,
-      duration: baseDuration,
+      duration: effectiveDuration,
       ease: "none",
       repeat: -1,
     });
@@ -100,7 +106,7 @@ export default function TextReelClient({
       window.removeEventListener("wheel", handleWheel);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [baseDuration]);
+  }, [baseDuration, mobileBaseDuration]);
 
   const items = Array.from({ length: reps }, (_, i) => (
     <span
