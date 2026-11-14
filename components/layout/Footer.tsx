@@ -224,7 +224,7 @@ export default function Footer() {
             </div>
           </div>
 
-            {/* Centered credit at the very bottom */}
+            {/* Centered credit at the very bottom
             <div className="mt-6">
               <p className="text-center text-white/15 text-xs">
                 Made by{' '}
@@ -238,7 +238,7 @@ export default function Footer() {
                 </a>
                 {', '}for the love of cinema.
               </p>
-            </div>
+            </div> */}
         </div>
       </div>
 
