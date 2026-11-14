@@ -63,6 +63,36 @@ export default function ArticleContentClient({ slug }: ArticleContentClientProps
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [slug]);
 
+  // SEO: reflect the loaded article in the document head. The tab/history get
+  // the real title, and the canonical points at the clean /articles/<slug>
+  // URL so any crawler rendering this page dedupes to the indexed URL.
+  useEffect(() => {
+    if (!article) return;
+
+    const prevTitle = document.title;
+    document.title = `${article.title} | DUFS Blog`;
+
+    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    const createdCanonical = !canonical;
+    const prevCanonicalHref = canonical?.getAttribute("href") ?? null;
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.appendChild(canonical);
+    }
+    canonical.href = `${window.location.origin}/articles/${slug}`;
+    const canonicalEl = canonical;
+
+    return () => {
+      document.title = prevTitle;
+      if (createdCanonical) {
+        canonicalEl.remove();
+      } else if (prevCanonicalHref !== null) {
+        canonicalEl.setAttribute("href", prevCanonicalHref);
+      }
+    };
+  }, [article, slug]);
+
 
 
   const handleDiscuss = () => {

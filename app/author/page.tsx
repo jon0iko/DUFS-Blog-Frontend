@@ -142,6 +142,34 @@ function AuthorPageInner() {
     fetchAuthorAndArticles(1)
   }, [fetchAuthorAndArticles])
 
+  // SEO: real tab title + canonical /authors/<slug> URL once the author loads
+  useEffect(() => {
+    if (!author?.Name) return
+
+    const prevTitle = document.title
+    document.title = `Articles by ${author.Name} | DUFS Blog`
+
+    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+    const createdCanonical = !canonical
+    const prevCanonicalHref = canonical?.getAttribute('href') ?? null
+    if (!canonical) {
+      canonical = document.createElement('link')
+      canonical.rel = 'canonical'
+      document.head.appendChild(canonical)
+    }
+    canonical.href = `${window.location.origin}/authors/${author.slug}`
+    const canonicalEl = canonical
+
+    return () => {
+      document.title = prevTitle
+      if (createdCanonical) {
+        canonicalEl.remove()
+      } else if (prevCanonicalHref !== null) {
+        canonicalEl.setAttribute('href', prevCanonicalHref)
+      }
+    }
+  }, [author?.Name, author?.slug])
+
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       fetchAuthorAndArticles(page)
